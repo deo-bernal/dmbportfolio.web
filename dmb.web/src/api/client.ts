@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5080/api",
+  // baseURL: "http://localhost:5080/api",
+  baseURL: "https://dmbportfolio-api.vercel.app/",
 });
 
 api.interceptors.request.use((config) => {
