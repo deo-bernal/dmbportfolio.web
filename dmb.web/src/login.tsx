@@ -40,8 +40,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   };
 
   return (
-    <Container fluid="lg" className="py-4 py-md-5 px-3">
-      <Row className="justify-content-center">
+    <Container fluid="lg" className="min-vh-100 d-flex align-items-center py-4 px-3">
+      <Row className="justify-content-center w-100" style={{ marginTop: "-7vh" }}>
         <Col xs={12} sm={10} md={8} lg={5} xl={4}>
           <Card className="shadow-sm">
             <Card.Body className="p-4">
