@@ -2,7 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
    //baseURL: "http://localhost:5080/api",
-  baseURL: "https://dmbportfolio-api.onrender.com",
+   baseURL: "https://dmbportfolio-api.onrender.com/api",
 });
 
 api.interceptors.request.use((config) => {
