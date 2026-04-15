@@ -81,7 +81,7 @@ function App({ onLogout }: AppProps) {
             <Card.Body>
               <header className="mb-3 d-flex flex-wrap justify-content-between align-items-start gap-3">
                 <div className="d-flex flex-wrap align-items-center gap-3">
-                  <h1 className="mb-0 fs-4 fs-md-3">{profile.name}</h1>
+                  <h1 className="mb-0 fs-4 fs-md-3" data-testid="profile-name">{profile.name}</h1>
                   <div className="d-flex align-items-center gap-2" aria-label="Built with React and .NET">
                     <img
                       src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg"
