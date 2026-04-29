@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Col from "react-bootstrap/Col";
@@ -31,15 +31,86 @@ type Profile = {
   contact: Contact;
 };
 
+type ApiUser = {
+  userId: number;
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  contactNo?: string | null;
+  activated: boolean;
+  createdAt: string;
+  userDetails?: ApiUserDetails | null;
+  projects: ApiProject[];
+};
+
+type ApiUserDetails = {
+  userId: number;
+  description?: string | null;
+  skills?: string | null;
+  video?: string | null;
+};
+
+type ApiProject = {
+  userId: number;
+  name: string;
+  type: string;
+  projectDetails?: string | null;
+};
+
 type AppProps = {
   onLogout: () => void;
 };
 
+function mapProfileDetailsToProfile(primaryUser: ApiUser): Profile {
+  const details = primaryUser.userDetails;
+
+  const parsedSkills = (details?.skills ?? "")
+    .split(/[,\n;]+/)
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+
+  const groupedProjects = (primaryUser.projects ?? [])
+    .reduce<ProjectCategory[]>((categories, project) => {
+      const categoryTitle = (project.type || "Other").trim() || "Other";
+      const existingCategory = categories.find(
+        (category) => category.title === categoryTitle
+      );
+
+      const item: ProjectItem = {
+        name: project.name,
+        description: project.projectDetails ?? "",
+      };
+
+      if (existingCategory) {
+        existingCategory.items.push(item);
+        return categories;
+      }
+
+      categories.push({ title: categoryTitle, items: [item] });
+      return categories;
+    }, []);
+
+  return {
+    name: [primaryUser.firstName, primaryUser.lastName].filter(Boolean).join(" ") || "Profile",
+    summary: details?.description ?? "",
+    video: details?.video ?? "",
+    skills: parsedSkills,
+    projectCategories: groupedProjects,
+    contact: {
+      email: primaryUser.email ?? "",
+      phone: primaryUser.contactNo ?? "",
+    },
+  };
+}
+
 function App({ onLogout }: AppProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [showAllProjects, setShowAllProjects] = useState(false);
+  const hasFetchedProfile = useRef(false);
   const visibleSkills = profile?.skills.slice(0, 11) ?? [];
   const hiddenSkills = profile?.skills.slice(11) ?? [];
   const visibleProjectCategories = profile?.projectCategories.slice(0, 2) ?? [];
@@ -58,15 +129,32 @@ function App({ onLogout }: AppProps) {
   };
 
   useEffect(() => {
-    api.get<Profile>("/profile").then((res) => setProfile(res.data));
-  }, []);
+    if (hasFetchedProfile.current) {
+      return;
+    }
+    hasFetchedProfile.current = true;
+
+    api
+      .get<ApiUser>("/profiledetails")
+      .then((res) => {
+        setProfile(mapProfileDetailsToProfile(res.data));
+        setLoadError(null);
+      })
+      .catch((error) => {
+        if (error?.response?.status === 401) {
+          onLogout();
+          return;
+        }
+        setLoadError("Unable to load profile details.");
+      });
+  }, [onLogout]);
 
   if (!profile) {
     return (
       <Container className="py-5">
         <Row className="justify-content-center">
           <Col xs="auto" className="text-center text-muted">
-            Loading...
+            {loadError ?? "Loading..."}
           </Col>
         </Row>
       </Container>
@@ -102,14 +190,16 @@ function App({ onLogout }: AppProps) {
                   {loggingOut ? "Signing out..." : "Log out"}
                 </Button>
               </header>
-              <a
-                className="link-primary fw-bold fs-5 d-inline-block mb-3"
-                href={profile.video}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Intro video
-              </a>
+              {profile.video ? (
+                <a
+                  className="link-primary fw-bold fs-5 d-inline-block mb-3"
+                  href={profile.video}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Intro video
+                </a>
+              ) : null}
               <p className="lead mb-0">{profile.summary}</p>
             </Card.Body>
           </Card>
