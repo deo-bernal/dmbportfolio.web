@@ -6,7 +6,7 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
 import Row from "react-bootstrap/Row";
-import api from "./api/client";
+import api from "./services/http.service";
 
 type LoginProps = {
   onLoginSuccess: (token: string) => void;
@@ -27,8 +27,12 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         password,
       });
       onLoginSuccess(res.data.token);
-    } catch {
-      setError("Invalid username or password.");
+    } catch (error: any) {
+      if (!error?.response) {
+        setError("Unable to reach API. Check API URL and backend status.");
+      } else {
+        setError("Invalid username or password.");
+      }
     } finally {
       setSubmitting(false);
     }
