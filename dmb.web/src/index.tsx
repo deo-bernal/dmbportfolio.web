@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
 import App from "./App";
+import { AuthProvider } from "./hooks/useAuth";
 import reportWebVitals from "./reportWebVitals";
 import store from "./store";
 
@@ -18,7 +19,9 @@ root.render(
   <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </BrowserRouter>
     </Provider>
   </React.StrictMode>

@@ -15,10 +15,9 @@ function App() {
     () =>
       createRouter({
         token: auth.token,
-        onLoginSuccess: auth.onLoginSuccess,
         onLogout: auth.onLogout,
       }),
-    [auth.token, auth.onLoginSuccess, auth.onLogout]
+    [auth.token, auth.onLogout]
   );
 
   const content = useRoutes(router);

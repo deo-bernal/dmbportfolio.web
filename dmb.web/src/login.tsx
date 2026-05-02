@@ -50,7 +50,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           <Card className="shadow-sm">
             <Card.Body className="p-4">
               <Card.Title as="h1" className="h3 mb-4 text-center">
-                Sign in to view Deo Bernal's Portfolio
+                Sign in to view your portfolio
               </Card.Title>
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="login-username">

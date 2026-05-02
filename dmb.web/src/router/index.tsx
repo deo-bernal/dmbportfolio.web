@@ -1,25 +1,33 @@
 import type { RouteObject } from "react-router";
 import { Navigate } from "react-router-dom";
-import Login from "../login";
+import Login from "../pages/Auth/Login";
+import ForgotPassword from "../pages/Auth/ForgotPassword";
+import ResetPassword from "../pages/Auth/ResetPassword";
 import PortfolioPage from "../pages/PortfolioPage";
 import ResumePage from "../pages/ResumePage";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
 
 type RouterConfig = {
   token: string | null;
-  onLoginSuccess: (token: string) => void;
   onLogout: () => void;
 };
 
 export default function createRouter({
   token,
-  onLoginSuccess,
   onLogout,
 }: RouterConfig): RouteObject[] {
   return [
     {
       path: "/login",
-      element: token ? <Navigate to="/" replace /> : <Login onLoginSuccess={onLoginSuccess} />,
+      element: token ? <Navigate to="/" replace /> : <Login />,
+    },
+    {
+      path: "/forgot-password",
+      element: token ? <Navigate to="/" replace /> : <ForgotPassword />,
+    },
+    {
+      path: "/reset-password",
+      element: <ResetPassword />,
     },
     {
       path: "/",
