@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import api from "../services/http.service";
+import type { LoginRequest, LoginResponse } from "models";
 
 type UseAuthResult = {
   token: string | null;
@@ -29,10 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (username: string, password: string) => {
-      const res = await api.post<{ token: string }>("/auth/login", {
-        username,
-        password,
-      });
+      const payload: LoginRequest = { username, password };
+      const res = await api.post<LoginResponse>("/auth/login", payload);
       onLoginSuccess(res.data.token);
       return true;
     },

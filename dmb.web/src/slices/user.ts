@@ -2,57 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { AppThunk } from "../store";
 import api from "../services/http.service";
-
-export type ProjectItem = {
-  name: string;
-  description: string;
-};
-
-export type ProjectCategory = {
-  title: string;
-  items: ProjectItem[];
-};
-
-export type Contact = {
-  email: string;
-  phone: string;
-};
-
-export type Profile = {
-  name: string;
-  summary: string;
-  video: string;
-  skills: string[];
-  projectCategories: ProjectCategory[];
-  contact: Contact;
-};
-
-type ApiUser = {
-  userId: number;
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  contactNo?: string | null;
-  activated: boolean;
-  createdAt: string;
-  userDetails?: ApiUserDetails | null;
-  projects: ApiProject[];
-};
-
-type ApiUserDetails = {
-  userId: number;
-  description?: string | null;
-  skills?: string | null;
-  video?: string | null;
-};
-
-type ApiProject = {
-  userId: number;
-  name: string;
-  type: string;
-  projectDetails?: string | null;
-};
+import type { ApiUser, Profile, ProjectCategory, ProjectItem } from "models";
 
 type UserState = {
   profile: Profile | null;

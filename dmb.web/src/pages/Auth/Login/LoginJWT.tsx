@@ -21,11 +21,7 @@ import axios from "axios";
 import useAuth from "hooks/useAuth";
 import { authSchema } from "validations/schema/auth";
 import { loginJwtSx } from "styles/main_style";
-
-type AuthFormValues = {
-  username: string;
-  password: string;
-};
+import type { ApiMessageResponse, AuthFormValues } from "models";
 
 const LoginJWT: FC = () => {
   const { login } = useAuth();
@@ -52,8 +48,12 @@ const LoginJWT: FC = () => {
         if (!error.response) {
           errorMessage = "Unable to reach API. Check API URL and backend status.";
         } else {
-          const data = error.response.data as { message?: string };
-          errorMessage = data?.message ?? "Invalid username or password.";
+          const data = error.response.data as Partial<ApiMessageResponse>;
+          if (error.response.status === 403 && data?.message) {
+            errorMessage = data.message;
+          } else {
+            errorMessage = data?.message ?? "Invalid username or password.";
+          }
         }
       }
       setError("root", { type: "manual", message: errorMessage });
@@ -77,10 +77,11 @@ const LoginJWT: FC = () => {
 
       <TextField
         sx={loginJwtSx.textField}
-        label="Username"
+        label="Email"
         fullWidth
         id="login-username"
         autoFocus
+        autoComplete="username"
         error={Boolean(errors.username)}
         helperText={errors.username?.message}
         {...register("username")}
@@ -135,7 +136,19 @@ const LoginJWT: FC = () => {
       >
         Sign in
       </Button>
-      <Box sx={{ mt: 1, textAlign: "right" }}>
+      <Box
+        sx={{
+          mt: 1,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 1,
+        }}
+      >
+        <Link component={RouterLink} to="/register" variant="body2" underline="hover" sx={{ fontWeight: 600 }}>
+          Create account
+        </Link>
         <Link component={RouterLink} to="/forgot-password" variant="body2" underline="hover" sx={{ fontWeight: 600 }}>
           Forgot password?
         </Link>

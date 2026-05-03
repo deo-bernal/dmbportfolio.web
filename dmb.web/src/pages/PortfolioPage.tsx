@@ -9,10 +9,7 @@ import api from "services/http.service";
 import { getProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
 import { agenticPageSx } from "styles/main_style";
-
-type PortfolioPageProps = {
-  onLogout: () => void;
-};
+import type { PortfolioPageProps } from "models";
 
 const DEVICON_SIZE = 28;
 

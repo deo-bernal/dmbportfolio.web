@@ -1,6 +1,6 @@
 import { forwardRef, useState, type ReactElement, type Ref } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
   Box,
@@ -14,14 +14,18 @@ import {
   TextField,
   Typography,
   CircularProgress,
+  InputAdornment,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import type { TransitionProps } from "@mui/material/transitions";
 import axios from "axios";
-import { forgotPasswordSchema } from "validations/schema/auth";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { registerSchema } from "validations/schema/auth";
 import { LoginMainContent, LoginTopWrapper, loginPageSx } from "styles/main_style";
 import { loginJwtSx } from "styles/main_style";
 import api from "services/http.service";
-import type { ApiMessageResponse, ForgotFormValues, ForgotPasswordRequest } from "models";
+import type { ApiMessageResponse, RegisterFormValues, RegisterRequest } from "models";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: ReactElement },
@@ -30,26 +34,40 @@ const Transition = forwardRef(function Transition(
   return <Slide direction="down" ref={ref} {...props} />;
 });
 
-export default function ForgotPassword() {
+export default function Register() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
+    control,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<ForgotFormValues>({
-    resolver: yupResolver(forgotPasswordSchema),
-    defaultValues: { email: "" },
+  } = useForm<RegisterFormValues>({
+    resolver: yupResolver(registerSchema),
+    defaultValues: {
+      email: "",
+      firstName: "",
+      lastName: "",
+      password: "",
+      contactNumber: "",
+    },
   });
 
-  const onSubmit = async (values: ForgotFormValues) => {
+  const onSubmit = async (values: RegisterFormValues) => {
     try {
-      const payload: ForgotPasswordRequest = { email: values.email };
-      await api.post("/auth/forgot-password", payload);
+      const payload: RegisterRequest = {
+        email: values.email,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        password: values.password,
+        contactNumber: values.contactNumber,
+      };
+      await api.post("/registration/register", payload);
       setDialogOpen(true);
     } catch (error: unknown) {
-      let errorMessage = "Unable to send reset email. Try again later.";
+      let errorMessage = "Registration failed. Please try again.";
       if (axios.isAxiosError(error)) {
         if (!error.response) {
           errorMessage = "Unable to reach API. Check API URL and backend status.";
@@ -69,10 +87,10 @@ export default function ForgotPassword() {
           <Card elevation={0} sx={loginPageSx.card}>
             <Box>
               <Typography variant="h2" sx={loginPageSx.titleSignIn}>
-                Recover password
+                Create account
               </Typography>
               <Typography variant="h4" sx={loginPageSx.titleSubtitle}>
-                Enter the email you use for this account. If it exists, we will send a reset link.
+                Register with your email and details. We will send a link to activate your account.
               </Typography>
             </Box>
 
@@ -88,6 +106,68 @@ export default function ForgotPassword() {
                 helperText={errors.email?.message}
                 {...register("email")}
               />
+              <TextField
+                sx={loginJwtSx.textField}
+                label="First name"
+                fullWidth
+                autoComplete="given-name"
+                error={Boolean(errors.firstName)}
+                helperText={errors.firstName?.message}
+                {...register("firstName")}
+              />
+              <TextField
+                sx={loginJwtSx.textField}
+                label="Last name"
+                fullWidth
+                autoComplete="family-name"
+                error={Boolean(errors.lastName)}
+                helperText={errors.lastName?.message}
+                {...register("lastName")}
+              />
+              <Controller
+                name="password"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    sx={loginJwtSx.textField}
+                    label="Password"
+                    type={showPassword ? "text" : "password"}
+                    fullWidth
+                    autoComplete="new-password"
+                    error={Boolean(errors.password)}
+                    helperText={errors.password?.message}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Tooltip title={showPassword ? "Hide password" : "Show password"}>
+                              <IconButton
+                                type="button"
+                                onClick={() => setShowPassword((v) => !v)}
+                                edge="end"
+                                aria-label="toggle password visibility"
+                                sx={loginJwtSx.visibilityIconButton}
+                              >
+                                {showPassword ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                              </IconButton>
+                            </Tooltip>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+              />
+              <TextField
+                sx={loginJwtSx.textField}
+                label="Contact number"
+                fullWidth
+                autoComplete="tel"
+                error={Boolean(errors.contactNumber)}
+                helperText={errors.contactNumber?.message}
+                {...register("contactNumber")}
+              />
               <Button
                 sx={loginJwtSx.submitButton}
                 type="submit"
@@ -98,7 +178,7 @@ export default function ForgotPassword() {
                 disabled={isSubmitting}
                 startIcon={isSubmitting ? <CircularProgress size="1rem" sx={loginJwtSx.submitSpinner} /> : null}
               >
-                Send reset link
+                Register
               </Button>
               {errors.root ? (
                 <FormHelperText error sx={loginJwtSx.rootErrorHelper}>
@@ -109,10 +189,10 @@ export default function ForgotPassword() {
 
             <Box sx={{ mt: 2, textAlign: "right" }}>
               <Typography component="span" variant="subtitle2" color="text.primary" sx={{ fontWeight: 700 }}>
-                Want to sign in again?{" "}
+                Already have an account?{" "}
               </Typography>
               <Link component={RouterLink} to="/login" sx={{ fontWeight: 700 }}>
-                Back to login
+                Sign in
               </Link>
             </Box>
           </Card>
@@ -132,7 +212,8 @@ export default function ForgotPassword() {
             Check your email
           </Typography>
           <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
-            If that address is registered, password reset instructions have been sent. The link expires in one hour.
+            We sent an activation link to your address. Open it to confirm your email before signing in. The link expires
+            in 48 hours.
           </Typography>
           <Button component={RouterLink} to="/login" fullWidth size="large" variant="contained">
             Continue to login

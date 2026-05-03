@@ -3,6 +3,8 @@ import { Navigate } from "react-router-dom";
 import Login from "../pages/Auth/Login";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
 import ResetPassword from "../pages/Auth/ResetPassword";
+import Register from "../pages/Register";
+import ActivateAccount from "../pages/ActivateAccount";
 import PortfolioPage from "../pages/PortfolioPage";
 import ResumePage from "../pages/ResumePage";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
@@ -26,8 +28,16 @@ export default function createRouter({
       element: token ? <Navigate to="/" replace /> : <ForgotPassword />,
     },
     {
+      path: "/register",
+      element: token ? <Navigate to="/" replace /> : <Register />,
+    },
+    {
       path: "/reset-password",
       element: <ResetPassword />,
+    },
+    {
+      path: "/activate-account",
+      element: <ActivateAccount />,
     },
     {
       path: "/",

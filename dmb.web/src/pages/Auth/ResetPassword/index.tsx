@@ -23,11 +23,7 @@ import { resetPasswordSchema } from "validations/schema/auth";
 import { LoginMainContent, LoginTopWrapper, loginPageSx } from "styles/main_style";
 import { loginJwtSx } from "styles/main_style";
 import api from "services/http.service";
-
-type ResetFormValues = {
-  newPassword: string;
-  confirmPassword: string;
-};
+import type { ApiMessageResponse, ResetFormValues, ResetPasswordRequest } from "models";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -51,11 +47,12 @@ export default function ResetPassword() {
       return;
     }
     try {
-      await api.post("/auth/reset-password", {
+      const payload: ResetPasswordRequest = {
         token: tokenFromUrl,
         newPassword: values.newPassword,
         confirmPassword: values.confirmPassword,
-      });
+      };
+      await api.post("/auth/reset-password", payload);
       window.location.assign("/login");
     } catch (error: unknown) {
       let errorMessage = "Could not reset password. The link may have expired.";
@@ -63,7 +60,7 @@ export default function ResetPassword() {
         if (!error.response) {
           errorMessage = "Unable to reach API. Check API URL and backend status.";
         } else {
-          const data = error.response.data as { message?: string };
+          const data = error.response.data as Partial<ApiMessageResponse>;
           errorMessage = data?.message ?? errorMessage;
         }
       }
