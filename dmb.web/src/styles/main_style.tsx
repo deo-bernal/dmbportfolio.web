@@ -217,18 +217,23 @@ export const loginJwtSx = {
 export const layoutShellSx = {
   root: {
     display: "flex",
+    flexDirection: { xs: "column", sm: "row" },
     minHeight: "100vh",
     fontFamily: pageFonts.sans,
   } satisfies SxProps<Theme>,
 
   sidebar: {
-    width: { xs: 220, sm: 260 },
+    width: { xs: "100%", sm: 260 },
     flexShrink: 0,
-    py: 3,
-    px: 2.25,
+    py: { xs: 1.5, sm: 3 },
+    px: { xs: 1.5, sm: 2.25 },
     background: `linear-gradient(180deg, #334155 0%, #1e293b 72%, #0f172a 100%)`,
-    borderRight: `1px solid ${alpha("#0f172a", 0.35)}`,
-    boxShadow: `6px 0 32px ${alpha("#0f172a", 0.18)}`,
+    borderRight: { xs: "none", sm: `1px solid ${alpha("#0f172a", 0.35)}` },
+    borderBottom: { xs: `1px solid ${alpha("#0f172a", 0.35)}`, sm: "none" },
+    boxShadow: {
+      xs: `0 4px 18px ${alpha("#0f172a", 0.18)}`,
+      sm: `6px 0 32px ${alpha("#0f172a", 0.18)}`,
+    },
   } satisfies SxProps<Theme>,
 
   sidebarBrand: {
@@ -238,14 +243,15 @@ export const layoutShellSx = {
     letterSpacing: "0.14em",
     textTransform: "uppercase",
     color: alpha("#e2e8f0", 0.92),
-    mb: 2.5,
-    pb: 1.75,
+    mb: { xs: 1, sm: 2.5 },
+    pb: { xs: 1, sm: 1.75 },
     borderBottom: `1px solid ${alpha("#94a3b8", 0.22)}`,
   } satisfies SxProps<Theme>,
 
   navStack: {
     display: "flex",
-    flexDirection: "column",
+    flexDirection: { xs: "row", sm: "column" },
+    flexWrap: "wrap",
     gap: 0.75,
   } satisfies SxProps<Theme>,
 
@@ -253,6 +259,7 @@ export const layoutShellSx = {
     display: "block",
     px: 1.5,
     py: 1,
+    textAlign: "center",
     borderRadius: 1.25,
     fontFamily: pageFonts.sans,
     fontWeight: 500,
@@ -295,6 +302,7 @@ export const agenticPageSx = {
   container: {
     maxWidth: "lg",
     mx: "auto",
+    px: { xs: 0.5, sm: 0 },
   } satisfies SxProps<Theme>,
 
   stackSections: {
@@ -409,7 +417,7 @@ export const agenticPageSx = {
     pl: 2.5,
     fontFamily: pageFonts.sans,
     color: "#334155",
-    "& li": { mb: 0.75 },
+    "& li": { mb: 0.75, overflowWrap: "anywhere" },
   } satisfies SxProps<Theme>,
 
   listNested: {
@@ -418,7 +426,7 @@ export const agenticPageSx = {
     pl: 2.5,
     fontFamily: pageFonts.sans,
     color: "#334155",
-    "& li": { mb: 0.75 },
+    "& li": { mb: 0.75, overflowWrap: "anywhere" },
   } satisfies SxProps<Theme>,
 
   projectSectionSpaced: {
@@ -460,6 +468,7 @@ export const agenticPageSx = {
       color: "#475569",
       fontWeight: 600,
       textDecoration: "none",
+      overflowWrap: "anywhere",
       borderBottom: `1px solid ${alpha("#475569", 0.35)}`,
       "&:hover": { color: "#1e293b" },
     },

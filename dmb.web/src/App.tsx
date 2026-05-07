@@ -3,13 +3,16 @@ import { useRoutes } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { CssBaseline } from "@mui/material";
+import { CssBaseline, useMediaQuery } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import useAuth from "./hooks/useAuth";
 import createRouter from "./router";
 import ThemeProvider from "./theme/ThemeProvider";
 
 function App() {
   const auth = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const router = useMemo(
     () =>
@@ -28,7 +31,7 @@ function App() {
           maxSnack={6}
           anchorOrigin={{
             vertical: "top",
-            horizontal: "right",
+            horizontal: isMobile ? "center" : "right",
           }}
         >
           <CssBaseline />
