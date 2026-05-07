@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -12,20 +11,6 @@ import { agenticPageSx } from "styles/main_style";
 import type { TabViewProps } from "../types";
 
 export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfile }: TabViewProps) {
-  const suggestedCategoryOptions = [
-    "🧳 Travel Industry Systems",
-    "💰 Finance & Banking Systems",
-    "🌐 Web & CMS Platforms",
-    "🏢 Enterprise & Business Systems",
-    "🛒 E-Commerce & Customer-Facing Apps",
-  ];
-  const categoryOptions = Array.from(
-    new Set([
-      ...suggestedCategoryOptions,
-      ...draft.projectCategories.map((category) => category.title).filter(Boolean),
-    ])
-  );
-
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [categoryError, setCategoryError] = useState<string | null>(null);
@@ -94,7 +79,7 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
         variant="outlined"
         onClick={openCategoryModal}
       >
-        Add category
+        Add New Category
       </Button>
       <Dialog open={isCategoryModalOpen} onClose={closeCategoryModal} fullWidth maxWidth="sm">
         <DialogTitle>Add project category</DialogTitle>
@@ -128,25 +113,16 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
       </Dialog>
       {draft.projectCategories.map((category, categoryIndex) => (
         <Box key={categoryIndex} sx={{ display: "grid", gap: 1.5 }}>
-          <Autocomplete
-            freeSolo
-            options={categoryOptions}
+          <TextField
+            label="Category title"
             value={category.title}
-            onChange={(_, value) =>
+            onChange={(e) =>
               setDraft((prev) => {
                 const copy = cloneProfile(prev);
-                copy.projectCategories[categoryIndex].title = (value ?? "").toString();
+                copy.projectCategories[categoryIndex].title = e.target.value;
                 return copy;
               })
             }
-            onInputChange={(_, value) =>
-              setDraft((prev) => {
-                const copy = cloneProfile(prev);
-                copy.projectCategories[categoryIndex].title = value;
-                return copy;
-              })
-            }
-            renderInput={(params) => <TextField {...params} label="Category title" helperText="Select existing or type a new category" />}
           />
           <Button
             size="small"
