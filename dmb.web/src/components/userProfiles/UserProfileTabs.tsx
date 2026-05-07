@@ -12,6 +12,7 @@ type UserProfileTabsProps = {
   profile: Profile;
   onSave: (profile: Profile, mode: "create" | "update") => Promise<void>;
   initialMode?: "view" | "edit";
+  saveMode?: "create" | "update";
 };
 
 type TabKey = "overview" | "skills" | "projects" | "contact";
@@ -20,7 +21,12 @@ function cloneProfile(profile: Profile): Profile {
   return JSON.parse(JSON.stringify(profile));
 }
 
-export default function UserProfileTabs({ profile, onSave, initialMode = "view" }: UserProfileTabsProps) {
+export default function UserProfileTabs({
+  profile,
+  onSave,
+  initialMode = "view",
+  saveMode = "update",
+}: UserProfileTabsProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [mode, setMode] = useState<"view" | "edit">(initialMode);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,7 +51,7 @@ export default function UserProfileTabs({ profile, onSave, initialMode = "view" 
     setIsSaving(true);
     setSaveError(null);
     try {
-      await onSave(draft, initialMode === "edit" ? "create" : "update");
+      await onSave(draft, saveMode);
       setMode("view");
     } catch (error: any) {
       setSaveError(error?.response?.data?.message ?? "Unable to save profile changes.");

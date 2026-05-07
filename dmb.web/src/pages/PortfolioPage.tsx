@@ -83,31 +83,16 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
     );
   }
 
-  if (!profile && !loadError) {
-    return (
-      <Container sx={agenticPageSx.container}>
-        <Stack sx={agenticPageSx.stackSections}>
-          <Box sx={agenticPageSx.panelBody}>
-            <Typography component="h1" sx={agenticPageSx.profileName}>
-              Create your profile
-            </Typography>
-            <Typography component="p" sx={agenticPageSx.summary}>
-              Complete the tabs and save to publish your portfolio.
-            </Typography>
-          </Box>
-          <UserProfileTabs profile={EMPTY_PROFILE} onSave={handleSaveProfile} initialMode="edit" />
-        </Stack>
-      </Container>
-    );
-  }
-
-  if (!profile) {
+  if (!profile && loadError) {
     return (
       <Container sx={agenticPageSx.container}>
         <Box sx={agenticPageSx.loadingState}>{loadError ?? "Unable to load profile details."}</Box>
       </Container>
     );
   }
+
+  const activeProfile = profile ?? EMPTY_PROFILE;
+  const isCreateMode = !profile;
 
   return (
     <Container sx={agenticPageSx.container}>
@@ -120,7 +105,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
                 data-testid="profile-name"
                 sx={agenticPageSx.profileName}
               >
-                {profile.name}
+                {activeProfile.name}
               </Typography>
               <Box sx={agenticPageSx.stackLogos} aria-label="Built with React and .NET">
                 <img
@@ -147,7 +132,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
                   onClick={() => setIsEditing(true)}
                   sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
-                  Edit profile
+                  {isCreateMode ? "Create profile" : "Edit profile"}
                 </Button>
               ) : (
                 <Button
@@ -171,9 +156,14 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
           </Box>
         </Box>
         {isEditing ? (
-          <UserProfileTabs profile={profile} onSave={handleSaveProfile} initialMode="edit" />
+          <UserProfileTabs
+            profile={activeProfile}
+            onSave={handleSaveProfile}
+            initialMode="edit"
+            saveMode={isCreateMode ? "create" : "update"}
+          />
         ) : (
-          <UserProfileView profile={profile} />
+          <UserProfileView profile={activeProfile} />
         )}
       </Stack>
     </Container>
