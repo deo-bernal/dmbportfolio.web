@@ -25,7 +25,7 @@ function mapProfileDetailsToProfile(primaryUser: ApiUser): Profile {
 
   const groupedProjects = (primaryUser.projects ?? []).reduce<ProjectCategory[]>(
     (categories, project) => {
-      const categoryTitle = (project.type || "Other").trim() || "Other";
+      const categoryTitle = (project.projectType?.typeName || "Other").trim() || "Other";
       const existingCategory = categories.find(
         (category) => category.title === categoryTitle
       );

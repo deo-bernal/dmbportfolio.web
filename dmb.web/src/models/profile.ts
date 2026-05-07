@@ -12,10 +12,15 @@ export type ApiUserDetails = {
 export type ApiProject = {
   projectId: number;
   userId: number;
+  projectTypeId: number;
   name: string;
-  type: string;
   projectDetails?: string | null;
   createdAt: string;
+  projectType?: {
+    projectTypeId: number;
+    typeName: string;
+    createdAt: string;
+  } | null;
 };
 
 export type ApiUser = {
