@@ -1,29 +1,31 @@
 import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Collapse from "@mui/material/Collapse";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import { UserProfileTabs } from "components/userProfiles";
 import api from "services/http.service";
 import { getProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
 import { agenticPageSx } from "styles/main_style";
-import type { PortfolioPageProps } from "models";
+import type { PortfolioPageProps, Profile, UpdateProfileRequest } from "models";
 
 const DEVICON_SIZE = 28;
+const EMPTY_PROFILE: Profile = {
+  name: "My Profile",
+  summary: "",
+  video: "",
+  skills: [],
+  projectCategories: [{ title: "", items: [{ name: "", description: "" }] }],
+  contact: { email: "", phone: "" },
+};
 
 export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
   const dispatch = useDispatch();
   const { profile, error: loadError, isLoading } = useSelector((state) => state.user);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [showAllSkills, setShowAllSkills] = useState(false);
-  const [showAllProjects, setShowAllProjects] = useState(false);
   const hasFetchedProfile = useRef(false);
-  const visibleSkills = profile?.skills.slice(0, 11) ?? [];
-  const hiddenSkills = profile?.skills.slice(11) ?? [];
-  const visibleProjectCategories = profile?.projectCategories.slice(0, 2) ?? [];
-  const hiddenProjectCategories = profile?.projectCategories.slice(2) ?? [];
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -45,12 +47,62 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
     dispatch(getProfile(onLogout) as any);
   }, [dispatch, onLogout]);
 
-  if (!profile) {
+  const handleSaveProfile = async (nextProfile: Profile, mode: "create" | "update") => {
+    const payload: UpdateProfileRequest = {
+      summary: nextProfile.summary,
+      video: nextProfile.video,
+      skills: nextProfile.skills,
+      contact: nextProfile.contact,
+      projectCategories: nextProfile.projectCategories,
+    };
+    try {
+      if (mode === "create") {
+        await api.post("/profiledetails", payload);
+      } else {
+        await api.put("/profiledetails", payload);
+      }
+    } catch (error: any) {
+      if (error?.response?.status === 404 && mode === "update") {
+        await api.post("/profiledetails", payload);
+      } else {
+        throw error;
+      }
+    }
+    await dispatch(getProfile(onLogout) as any);
+  };
+
+  if (!profile && isLoading) {
     return (
       <Container sx={agenticPageSx.container}>
         <Box sx={agenticPageSx.loadingState}>
-          {loadError ?? (isLoading ? "Loading..." : "No profile found.")}
+          Loading...
         </Box>
+      </Container>
+    );
+  }
+
+  if (!profile && !loadError) {
+    return (
+      <Container sx={agenticPageSx.container}>
+        <Stack sx={agenticPageSx.stackSections}>
+          <Box sx={agenticPageSx.panelBody}>
+            <Typography component="h1" sx={agenticPageSx.profileName}>
+              Create your profile
+            </Typography>
+            <Typography component="p" sx={agenticPageSx.summary}>
+              Complete the tabs and save to publish your portfolio.
+            </Typography>
+          </Box>
+          <UserProfileTabs profile={EMPTY_PROFILE} onSave={handleSaveProfile} initialMode="edit" />
+        </Stack>
+      </Container>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <Container sx={agenticPageSx.container}>
+        <Box sx={agenticPageSx.loadingState}>{loadError ?? "Unable to load profile details."}</Box>
       </Container>
     );
   }
@@ -96,137 +148,8 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
               {loggingOut ? "Signing out..." : "Log out"}
             </Button>
           </Box>
-          {profile.video ? (
-            <Box
-              component="a"
-              href={profile.video}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={agenticPageSx.introLink}
-            >
-              Intro video
-            </Box>
-          ) : null}
-          <Typography component="p" sx={agenticPageSx.summary}>
-            {profile.summary}
-          </Typography>
         </Box>
-
-        <Box sx={agenticPageSx.panelBody}>
-          <Typography component="h2" sx={agenticPageSx.sectionTitle}>
-            Skills
-          </Typography>
-          <Box component="ul" sx={agenticPageSx.list}>
-            {visibleSkills.map((s, i) => (
-              <Box component="li" key={i}>
-                {s}
-              </Box>
-            ))}
-          </Box>
-          {hiddenSkills.length > 0 ? (
-            <>
-              <Collapse in={showAllSkills}>
-                <Box component="ul" sx={agenticPageSx.listNested}>
-                  {hiddenSkills.map((s, i) => (
-                    <Box component="li" key={`hidden-${i}`}>
-                      {s}
-                    </Box>
-                  ))}
-                </Box>
-              </Collapse>
-              <Button
-                variant="text"
-                onClick={() => setShowAllSkills((prev) => !prev)}
-                aria-expanded={showAllSkills}
-                sx={agenticPageSx.toggleButton}
-              >
-                {showAllSkills ? "Hide skills ▲" : "Show all skills ▼"}
-              </Button>
-            </>
-          ) : null}
-        </Box>
-
-        <Box sx={agenticPageSx.panelBody}>
-          <Typography component="h2" sx={agenticPageSx.sectionTitle}>
-            Projects
-          </Typography>
-          {visibleProjectCategories.map((category, i) => (
-            <Box
-              component="section"
-              key={i}
-              sx={
-                i === visibleProjectCategories.length - 1 ? undefined : agenticPageSx.projectSectionSpaced
-              }
-            >
-              <Typography component="h3" sx={agenticPageSx.categoryTitle}>
-                {category.title}
-              </Typography>
-              <Box component="ul" sx={agenticPageSx.list}>
-                {category.items.map((item, j) => (
-                  <Box component="li" key={j} sx={{ mb: 1 }}>
-                    <strong>{item.name}</strong>
-                    {" - "}
-                    <span>{item.description}</span>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          ))}
-          {hiddenProjectCategories.length > 0 ? (
-            <>
-              <Collapse in={showAllProjects}>
-                <Box sx={agenticPageSx.collapsedProjectsBlock}>
-                  {hiddenProjectCategories.map((category, i) => (
-                    <Box
-                      component="section"
-                      key={`hidden-${i}`}
-                      sx={
-                        i === hiddenProjectCategories.length - 1
-                          ? undefined
-                          : agenticPageSx.projectSectionSpaced
-                      }
-                    >
-                      <Typography component="h3" sx={agenticPageSx.categoryTitle}>
-                        {category.title}
-                      </Typography>
-                      <Box component="ul" sx={agenticPageSx.list}>
-                        {category.items.map((item, j) => (
-                          <Box component="li" key={j} sx={{ mb: 1 }}>
-                            <strong>{item.name}</strong>
-                            {" - "}
-                            <span>{item.description}</span>
-                          </Box>
-                        ))}
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              </Collapse>
-              <Button
-                variant="text"
-                onClick={() => setShowAllProjects((prev) => !prev)}
-                aria-expanded={showAllProjects}
-                sx={agenticPageSx.toggleButton}
-              >
-                {showAllProjects ? "Hide projects ▲" : "Show all projects ▼"}
-              </Button>
-            </>
-          ) : null}
-        </Box>
-
-        <Box sx={agenticPageSx.panelBody}>
-          <Typography component="h2" sx={agenticPageSx.sectionTitle}>
-            Contact
-          </Typography>
-          <Typography component="p" sx={agenticPageSx.contactLine}>
-            <strong>Email:</strong>{" "}
-            <a href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a>
-          </Typography>
-          <Typography component="p" sx={agenticPageSx.contactLine}>
-            <strong>Phone:</strong>{" "}
-            <a href={`tel:${profile.contact.phone.replace(/\s/g, "")}`}>{profile.contact.phone}</a>
-          </Typography>
-        </Box>
+        <UserProfileTabs profile={profile} onSave={handleSaveProfile} />
       </Stack>
     </Container>
   );

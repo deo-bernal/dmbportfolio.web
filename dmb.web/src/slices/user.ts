@@ -101,6 +101,10 @@ export const getProfile =
         dispatch(slice.actions.clearProfile());
         return;
       }
+      if (error?.response?.status === 404) {
+        dispatch(slice.actions.clearProfile());
+        return;
+      }
       dispatch(slice.actions.getProfileFailure({ error: "Unable to load profile details." }));
     }
   };

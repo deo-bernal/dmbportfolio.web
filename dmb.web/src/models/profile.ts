@@ -60,6 +60,14 @@ export type Profile = {
   contact: Contact;
 };
 
+export type UpdateProfileRequest = {
+  summary: string;
+  video: string;
+  skills: string[];
+  contact: Contact;
+  projectCategories: ProjectCategory[];
+};
+
 export type PortfolioPageProps = {
   onLogout: () => void;
 };
