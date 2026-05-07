@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { UserProfileTabs } from "components/userProfiles";
+import { UserProfileTabs, UserProfileView } from "components/userProfiles";
 import api from "services/http.service";
 import { getProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
@@ -25,6 +25,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
   const dispatch = useDispatch();
   const { profile, error: loadError, isLoading } = useSelector((state) => state.user);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const hasFetchedProfile = useRef(false);
 
   const handleLogout = async () => {
@@ -69,6 +70,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
       }
     }
     await dispatch(getProfile(onLogout) as any);
+    setIsEditing(false);
   };
 
   if (!profile && isLoading) {
@@ -138,18 +140,41 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
                 />
               </Box>
             </Box>
-            <Button
-              variant="contained"
-              disableElevation
-              onClick={handleLogout}
-              disabled={loggingOut}
-              sx={agenticPageSx.logoutButton}
-            >
-              {loggingOut ? "Signing out..." : "Log out"}
-            </Button>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", width: { xs: "100%", sm: "auto" } }}>
+              {!isEditing ? (
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsEditing(true)}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
+                >
+                  Edit profile
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsEditing(false)}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
+                >
+                  Back to view
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                disableElevation
+                onClick={handleLogout}
+                disabled={loggingOut}
+                sx={agenticPageSx.logoutButton}
+              >
+                {loggingOut ? "Signing out..." : "Log out"}
+              </Button>
+            </Box>
           </Box>
         </Box>
-        <UserProfileTabs profile={profile} onSave={handleSaveProfile} />
+        {isEditing ? (
+          <UserProfileTabs profile={profile} onSave={handleSaveProfile} initialMode="edit" />
+        ) : (
+          <UserProfileView profile={profile} />
+        )}
       </Stack>
     </Container>
   );
