@@ -9,4 +9,5 @@ export type TabViewProps = {
   mode: FormMode;
   setDraft: Dispatch<SetStateAction<Profile>>;
   cloneProfile: (profile: Profile) => Profile;
+  onImmediatePersist: (nextProfile: Profile, successMessage: string) => Promise<void>;
 };

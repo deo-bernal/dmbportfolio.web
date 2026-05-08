@@ -1,21 +1,15 @@
 import { useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-import TextField from "@mui/material/TextField";
 import { useSnackbar } from "notistack";
 import FormUtils from "components/common/FormUtils";
 import type { Profile } from "models";
 import { agenticPageSx } from "styles/main_style";
 import { contactTabSchema } from "validations/schema/contactTab";
 import { projectsTabSchema } from "validations/schema/projectsTab";
-import { addSkillSchema, skillsTabSchema } from "validations/schema/skillsTab";
+import { skillsTabSchema } from "validations/schema/skillsTab";
 import { ContactTab, OverviewTab, ProjectsTab, SkillsTab } from "./Tabs";
 
 type UserProfileTabsProps = {
@@ -77,9 +71,6 @@ export default function UserProfileTabs({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Profile>(() => cloneProfile(profile));
-  const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
-  const [newSkillName, setNewSkillName] = useState("");
-  const [newSkillTouched, setNewSkillTouched] = useState(false);
 
   const syncedProfile = useMemo(() => cloneProfile(profile), [profile]);
 
@@ -118,38 +109,28 @@ export default function UserProfileTabs({
     }
   };
 
-  const openAddSkillModal = () => {
-    setNewSkillName("");
-    setNewSkillTouched(false);
-    setIsAddSkillModalOpen(true);
-  };
-
-  const closeAddSkillModal = () => {
-    setIsAddSkillModalOpen(false);
-    setNewSkillTouched(false);
-  };
-
-  const addSkillFromModal = () => {
-    setNewSkillTouched(true);
-    const normalized = newSkillName.trim();
+  const persistProfileImmediately = async (nextProfile: Profile, successMessage: string) => {
+    setIsSaving(true);
+    setSaveError(null);
     try {
-      addSkillSchema.validateSync({ newSkill: normalized });
+      const normalizedDraft = normalizeProfileForSave(nextProfile);
+      skillsTabSchema.validateSync({ skills: normalizedDraft.skills });
+      projectsTabSchema.validateSync({ projectCategories: normalizedDraft.projectCategories });
+      contactTabSchema.validateSync({
+        email: normalizedDraft.contact.email,
+        phone: normalizedDraft.contact.phone,
+      });
+      await onSave(normalizedDraft, saveMode);
+      setDraft(normalizedDraft);
+      enqueueSnackbar(successMessage, { variant: "success" });
     } catch (error: any) {
-      enqueueSnackbar(error?.message ?? "New skill is required.", { variant: "error" });
-      return;
+      const message = error?.response?.data?.message ?? error?.message ?? "Unable to save profile changes.";
+      enqueueSnackbar(message, { variant: "error" });
+      setSaveError(message);
+      throw error;
+    } finally {
+      setIsSaving(false);
     }
-    const duplicate = draft.skills.some((skill) => skill.trim().toLowerCase() === normalized.toLowerCase());
-    if (duplicate) {
-      enqueueSnackbar("Skill already exists.", { variant: "error" });
-      return;
-    }
-
-    setDraft((prev) => ({
-      ...prev,
-      skills: [...prev.skills, normalized],
-    }));
-    enqueueSnackbar("Skill added.", { variant: "success" });
-    closeAddSkillModal();
   };
 
   return (
@@ -173,43 +154,13 @@ export default function UserProfileTabs({
         onCancel={cancelEdit}
         onSave={saveEdit}
         isSaving={isSaving}
-        editActionLabel={activeTab === "skills" && mode === "edit" ? "Add Skill" : undefined}
-        onEditAction={activeTab === "skills" && mode === "edit" ? openAddSkillModal : undefined}
+        showSaveCancelActions={!(mode === "edit" && (activeTab === "skills" || activeTab === "projects"))}
       >
         {saveError ? <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert> : null}
-        {activeTab === "overview" ? <OverviewTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
-        {activeTab === "skills" ? <SkillsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
-        {activeTab === "projects" ? <ProjectsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
-        {activeTab === "contact" ? <ContactTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
-        <Dialog open={isAddSkillModalOpen} onClose={closeAddSkillModal} fullWidth maxWidth="sm">
-          <DialogTitle>Add new skill</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              fullWidth
-              required
-              label="New skill"
-              value={newSkillName}
-              error={newSkillTouched && newSkillName.trim().length === 0}
-              helperText={newSkillTouched && newSkillName.trim().length === 0 ? "New skill is required." : ""}
-              onChange={(e) => setNewSkillName(e.target.value)}
-              onBlur={() => setNewSkillTouched(true)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addSkillFromModal();
-                }
-              }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={closeAddSkillModal}>Cancel</Button>
-            <Button variant="contained" onClick={addSkillFromModal}>
-              Add
-            </Button>
-          </DialogActions>
-        </Dialog>
+        {activeTab === "overview" ? <OverviewTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} onImmediatePersist={persistProfileImmediately} /> : null}
+        {activeTab === "skills" ? <SkillsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} onImmediatePersist={persistProfileImmediately} /> : null}
+        {activeTab === "projects" ? <ProjectsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} onImmediatePersist={persistProfileImmediately} /> : null}
+        {activeTab === "contact" ? <ContactTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} onImmediatePersist={persistProfileImmediately} /> : null}
       </FormUtils>
     </Box>
   );

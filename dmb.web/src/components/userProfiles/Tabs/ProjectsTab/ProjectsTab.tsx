@@ -17,6 +17,7 @@ import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import getColumns, { type CategoryGridRow, type ProjectGridRow, type ProjectsGridRow } from "./columns";
 import ProjectModal from "./ProjectModal";
 import CategoryModal from "./CategoryModal";
+import ProjectFilter from "./TableSections/ProjectFilter";
 
 type DeleteTarget =
   | { kind: "category"; categoryIndex: number }
@@ -28,8 +29,9 @@ type EditTarget =
   | { kind: "project"; categoryIndex: number; itemIndex: number }
   | null;
 
-export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfile }: TabViewProps) {
+export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImmediatePersist }: TabViewProps) {
   const { enqueueSnackbar } = useSnackbar();
+  const [query, setQuery] = useState("");
 
   // Add category
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -77,7 +79,7 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
     setProjectError(null);
   };
 
-  const addCategory = () => {
+  const addCategory = async () => {
     const normalized = newCategoryName.trim();
     try {
       addCategorySchema.validateSync({ categoryName: normalized });
@@ -98,18 +100,13 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
     }
 
     // New categories can exist without projects; we show the "Add Item" action per category row.
-    setDraft((prev) => ({
-      ...prev,
-      projectCategories: [
-        ...prev.projectCategories,
-        { title: normalized, items: [] },
-      ],
-    }));
-    enqueueSnackbar("Category added.", { variant: "success" });
+    const nextProfile = cloneProfile(draft);
+    nextProfile.projectCategories.push({ title: normalized, items: [] });
+    await onImmediatePersist(nextProfile, "Category added.");
     closeCategoryModal();
   };
 
-  const addProjectItem = () => {
+  const addProjectItem = async () => {
     if (addModalCategoryIndex === null) return;
 
     const normalizedName = projectModalName.trim();
@@ -126,16 +123,12 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
       return;
     }
 
-    setDraft((prev) => {
-      const copy = cloneProfile(prev);
-      copy.projectCategories[addModalCategoryIndex].items.push({
-        name: normalizedName,
-        description: normalizedDescription,
-      });
-      return copy;
+    const nextProfile = cloneProfile(draft);
+    nextProfile.projectCategories[addModalCategoryIndex].items.push({
+      name: normalizedName,
+      description: normalizedDescription,
     });
-
-    enqueueSnackbar("Project item added.", { variant: "success" });
+    await onImmediatePersist(nextProfile, "Project item added.");
     closeProjectModal();
   };
 
@@ -197,7 +190,24 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
       setDeleteTarget({ kind: "project", categoryIndex: row.categoryIndex, itemIndex: row.itemIndex }),
   });
 
-  const confirmDelete = () => {
+  const filteredRows = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return rows;
+    }
+    return rows.filter((row) => {
+      const category = row.category.toLowerCase();
+      const name = row.name.toLowerCase();
+      const description = row.description.toLowerCase();
+      return (
+        category.includes(normalizedQuery) ||
+        name.includes(normalizedQuery) ||
+        description.includes(normalizedQuery)
+      );
+    });
+  }, [rows, query]);
+
+  const confirmDelete = async () => {
     if (!deleteTarget) return;
 
     if (deleteTarget.kind === "category") {
@@ -216,10 +226,9 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
       nextProfile.projectCategories = nextProfile.projectCategories.filter(
         (_, i) => i !== deleteTarget.categoryIndex
       );
-      setDraft(nextProfile);
+      await onImmediatePersist(nextProfile, "Category deleted.");
       setDeleteTarget(null);
       setEditTarget(null);
-      enqueueSnackbar("Category deleted.", { variant: "success" });
       return;
     }
 
@@ -228,13 +237,12 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
       nextProfile.projectCategories[deleteTarget.categoryIndex].items.filter(
         (_, i) => i !== deleteTarget.itemIndex
       );
-    setDraft(nextProfile);
+    await onImmediatePersist(nextProfile, "Project deleted.");
     setDeleteTarget(null);
     setEditTarget(null);
-    enqueueSnackbar("Project deleted.", { variant: "success" });
   };
 
-  const saveProjectEdit = () => {
+  const saveProjectEdit = async () => {
     if (!editTarget || editTarget.kind !== "project") return;
 
     const normalizedName = projectModalName.trim();
@@ -254,12 +262,11 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
       name: normalizedName,
       description: normalizedDescription,
     };
-    setDraft(nextProfile);
+    await onImmediatePersist(nextProfile, "Project updated.");
     closeProjectModal();
-    enqueueSnackbar("Project updated.", { variant: "success" });
   };
 
-  const saveCategoryEdit = () => {
+  const saveCategoryEdit = async () => {
     if (!editTarget || editTarget.kind !== "category") return;
 
     const normalized = categoryEditTitle.trim();
@@ -283,12 +290,11 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
 
     const nextProfile = cloneProfile(draft);
     nextProfile.projectCategories[editTarget.categoryIndex].title = normalized;
-    setDraft(nextProfile);
+    await onImmediatePersist(nextProfile, "Category updated.");
 
     setEditTarget(null);
     setCategoryEditTitle("");
     setCategoryEditError(null);
-    enqueueSnackbar("Category updated.", { variant: "success" });
   };
 
   if (mode === "view") {
@@ -356,11 +362,12 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
         </DialogActions>
       </Dialog>
 
+      <ProjectFilter query={query} onQueryChange={setQuery} />
       <DataTable
-        rows={rows}
+        rows={filteredRows}
         columns={columns}
         getRowId={(row) => row.id}
-        emptyMessage="No project categories found."
+        emptyMessage="No project rows found."
       />
 
       <ProjectModal

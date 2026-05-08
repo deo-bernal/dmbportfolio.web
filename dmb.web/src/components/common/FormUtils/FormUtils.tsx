@@ -9,6 +9,7 @@ type FormUtilsProps = {
   onEdit: () => void;
   onCancel: () => void;
   onSave: () => Promise<void> | void;
+  showSaveCancelActions?: boolean;
   editActionLabel?: string;
   onEditAction?: () => void;
   editActionDisabled?: boolean;
@@ -21,6 +22,7 @@ export default function FormUtils({
   onEdit,
   onCancel,
   onSave,
+  showSaveCancelActions = true,
   editActionLabel,
   onEditAction,
   editActionDisabled = false,
@@ -40,12 +42,16 @@ export default function FormUtils({
                 {editActionLabel}
               </Button>
             ) : null}
-            <Button variant="outlined" onClick={onCancel} disabled={isSaving}>
-              Cancel
-            </Button>
-            <Button variant="contained" onClick={onSave} disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
+            {showSaveCancelActions ? (
+              <>
+                <Button variant="outlined" onClick={onCancel} disabled={isSaving}>
+                  Cancel
+                </Button>
+                <Button variant="contained" onClick={onSave} disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
+              </>
+            ) : null}
           </>
         )}
       </Box>
