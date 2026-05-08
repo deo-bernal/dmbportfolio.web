@@ -1,42 +1,54 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
-import IconButton from "@mui/material/IconButton";
-import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import DeleteIcon from "@mui/icons-material/Delete";
 import { useSnackbar } from "notistack";
+import DataTable from "components/common/Datatable";
 import { agenticPageSx } from "styles/main_style";
 import { addCategorySchema, addProjectItemSchema } from "validations/schema/projectsTab";
 import type { TabViewProps } from "../types";
+import PageHeader from "../PageHeader";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
+import getColumns, { type CategoryGridRow, type ProjectGridRow, type ProjectsGridRow } from "./columns";
+import ProjectModal from "./ProjectModal";
+import CategoryModal from "./CategoryModal";
 
 type DeleteTarget =
-  | { type: "category"; categoryIndex: number }
-  | { type: "project"; categoryIndex: number; itemIndex: number };
+  | { kind: "category"; categoryIndex: number }
+  | { kind: "project"; categoryIndex: number; itemIndex: number }
+  | null;
 
-export default function ProjectsTab({
-  profile,
-  draft,
-  mode,
-  setDraft,
-  cloneProfile,
-  onImmediatePersist,
-}: TabViewProps) {
+type EditTarget =
+  | { kind: "category"; categoryIndex: number }
+  | { kind: "project"; categoryIndex: number; itemIndex: number }
+  | null;
+
+export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfile }: TabViewProps) {
   const { enqueueSnackbar } = useSnackbar();
+
+  // Add category
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectDescription, setNewProjectDescription] = useState("");
-  const [activeCategoryIndex, setActiveCategoryIndex] = useState<number | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
+
+  // Add/edit project item (re-uses ProjectModal)
+  const [addModalCategoryIndex, setAddModalCategoryIndex] = useState<number | null>(null);
+  const [projectModalName, setProjectModalName] = useState("");
+  const [projectModalDescription, setProjectModalDescription] = useState("");
   const [projectError, setProjectError] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+
+  // Edit category
+  const [editTarget, setEditTarget] = useState<EditTarget>(null);
+  const [categoryEditTitle, setCategoryEditTitle] = useState("");
+  const [categoryEditError, setCategoryEditError] = useState<string | null>(null);
+
+  // Delete category / project
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
 
   const openCategoryModal = () => {
     setNewCategoryName("");
@@ -49,17 +61,19 @@ export default function ProjectsTab({
     setCategoryError(null);
   };
 
-  const openProjectModal = (categoryIndex: number) => {
-    setActiveCategoryIndex(categoryIndex);
-    setNewProjectName("");
-    setNewProjectDescription("");
+  const openAddProjectModal = (categoryIndex: number) => {
+    setEditTarget(null);
+    setAddModalCategoryIndex(categoryIndex);
+    setProjectModalName("");
+    setProjectModalDescription("");
     setProjectError(null);
-    setIsProjectModalOpen(true);
   };
 
   const closeProjectModal = () => {
-    setIsProjectModalOpen(false);
-    setActiveCategoryIndex(null);
+    setAddModalCategoryIndex(null);
+    setEditTarget(null);
+    setProjectModalName("");
+    setProjectModalDescription("");
     setProjectError(null);
   };
 
@@ -83,25 +97,23 @@ export default function ProjectsTab({
       return;
     }
 
+    // New categories can exist without projects; we show the "Add Item" action per category row.
     setDraft((prev) => ({
       ...prev,
       projectCategories: [
         ...prev.projectCategories,
-        { title: normalized, items: [{ name: "", description: "" }] },
+        { title: normalized, items: [] },
       ],
     }));
     enqueueSnackbar("Category added.", { variant: "success" });
-    setIsCategoryModalOpen(false);
-    setCategoryError(null);
+    closeCategoryModal();
   };
 
   const addProjectItem = () => {
-    if (activeCategoryIndex === null) {
-      return;
-    }
+    if (addModalCategoryIndex === null) return;
 
-    const normalizedName = newProjectName.trim();
-    const normalizedDescription = newProjectDescription.trim();
+    const normalizedName = projectModalName.trim();
+    const normalizedDescription = projectModalDescription.trim();
     try {
       addProjectItemSchema.validateSync({
         projectName: normalizedName,
@@ -116,50 +128,179 @@ export default function ProjectsTab({
 
     setDraft((prev) => {
       const copy = cloneProfile(prev);
-      copy.projectCategories[activeCategoryIndex].items.push({
+      copy.projectCategories[addModalCategoryIndex].items.push({
         name: normalizedName,
         description: normalizedDescription,
       });
       return copy;
     });
+
     enqueueSnackbar("Project item added.", { variant: "success" });
     closeProjectModal();
   };
 
-  const confirmDelete = async () => {
+  const rows: ProjectsGridRow[] = useMemo(() => {
+    const result: ProjectsGridRow[] = [];
+
+    draft.projectCategories.forEach((category, categoryIndex) => {
+      const categoryTitle = category.title ?? "";
+      const nonEmptyProjects = (category.items ?? []).filter(
+        (item) => (item?.name ?? "").trim().length > 0 || (item?.description ?? "").trim().length > 0
+      );
+
+      result.push({
+        kind: "category",
+        id: `cat-${categoryIndex}`,
+        categoryIndex,
+        category: categoryTitle,
+        name: "",
+        description: "",
+        hasProjects: nonEmptyProjects.length > 0,
+      });
+
+      category.items.forEach((item, itemIndex) => {
+        const name = (item?.name ?? "").toString();
+        const description = (item?.description ?? "").toString();
+        if (name.trim().length === 0 && description.trim().length === 0) return;
+
+        result.push({
+          kind: "project",
+          id: `cat-${categoryIndex}-item-${itemIndex}`,
+          categoryIndex,
+          itemIndex,
+          category: categoryTitle,
+          name,
+          description,
+        });
+      });
+    });
+
+    return result;
+  }, [draft.projectCategories]);
+
+  const columns = getColumns({
+    onEditCategory: (row: CategoryGridRow) => {
+      setEditTarget({ kind: "category", categoryIndex: row.categoryIndex });
+      setCategoryEditTitle(row.category);
+      setCategoryEditError(null);
+    },
+    onDeleteCategory: (row: CategoryGridRow) =>
+      setDeleteTarget({ kind: "category", categoryIndex: row.categoryIndex }),
+    onAddProjectItem: (categoryIndex: number) => openAddProjectModal(categoryIndex),
+    onEditProject: (row: ProjectGridRow) => {
+      setEditTarget({ kind: "project", categoryIndex: row.categoryIndex, itemIndex: row.itemIndex });
+      setProjectModalName(row.name);
+      setProjectModalDescription(row.description);
+      setProjectError(null);
+    },
+    onDeleteProject: (row: ProjectGridRow) =>
+      setDeleteTarget({ kind: "project", categoryIndex: row.categoryIndex, itemIndex: row.itemIndex }),
+  });
+
+  const confirmDelete = () => {
     if (!deleteTarget) return;
 
-    if (deleteTarget.type === "category") {
+    if (deleteTarget.kind === "category") {
       const targetCategory = draft.projectCategories[deleteTarget.categoryIndex];
-      if (targetCategory?.items.some((item) => item.name.trim().length > 0)) {
+      const hasProjects = (targetCategory?.items ?? []).some(
+        (item) => (item?.name ?? "").trim().length > 0 || (item?.description ?? "").trim().length > 0
+      );
+
+      if (hasProjects) {
         enqueueSnackbar("Cannot delete category with existing projects.", { variant: "error" });
         setDeleteTarget(null);
         return;
       }
+
       const nextProfile = cloneProfile(draft);
       nextProfile.projectCategories = nextProfile.projectCategories.filter(
         (_, i) => i !== deleteTarget.categoryIndex
       );
       setDraft(nextProfile);
       setDeleteTarget(null);
-      await onImmediatePersist(nextProfile, "Category deleted.");
+      setEditTarget(null);
+      enqueueSnackbar("Category deleted.", { variant: "success" });
       return;
     }
 
     const nextProfile = cloneProfile(draft);
-    nextProfile.projectCategories[deleteTarget.categoryIndex].items = nextProfile.projectCategories[
-      deleteTarget.categoryIndex
-    ].items.filter((_, i) => i !== deleteTarget.itemIndex);
+    nextProfile.projectCategories[deleteTarget.categoryIndex].items =
+      nextProfile.projectCategories[deleteTarget.categoryIndex].items.filter(
+        (_, i) => i !== deleteTarget.itemIndex
+      );
     setDraft(nextProfile);
     setDeleteTarget(null);
-    await onImmediatePersist(nextProfile, "Project deleted.");
+    setEditTarget(null);
+    enqueueSnackbar("Project deleted.", { variant: "success" });
+  };
+
+  const saveProjectEdit = () => {
+    if (!editTarget || editTarget.kind !== "project") return;
+
+    const normalizedName = projectModalName.trim();
+    const normalizedDescription = projectModalDescription.trim();
+    try {
+      addProjectItemSchema.validateSync({
+        projectName: normalizedName,
+        projectDescription: normalizedDescription,
+      });
+    } catch (error: any) {
+      setProjectError(error?.message ?? "Project details are required.");
+      return;
+    }
+
+    const nextProfile = cloneProfile(draft);
+    nextProfile.projectCategories[editTarget.categoryIndex].items[editTarget.itemIndex] = {
+      name: normalizedName,
+      description: normalizedDescription,
+    };
+    setDraft(nextProfile);
+    closeProjectModal();
+    enqueueSnackbar("Project updated.", { variant: "success" });
+  };
+
+  const saveCategoryEdit = () => {
+    if (!editTarget || editTarget.kind !== "category") return;
+
+    const normalized = categoryEditTitle.trim();
+    try {
+      addCategorySchema.validateSync({ categoryName: normalized });
+    } catch (error: any) {
+      setCategoryEditError(error?.message ?? "Category name is required.");
+      return;
+    }
+
+    const duplicate = draft.projectCategories.some(
+      (category, i) =>
+        i !== editTarget.categoryIndex &&
+        category.title.trim().toLowerCase() === normalized.toLowerCase()
+    );
+    if (duplicate) {
+      setCategoryEditError("Category already exists.");
+      enqueueSnackbar("Category already exists.", { variant: "error" });
+      return;
+    }
+
+    const nextProfile = cloneProfile(draft);
+    nextProfile.projectCategories[editTarget.categoryIndex].title = normalized;
+    setDraft(nextProfile);
+
+    setEditTarget(null);
+    setCategoryEditTitle("");
+    setCategoryEditError(null);
+    enqueueSnackbar("Category updated.", { variant: "success" });
   };
 
   if (mode === "view") {
     return (
       <>
+        <PageHeader title="Projects" subtitle="Project categories and items" />
         {profile.projectCategories.map((category, i) => (
-          <Box component="section" key={i} sx={i === profile.projectCategories.length - 1 ? undefined : agenticPageSx.projectSectionSpaced}>
+          <Box
+            component="section"
+            key={i}
+            sx={i === profile.projectCategories.length - 1 ? undefined : agenticPageSx.projectSectionSpaced}
+          >
             <Typography component="h3" sx={agenticPageSx.categoryTitle}>
               {category.title}
             </Typography>
@@ -178,12 +319,12 @@ export default function ProjectsTab({
 
   return (
     <Box sx={{ display: "grid", gap: 3 }}>
-      <Button
-        variant="outlined"
-        onClick={openCategoryModal}
-      >
+      <PageHeader title="Projects" subtitle="Manage project categories and items in a grid view" />
+
+      <Button variant="outlined" onClick={openCategoryModal}>
         Add New Category
       </Button>
+
       <Dialog open={isCategoryModalOpen} onClose={closeCategoryModal} fullWidth maxWidth="sm">
         <DialogTitle>Add project category</DialogTitle>
         <DialogContent>
@@ -214,139 +355,80 @@ export default function ProjectsTab({
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={isProjectModalOpen} onClose={closeProjectModal} fullWidth maxWidth="sm">
-        <DialogTitle>Add project item</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            fullWidth
-            label="Project name"
-            value={newProjectName}
-            onChange={(e) => {
-              setNewProjectName(e.target.value);
-              if (projectError) setProjectError(null);
-            }}
-          />
-          <TextField
-            margin="dense"
-            fullWidth
-            multiline
-            minRows={3}
-            label="Project description"
-            value={newProjectDescription}
-            error={Boolean(projectError)}
-            helperText={projectError ?? ""}
-            onChange={(e) => {
-              setNewProjectDescription(e.target.value);
-              if (projectError) setProjectError(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                addProjectItem();
-              }
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={closeProjectModal}>Cancel</Button>
-          <Button variant="contained" onClick={addProjectItem}>
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} fullWidth maxWidth="xs">
-        <DialogTitle>
-          {deleteTarget?.type === "category" ? "Delete category" : "Delete project"}
-        </DialogTitle>
-        <DialogContent>
-          {deleteTarget?.type === "category"
-            ? "Are you sure you want to delete this category?"
-            : "Are you sure you want to delete this project?"}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button color="error" variant="contained" onClick={confirmDelete}>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-      {draft.projectCategories.map((category, categoryIndex) => (
-        <Paper
-          key={categoryIndex}
-          variant="outlined"
-          sx={{ display: "grid", gap: 1.5, p: { xs: 1.5, sm: 2 }, borderRadius: 2 }}
-        >
-          <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-            <TextField
-              fullWidth
-              label="Category title"
-              value={category.title}
-              onChange={(e) =>
-                setDraft((prev) => {
-                  const copy = cloneProfile(prev);
-                  copy.projectCategories[categoryIndex].title = e.target.value;
-                  return copy;
-                })
-              }
-            />
-            <IconButton
-              aria-label="Delete category"
-              color="error"
-              disabled={category.items.some((item) => item.name.trim().length > 0)}
-              onClick={() => setDeleteTarget({ type: "category", categoryIndex })}
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-          <Button
-            size="small"
-            variant="text"
-            onClick={() => openProjectModal(categoryIndex)}
-          >
-            Add project item
-          </Button>
-          {category.items.map((item, itemIndex) => (
-            <Box key={itemIndex} sx={{ display: "grid", gap: 1 }}>
-              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-                <TextField
-                  fullWidth
-                  label="Project name"
-                  value={item.name}
-                  onChange={(e) =>
-                    setDraft((prev) => {
-                      const copy = cloneProfile(prev);
-                      copy.projectCategories[categoryIndex].items[itemIndex].name = e.target.value;
-                      return copy;
-                    })
-                  }
-                />
-                <IconButton
-                  aria-label="Delete project"
-                  color="error"
-                  onClick={() => setDeleteTarget({ type: "project", categoryIndex, itemIndex })}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
-              <TextField
-                label="Project description"
-                multiline
-                minRows={2}
-                value={item.description}
-                onChange={(e) =>
-                  setDraft((prev) => {
-                    const copy = cloneProfile(prev);
-                    copy.projectCategories[categoryIndex].items[itemIndex].description = e.target.value;
-                    return copy;
-                  })
-                }
-              />
-            </Box>
-          ))}
-        </Paper>
-      ))}
+
+      <DataTable
+        rows={rows}
+        columns={columns}
+        getRowId={(row) => row.id}
+        emptyMessage="No project categories found."
+      />
+
+      <ProjectModal
+        open={addModalCategoryIndex !== null}
+        title="Add project item"
+        name={projectModalName}
+        description={projectModalDescription}
+        error={projectError}
+        onClose={closeProjectModal}
+        onNameChange={(value) => {
+          setProjectModalName(value);
+          if (projectError) setProjectError(null);
+        }}
+        onDescriptionChange={(value) => {
+          setProjectModalDescription(value);
+          if (projectError) setProjectError(null);
+        }}
+        onSubmit={addProjectItem}
+        submitLabel="Add"
+      />
+
+      <ProjectModal
+        open={editTarget?.kind === "project"}
+        title="Edit project item"
+        name={projectModalName}
+        description={projectModalDescription}
+        error={projectError}
+        onClose={closeProjectModal}
+        onNameChange={(value) => {
+          setProjectModalName(value);
+          if (projectError) setProjectError(null);
+        }}
+        onDescriptionChange={(value) => {
+          setProjectModalDescription(value);
+          if (projectError) setProjectError(null);
+        }}
+        onSubmit={saveProjectEdit}
+      />
+
+      <CategoryModal
+        open={editTarget?.kind === "category"}
+        title="Edit category"
+        value={categoryEditTitle}
+        error={categoryEditError}
+        onClose={() => {
+          setEditTarget(null);
+          setCategoryEditTitle("");
+          setCategoryEditError(null);
+        }}
+        onValueChange={(value) => {
+          setCategoryEditTitle(value);
+          if (categoryEditError) setCategoryEditError(null);
+        }}
+        onSubmit={saveCategoryEdit}
+      />
+
+      <ConfirmDeleteModal
+        open={deleteTarget !== null}
+        title={deleteTarget?.kind === "category" ? "Delete category" : "Delete project item"}
+        message={
+          deleteTarget?.kind === "category"
+            ? "Are you sure you want to delete this category? Categories cannot be deleted if they have projects."
+            : "Are you sure you want to delete this project item?"
+        }
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
     </Box>
   );
 }
+

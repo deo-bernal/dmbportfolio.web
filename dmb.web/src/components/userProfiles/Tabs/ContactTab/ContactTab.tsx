@@ -3,11 +3,13 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { agenticPageSx } from "styles/main_style";
 import type { TabViewProps } from "../types";
+import PageHeader from "../PageHeader";
 
 export default function ContactTab({ profile, draft, mode, setDraft }: TabViewProps) {
   if (mode === "view") {
     return (
       <>
+        <PageHeader title="Contact" subtitle="Primary email and phone details" />
         <Typography component="p" sx={agenticPageSx.contactLine}>
           <strong>Email:</strong> <a href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a>
         </Typography>
@@ -20,6 +22,7 @@ export default function ContactTab({ profile, draft, mode, setDraft }: TabViewPr
 
   return (
     <Box sx={{ display: "grid", gap: 2 }}>
+      <PageHeader title="Contact" subtitle="Update your contact details" />
       <TextField
         label="Email"
         type="email"

@@ -118,23 +118,6 @@ export default function UserProfileTabs({
     }
   };
 
-  const persistProfileImmediately = async (nextProfile: Profile, successMessage: string) => {
-    setIsSaving(true);
-    setSaveError(null);
-    try {
-      const normalizedDraft = normalizeProfileForSave(nextProfile);
-      await onSave(normalizedDraft, saveMode);
-      setDraft(normalizedDraft);
-      enqueueSnackbar(successMessage, { variant: "success" });
-    } catch (error: any) {
-      const message = error?.response?.data?.message ?? error?.message ?? "Unable to save profile changes.";
-      enqueueSnackbar(message, { variant: "error" });
-      setSaveError(message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const openAddSkillModal = () => {
     setNewSkillName("");
     setNewSkillTouched(false);
@@ -146,7 +129,7 @@ export default function UserProfileTabs({
     setNewSkillTouched(false);
   };
 
-  const addSkillFromModal = async () => {
+  const addSkillFromModal = () => {
     setNewSkillTouched(true);
     const normalized = newSkillName.trim();
     try {
@@ -161,13 +144,12 @@ export default function UserProfileTabs({
       return;
     }
 
-    const nextProfile = {
-      ...draft,
-      skills: [...draft.skills, normalized],
-    };
-    setDraft(nextProfile);
+    setDraft((prev) => ({
+      ...prev,
+      skills: [...prev.skills, normalized],
+    }));
+    enqueueSnackbar("Skill added.", { variant: "success" });
     closeAddSkillModal();
-    await persistProfileImmediately(nextProfile, "Skill added.");
   };
 
   return (
@@ -195,46 +177,10 @@ export default function UserProfileTabs({
         onEditAction={activeTab === "skills" && mode === "edit" ? openAddSkillModal : undefined}
       >
         {saveError ? <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert> : null}
-        {activeTab === "overview" ? (
-          <OverviewTab
-            profile={profile}
-            draft={draft}
-            mode={mode}
-            setDraft={setDraft}
-            cloneProfile={cloneProfile}
-            onImmediatePersist={persistProfileImmediately}
-          />
-        ) : null}
-        {activeTab === "skills" ? (
-          <SkillsTab
-            profile={profile}
-            draft={draft}
-            mode={mode}
-            setDraft={setDraft}
-            cloneProfile={cloneProfile}
-            onImmediatePersist={persistProfileImmediately}
-          />
-        ) : null}
-        {activeTab === "projects" ? (
-          <ProjectsTab
-            profile={profile}
-            draft={draft}
-            mode={mode}
-            setDraft={setDraft}
-            cloneProfile={cloneProfile}
-            onImmediatePersist={persistProfileImmediately}
-          />
-        ) : null}
-        {activeTab === "contact" ? (
-          <ContactTab
-            profile={profile}
-            draft={draft}
-            mode={mode}
-            setDraft={setDraft}
-            cloneProfile={cloneProfile}
-            onImmediatePersist={persistProfileImmediately}
-          />
-        ) : null}
+        {activeTab === "overview" ? <OverviewTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
+        {activeTab === "skills" ? <SkillsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
+        {activeTab === "projects" ? <ProjectsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
+        {activeTab === "contact" ? <ContactTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
         <Dialog open={isAddSkillModalOpen} onClose={closeAddSkillModal} fullWidth maxWidth="sm">
           <DialogTitle>Add new skill</DialogTitle>
           <DialogContent>
@@ -259,7 +205,7 @@ export default function UserProfileTabs({
           </DialogContent>
           <DialogActions>
             <Button onClick={closeAddSkillModal}>Cancel</Button>
-            <Button variant="contained" onClick={() => void addSkillFromModal()}>
+            <Button variant="contained" onClick={addSkillFromModal}>
               Add
             </Button>
           </DialogActions>
