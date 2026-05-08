@@ -13,19 +13,32 @@ import PageHeader from "../PageHeader";
 
 export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewProps) {
   const { enqueueSnackbar } = useSnackbar();
-  const publicUrl = profile.username ? `https://www.dmbwebsolutions.com/${profile.username}` : "";
+  const publicPortfolioUrl = profile.username ? `https://www.dmbwebsolutions.com/${profile.username}` : "";
+  const publicResumeUrl = profile.username ? `https://www.dmbwebsolutions.com/${profile.username}/resume` : "";
 
-  const copyPublicUrl = async () => {
-    if (!publicUrl) {
-      enqueueSnackbar("Public profile URL is unavailable.", { variant: "error" });
+  const copyUrl = async (value: string, missingMessage: string) => {
+    if (!value) {
+      enqueueSnackbar(missingMessage, { variant: "error" });
       return;
     }
     try {
-      await navigator.clipboard.writeText(publicUrl);
-      enqueueSnackbar("Public profile URL copied.", { variant: "success" });
+      await navigator.clipboard.writeText(value);
+      enqueueSnackbar("Public URL copied.", { variant: "success" });
     } catch {
       enqueueSnackbar("Unable to copy URL.", { variant: "error" });
     }
+  };
+
+  const copyPublicPortfolioUrl = async () => {
+    if (!publicPortfolioUrl) {
+      enqueueSnackbar("Public profile URL is unavailable.", { variant: "error" });
+      return;
+    }
+    await copyUrl(publicPortfolioUrl, "Public portfolio URL is unavailable.");
+  };
+
+  const copyPublicResumeUrl = async () => {
+    await copyUrl(publicResumeUrl, "Public resume URL is unavailable.");
   };
 
   if (mode === "view") {
@@ -77,13 +90,24 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
           {draft.isViewable ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: { xs: "100%", sm: 420 }, flex: 1 }}>
               <TextField
-                label="Public Profile"
-                value={publicUrl}
+                label="Public Portfolio Profile"
+                value={publicPortfolioUrl}
                 slotProps={{ input: { readOnly: true } }}
                 sx={{ flex: 1 }}
               />
               <Tooltip title="Copy public URL">
-                <IconButton onClick={copyPublicUrl} aria-label="Copy public profile URL">
+                <IconButton onClick={copyPublicPortfolioUrl} aria-label="Copy public portfolio URL">
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <TextField
+                label="Public Resume Profile"
+                value={publicResumeUrl}
+                slotProps={{ input: { readOnly: true } }}
+                sx={{ flex: 1, minWidth: { xs: "100%", sm: 420 } }}
+              />
+              <Tooltip title="Copy public URL">
+                <IconButton onClick={copyPublicResumeUrl} aria-label="Copy public resume URL">
                   <ContentCopyIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
