@@ -47,11 +47,13 @@ function mapProfileDetailsToProfile(primaryUser: ApiUser): Profile {
   );
 
   return {
+    username: primaryUser.username ?? "",
     name:
       [primaryUser.firstName, primaryUser.lastName].filter(Boolean).join(" ") ||
       "Profile",
     summary: details?.description ?? "",
     video: details?.video ?? "",
+    isViewable: primaryUser.isViewable ?? false,
     skills: parsedSkills,
     projectCategories: groupedProjects,
     contact: {
@@ -108,6 +110,20 @@ export const getProfile =
       dispatch(slice.actions.getProfileFailure({ error: "Unable to load profile details." }));
     }
   };
+
+export const getPublicProfile = (username: string): AppThunk => async (dispatch): Promise<void> => {
+  dispatch(slice.actions.getProfileStart());
+  try {
+    const res = await api.get<ApiUser>("/publicprofile", { params: { username } });
+    dispatch(slice.actions.getProfileSuccess({ profile: mapProfileDetailsToProfile(res.data) }));
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      dispatch(slice.actions.getProfileFailure({ error: "This portfolio is not publicly viewable." }));
+      return;
+    }
+    dispatch(slice.actions.getProfileFailure({ error: "Unable to load profile details." }));
+  }
+};
 
 export const { clearProfile } = slice.actions;
 export default slice;

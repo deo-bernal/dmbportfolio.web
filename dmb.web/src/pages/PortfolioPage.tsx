@@ -13,9 +13,11 @@ import type { PortfolioPageProps, Profile, UpdateProfileRequest } from "models";
 
 const DEVICON_SIZE = 28;
 const EMPTY_PROFILE: Profile = {
+  username: "",
   name: "My Profile",
   summary: "",
   video: "",
+  isViewable: false,
   skills: [],
   projectCategories: [{ title: "", items: [{ name: "", description: "" }] }],
   contact: { email: "", phone: "" },
@@ -52,6 +54,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
     const payload: UpdateProfileRequest = {
       summary: nextProfile.summary,
       video: nextProfile.video,
+      isViewable: nextProfile.isViewable,
       skills: nextProfile.skills,
       contact: nextProfile.contact,
       projectCategories: nextProfile.projectCategories,

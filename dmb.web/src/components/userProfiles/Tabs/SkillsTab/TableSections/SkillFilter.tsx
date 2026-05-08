@@ -26,8 +26,11 @@ export default function SkillFilter({ query, onQueryChange }: SkillFilterProps) 
   return (
     <Card sx={{ p: 2, display: "flex", alignItems: "center" }}>
       {!open ? (
-        <Typography onClick={() => setOpen(true)} variant="h6" sx={{ cursor: "pointer", flex: 1 }}>
-          Expand for skill filters
+        <Typography
+          onClick={() => setOpen(true)}
+          sx={{ cursor: "pointer", flex: 1, fontWeight: 600, color: "#475569" }}
+        >
+          Show skill filters
         </Typography>
       ) : null}
       <Collapse in={open} sx={{ width: "100%" }}>

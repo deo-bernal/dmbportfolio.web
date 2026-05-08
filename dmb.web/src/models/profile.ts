@@ -31,6 +31,7 @@ export type ApiUser = {
   email: string;
   contactNo?: string | null;
   activated: boolean;
+  isViewable: boolean;
   createdAt: string;
   userDetails?: ApiUserDetails | null;
   projects: ApiProject[];
@@ -52,9 +53,11 @@ export type Contact = {
 };
 
 export type Profile = {
+  username: string;
   name: string;
   summary: string;
   video: string;
+  isViewable: boolean;
   skills: string[];
   projectCategories: ProjectCategory[];
   contact: Contact;
@@ -63,6 +66,7 @@ export type Profile = {
 export type UpdateProfileRequest = {
   summary: string;
   video: string;
+  isViewable: boolean;
   skills: string[];
   contact: Contact;
   projectCategories: ProjectCategory[];

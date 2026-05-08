@@ -129,7 +129,7 @@ export default function SkillsTab({ profile, draft, mode, cloneProfile, onImmedi
 
   return (
     <Box sx={{ display: "grid", gap: 2 }}>
-      <PageHeader title="Skills" subtitle="Manage skills with grid actions and modal editing" />
+      <PageHeader title="Skills" subtitle="Manage skills" />
 
       <Button variant="outlined" onClick={openAddModal}>
         Add Skill

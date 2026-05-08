@@ -325,7 +325,7 @@ export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImme
 
   return (
     <Box sx={{ display: "grid", gap: 3 }}>
-      <PageHeader title="Projects" subtitle="Manage project categories and items in a grid view" />
+      <PageHeader title="Projects" subtitle="Manage project categories and items" />
 
       <Button variant="outlined" onClick={openCategoryModal}>
         Add New Category

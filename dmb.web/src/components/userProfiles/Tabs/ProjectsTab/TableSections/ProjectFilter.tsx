@@ -26,8 +26,11 @@ export default function ProjectFilter({ query, onQueryChange }: ProjectFilterPro
   return (
     <Card sx={{ p: 2, display: "flex", alignItems: "center" }}>
       {!open ? (
-        <Typography onClick={() => setOpen(true)} variant="h6" sx={{ cursor: "pointer", flex: 1 }}>
-          Expand for project filters
+        <Typography
+          onClick={() => setOpen(true)}
+          sx={{ cursor: "pointer", flex: 1, fontWeight: 600, color: "#475569" }}
+        >
+          Show project filters
         </Typography>
       ) : null}
       <Collapse in={open} sx={{ width: "100%" }}>
