@@ -25,21 +25,8 @@ const EMPTY_PROFILE: Profile = {
 export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
   const dispatch = useDispatch();
   const { profile, error: loadError, isLoading } = useSelector((state) => state.user);
-  const [loggingOut, setLoggingOut] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const hasFetchedProfile = useRef(false);
-
-  const handleLogout = async () => {
-    setLoggingOut(true);
-    try {
-      await api.post("/auth/logout");
-    } catch {
-      // Still clear the session locally if the request fails (e.g. offline).
-    } finally {
-      setLoggingOut(false);
-      onLogout();
-    }
-  };
 
   useEffect(() => {
     if (hasFetchedProfile.current) {
@@ -133,15 +120,6 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
                   Back to view
                 </Button>
               )}
-              <Button
-                variant="contained"
-                disableElevation
-                onClick={handleLogout}
-                disabled={loggingOut}
-                sx={agenticPageSx.logoutButton}
-              >
-                {loggingOut ? "Signing out..." : "Log out"}
-              </Button>
             </Box>
           </Box>
         </Box>
