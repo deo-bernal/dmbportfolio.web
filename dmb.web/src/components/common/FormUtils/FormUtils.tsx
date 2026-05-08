@@ -9,6 +9,9 @@ type FormUtilsProps = {
   onEdit: () => void;
   onCancel: () => void;
   onSave: () => Promise<void> | void;
+  editActionLabel?: string;
+  onEditAction?: () => void;
+  editActionDisabled?: boolean;
   children: React.ReactNode;
 };
 
@@ -18,6 +21,9 @@ export default function FormUtils({
   onEdit,
   onCancel,
   onSave,
+  editActionLabel,
+  onEditAction,
+  editActionDisabled = false,
   children,
 }: FormUtilsProps) {
   return (
@@ -29,6 +35,11 @@ export default function FormUtils({
           </Button>
         ) : (
           <>
+            {editActionLabel && onEditAction ? (
+              <Button variant="outlined" onClick={onEditAction} disabled={isSaving || editActionDisabled}>
+                {editActionLabel}
+              </Button>
+            ) : null}
             <Button variant="outlined" onClick={onCancel} disabled={isSaving}>
               Cancel
             </Button>

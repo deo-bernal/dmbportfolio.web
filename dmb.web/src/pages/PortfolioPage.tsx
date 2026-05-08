@@ -70,7 +70,6 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
       }
     }
     await dispatch(getProfile(onLogout) as any);
-    setIsEditing(false);
   };
 
   if (!profile && isLoading) {

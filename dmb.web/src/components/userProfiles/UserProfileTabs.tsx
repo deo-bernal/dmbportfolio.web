@@ -1,8 +1,14 @@
 import { useMemo, useState } from "react";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+import TextField from "@mui/material/TextField";
 import { useSnackbar } from "notistack";
 import FormUtils from "components/common/FormUtils";
 import type { Profile } from "models";
@@ -68,6 +74,9 @@ export default function UserProfileTabs({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Profile>(() => cloneProfile(profile));
+  const [isAddSkillModalOpen, setIsAddSkillModalOpen] = useState(false);
+  const [newSkillName, setNewSkillName] = useState("");
+  const [newSkillTouched, setNewSkillTouched] = useState(false);
 
   const syncedProfile = useMemo(() => cloneProfile(profile), [profile]);
 
@@ -90,7 +99,6 @@ export default function UserProfileTabs({
       const normalizedDraft = normalizeProfileForSave(draft);
       await onSave(normalizedDraft, saveMode);
       enqueueSnackbar("Profile changes saved successfully.", { variant: "success" });
-      setMode("view");
     } catch (error: any) {
       enqueueSnackbar(error?.response?.data?.message ?? "Unable to save profile changes.", {
         variant: "error",
@@ -99,6 +107,38 @@ export default function UserProfileTabs({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const openAddSkillModal = () => {
+    setNewSkillName("");
+    setNewSkillTouched(false);
+    setIsAddSkillModalOpen(true);
+  };
+
+  const closeAddSkillModal = () => {
+    setIsAddSkillModalOpen(false);
+    setNewSkillTouched(false);
+  };
+
+  const addSkillFromModal = () => {
+    setNewSkillTouched(true);
+    const normalized = newSkillName.trim();
+    if (!normalized) {
+      enqueueSnackbar("New skill is required.", { variant: "error" });
+      return;
+    }
+    const duplicate = draft.skills.some((skill) => skill.trim().toLowerCase() === normalized.toLowerCase());
+    if (duplicate) {
+      enqueueSnackbar("Skill already exists.", { variant: "error" });
+      return;
+    }
+
+    setDraft((prev) => ({
+      ...prev,
+      skills: [...prev.skills, normalized],
+    }));
+    enqueueSnackbar("Skill added.", { variant: "success" });
+    closeAddSkillModal();
   };
 
   return (
@@ -116,12 +156,49 @@ export default function UserProfileTabs({
         <Tab label="Contact" value="contact" />
       </Tabs>
 
-      <FormUtils mode={mode} onEdit={beginEdit} onCancel={cancelEdit} onSave={saveEdit} isSaving={isSaving}>
+      <FormUtils
+        mode={mode}
+        onEdit={beginEdit}
+        onCancel={cancelEdit}
+        onSave={saveEdit}
+        isSaving={isSaving}
+        editActionLabel={activeTab === "skills" && mode === "edit" ? "Add Skill" : undefined}
+        onEditAction={activeTab === "skills" && mode === "edit" ? openAddSkillModal : undefined}
+      >
         {saveError ? <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert> : null}
         {activeTab === "overview" ? <OverviewTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
         {activeTab === "skills" ? <SkillsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
         {activeTab === "projects" ? <ProjectsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
         {activeTab === "contact" ? <ContactTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
+        <Dialog open={isAddSkillModalOpen} onClose={closeAddSkillModal} fullWidth maxWidth="sm">
+          <DialogTitle>Add new skill</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              fullWidth
+              required
+              label="New skill"
+              value={newSkillName}
+              error={newSkillTouched && newSkillName.trim().length === 0}
+              helperText={newSkillTouched && newSkillName.trim().length === 0 ? "New skill is required." : ""}
+              onChange={(e) => setNewSkillName(e.target.value)}
+              onBlur={() => setNewSkillTouched(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addSkillFromModal();
+                }
+              }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeAddSkillModal}>Cancel</Button>
+            <Button variant="contained" onClick={addSkillFromModal}>
+              Add
+            </Button>
+          </DialogActions>
+        </Dialog>
       </FormUtils>
     </Box>
   );
