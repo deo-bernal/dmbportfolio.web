@@ -8,10 +8,12 @@ import Typography from "@mui/material/Typography";
 import { ResumeProfileView } from "components/resumeProfile";
 import type { ResumeProfile } from "models";
 import { EMPTY_RESUME_PROFILE } from "models";
+import useAuth from "hooks/useAuth";
 import api from "services/http.service";
 import { agenticPageSx } from "styles/main_style";
 
 export default function PublicResumePage() {
+  const auth = useAuth();
   const navigate = useNavigate();
   const { username = "" } = useParams<{ username: string }>();
   const [resume, setResume] = useState<ResumeProfile>(EMPTY_RESUME_PROFILE);
@@ -111,10 +113,10 @@ export default function PublicResumePage() {
               <Button
                 variant="contained"
                 disableElevation
-                onClick={() => navigate("/login")}
+                onClick={() => navigate(auth.isAuthenticated ? "/accent-sidebar/resume" : "/login")}
                 sx={agenticPageSx.logoutButton}
               >
-                Log in
+                {auth.isAuthenticated ? "My Resume" : "Log in"}
               </Button>
             </Box>
           </Box>
