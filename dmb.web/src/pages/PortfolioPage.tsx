@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { UserProfileTabs, UserProfileView } from "components/userProfiles";
+import { PortfolioProfileTabs, PortfolioProfileView } from "components/portfolioProfile";
 import api from "services/http.service";
 import { getProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
@@ -146,14 +146,14 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
           </Box>
         </Box>
         {isEditing ? (
-          <UserProfileTabs
+          <PortfolioProfileTabs
             profile={activeProfile}
             onSave={handleSaveProfile}
             initialMode="edit"
             saveMode={isCreateMode ? "create" : "update"}
           />
         ) : (
-          <UserProfileView profile={activeProfile} />
+          <PortfolioProfileView profile={activeProfile} />
         )}
       </Stack>
     </Container>

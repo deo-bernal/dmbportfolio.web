@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import { UserProfileView } from "components/userProfiles";
+import { PortfolioProfileView } from "components/portfolioProfile";
 import { getPublicProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
 import { agenticPageSx } from "styles/main_style";
@@ -73,7 +73,7 @@ export default function PublicProfilePage() {
             </Box>
           </Box>
         </Box>
-        <UserProfileView profile={profile} />
+        <PortfolioProfileView profile={profile} />
       </Stack>
     </Container>
   );
