@@ -12,9 +12,21 @@ import Typography from "@mui/material/Typography";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useSnackbar } from "notistack";
 import { agenticPageSx } from "styles/main_style";
+import { addCategorySchema, addProjectItemSchema } from "validations/schema/projectsTab";
 import type { TabViewProps } from "../types";
 
-export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfile }: TabViewProps) {
+type DeleteTarget =
+  | { type: "category"; categoryIndex: number }
+  | { type: "project"; categoryIndex: number; itemIndex: number };
+
+export default function ProjectsTab({
+  profile,
+  draft,
+  mode,
+  setDraft,
+  cloneProfile,
+  onImmediatePersist,
+}: TabViewProps) {
   const { enqueueSnackbar } = useSnackbar();
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -24,6 +36,7 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
   const [activeCategoryIndex, setActiveCategoryIndex] = useState<number | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [projectError, setProjectError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
   const openCategoryModal = () => {
     setNewCategoryName("");
@@ -52,9 +65,12 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
 
   const addCategory = () => {
     const normalized = newCategoryName.trim();
-    if (!normalized) {
-      setCategoryError("Category name is required.");
-      enqueueSnackbar("Category name is required.", { variant: "error" });
+    try {
+      addCategorySchema.validateSync({ categoryName: normalized });
+    } catch (error: any) {
+      const message = error?.message ?? "Category name is required.";
+      setCategoryError(message);
+      enqueueSnackbar(message, { variant: "error" });
       return;
     }
 
@@ -86,9 +102,15 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
 
     const normalizedName = newProjectName.trim();
     const normalizedDescription = newProjectDescription.trim();
-    if (!normalizedName && !normalizedDescription) {
-      setProjectError("Project name or description is required.");
-      enqueueSnackbar("Project name or description is required.", { variant: "error" });
+    try {
+      addProjectItemSchema.validateSync({
+        projectName: normalizedName,
+        projectDescription: normalizedDescription,
+      });
+    } catch (error: any) {
+      const message = error?.message ?? "Project details are required.";
+      setProjectError(message);
+      enqueueSnackbar(message, { variant: "error" });
       return;
     }
 
@@ -102,6 +124,35 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
     });
     enqueueSnackbar("Project item added.", { variant: "success" });
     closeProjectModal();
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === "category") {
+      const targetCategory = draft.projectCategories[deleteTarget.categoryIndex];
+      if (targetCategory?.items.some((item) => item.name.trim().length > 0)) {
+        enqueueSnackbar("Cannot delete category with existing projects.", { variant: "error" });
+        setDeleteTarget(null);
+        return;
+      }
+      const nextProfile = cloneProfile(draft);
+      nextProfile.projectCategories = nextProfile.projectCategories.filter(
+        (_, i) => i !== deleteTarget.categoryIndex
+      );
+      setDraft(nextProfile);
+      setDeleteTarget(null);
+      await onImmediatePersist(nextProfile, "Category deleted.");
+      return;
+    }
+
+    const nextProfile = cloneProfile(draft);
+    nextProfile.projectCategories[deleteTarget.categoryIndex].items = nextProfile.projectCategories[
+      deleteTarget.categoryIndex
+    ].items.filter((_, i) => i !== deleteTarget.itemIndex);
+    setDraft(nextProfile);
+    setDeleteTarget(null);
+    await onImmediatePersist(nextProfile, "Project deleted.");
   };
 
   if (mode === "view") {
@@ -205,6 +256,22 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
           </Button>
         </DialogActions>
       </Dialog>
+      <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} fullWidth maxWidth="xs">
+        <DialogTitle>
+          {deleteTarget?.type === "category" ? "Delete category" : "Delete project"}
+        </DialogTitle>
+        <DialogContent>
+          {deleteTarget?.type === "category"
+            ? "Are you sure you want to delete this category?"
+            : "Are you sure you want to delete this project?"}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={confirmDelete}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
       {draft.projectCategories.map((category, categoryIndex) => (
         <Paper
           key={categoryIndex}
@@ -228,19 +295,7 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
               aria-label="Delete category"
               color="error"
               disabled={category.items.some((item) => item.name.trim().length > 0)}
-              onClick={() => {
-                const hasLinkedProjects = category.items.some((item) => item.name.trim().length > 0);
-                if (hasLinkedProjects) {
-                  enqueueSnackbar("Cannot delete category with existing projects.", { variant: "error" });
-                  return;
-                }
-                setDraft((prev) => {
-                  const copy = cloneProfile(prev);
-                  copy.projectCategories = copy.projectCategories.filter((_, i) => i !== categoryIndex);
-                  return copy;
-                });
-                enqueueSnackbar("Category deleted.", { variant: "success" });
-              }}
+              onClick={() => setDeleteTarget({ type: "category", categoryIndex })}
             >
               <DeleteIcon />
             </IconButton>
@@ -270,16 +325,7 @@ export default function ProjectsTab({ profile, draft, mode, setDraft, cloneProfi
                 <IconButton
                   aria-label="Delete project"
                   color="error"
-                  onClick={() => {
-                    setDraft((prev) => {
-                      const copy = cloneProfile(prev);
-                      copy.projectCategories[categoryIndex].items = copy.projectCategories[categoryIndex].items.filter(
-                        (_, i) => i !== itemIndex
-                      );
-                      return copy;
-                    });
-                    enqueueSnackbar("Project deleted.", { variant: "success" });
-                  }}
+                  onClick={() => setDeleteTarget({ type: "project", categoryIndex, itemIndex })}
                 >
                   <DeleteIcon />
                 </IconButton>

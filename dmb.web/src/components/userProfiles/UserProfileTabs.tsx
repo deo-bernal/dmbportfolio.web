@@ -13,6 +13,9 @@ import { useSnackbar } from "notistack";
 import FormUtils from "components/common/FormUtils";
 import type { Profile } from "models";
 import { agenticPageSx } from "styles/main_style";
+import { contactTabSchema } from "validations/schema/contactTab";
+import { projectsTabSchema } from "validations/schema/projectsTab";
+import { addSkillSchema, skillsTabSchema } from "validations/schema/skillsTab";
 import { ContactTab, OverviewTab, ProjectsTab, SkillsTab } from "./Tabs";
 
 type UserProfileTabsProps = {
@@ -97,13 +100,36 @@ export default function UserProfileTabs({
     setSaveError(null);
     try {
       const normalizedDraft = normalizeProfileForSave(draft);
+      skillsTabSchema.validateSync({ skills: normalizedDraft.skills });
+      projectsTabSchema.validateSync({ projectCategories: normalizedDraft.projectCategories });
+      contactTabSchema.validateSync({
+        email: normalizedDraft.contact.email,
+        phone: normalizedDraft.contact.phone,
+      });
       await onSave(normalizedDraft, saveMode);
       enqueueSnackbar("Profile changes saved successfully.", { variant: "success" });
     } catch (error: any) {
-      enqueueSnackbar(error?.response?.data?.message ?? "Unable to save profile changes.", {
+      enqueueSnackbar(error?.response?.data?.message ?? error?.message ?? "Unable to save profile changes.", {
         variant: "error",
       });
-      setSaveError(error?.response?.data?.message ?? "Unable to save profile changes.");
+      setSaveError(error?.response?.data?.message ?? error?.message ?? "Unable to save profile changes.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const persistProfileImmediately = async (nextProfile: Profile, successMessage: string) => {
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const normalizedDraft = normalizeProfileForSave(nextProfile);
+      await onSave(normalizedDraft, saveMode);
+      setDraft(normalizedDraft);
+      enqueueSnackbar(successMessage, { variant: "success" });
+    } catch (error: any) {
+      const message = error?.response?.data?.message ?? error?.message ?? "Unable to save profile changes.";
+      enqueueSnackbar(message, { variant: "error" });
+      setSaveError(message);
     } finally {
       setIsSaving(false);
     }
@@ -120,11 +146,13 @@ export default function UserProfileTabs({
     setNewSkillTouched(false);
   };
 
-  const addSkillFromModal = () => {
+  const addSkillFromModal = async () => {
     setNewSkillTouched(true);
     const normalized = newSkillName.trim();
-    if (!normalized) {
-      enqueueSnackbar("New skill is required.", { variant: "error" });
+    try {
+      addSkillSchema.validateSync({ newSkill: normalized });
+    } catch (error: any) {
+      enqueueSnackbar(error?.message ?? "New skill is required.", { variant: "error" });
       return;
     }
     const duplicate = draft.skills.some((skill) => skill.trim().toLowerCase() === normalized.toLowerCase());
@@ -133,12 +161,13 @@ export default function UserProfileTabs({
       return;
     }
 
-    setDraft((prev) => ({
-      ...prev,
-      skills: [...prev.skills, normalized],
-    }));
-    enqueueSnackbar("Skill added.", { variant: "success" });
+    const nextProfile = {
+      ...draft,
+      skills: [...draft.skills, normalized],
+    };
+    setDraft(nextProfile);
     closeAddSkillModal();
+    await persistProfileImmediately(nextProfile, "Skill added.");
   };
 
   return (
@@ -166,10 +195,46 @@ export default function UserProfileTabs({
         onEditAction={activeTab === "skills" && mode === "edit" ? openAddSkillModal : undefined}
       >
         {saveError ? <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert> : null}
-        {activeTab === "overview" ? <OverviewTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
-        {activeTab === "skills" ? <SkillsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
-        {activeTab === "projects" ? <ProjectsTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
-        {activeTab === "contact" ? <ContactTab profile={profile} draft={draft} mode={mode} setDraft={setDraft} cloneProfile={cloneProfile} /> : null}
+        {activeTab === "overview" ? (
+          <OverviewTab
+            profile={profile}
+            draft={draft}
+            mode={mode}
+            setDraft={setDraft}
+            cloneProfile={cloneProfile}
+            onImmediatePersist={persistProfileImmediately}
+          />
+        ) : null}
+        {activeTab === "skills" ? (
+          <SkillsTab
+            profile={profile}
+            draft={draft}
+            mode={mode}
+            setDraft={setDraft}
+            cloneProfile={cloneProfile}
+            onImmediatePersist={persistProfileImmediately}
+          />
+        ) : null}
+        {activeTab === "projects" ? (
+          <ProjectsTab
+            profile={profile}
+            draft={draft}
+            mode={mode}
+            setDraft={setDraft}
+            cloneProfile={cloneProfile}
+            onImmediatePersist={persistProfileImmediately}
+          />
+        ) : null}
+        {activeTab === "contact" ? (
+          <ContactTab
+            profile={profile}
+            draft={draft}
+            mode={mode}
+            setDraft={setDraft}
+            cloneProfile={cloneProfile}
+            onImmediatePersist={persistProfileImmediately}
+          />
+        ) : null}
         <Dialog open={isAddSkillModalOpen} onClose={closeAddSkillModal} fullWidth maxWidth="sm">
           <DialogTitle>Add new skill</DialogTitle>
           <DialogContent>
@@ -194,7 +259,7 @@ export default function UserProfileTabs({
           </DialogContent>
           <DialogActions>
             <Button onClick={closeAddSkillModal}>Cancel</Button>
-            <Button variant="contained" onClick={addSkillFromModal}>
+            <Button variant="contained" onClick={() => void addSkillFromModal()}>
               Add
             </Button>
           </DialogActions>
