@@ -2,10 +2,12 @@ import { useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
+import { useSnackbar } from "notistack";
 import { agenticPageSx } from "styles/main_style";
 import type { TabViewProps } from "../types";
 
 export default function SkillsTab({ profile, draft, mode, setDraft }: TabViewProps) {
+  const { enqueueSnackbar } = useSnackbar();
   const [newSkill, setNewSkill] = useState("");
 
   if (mode === "view") {
@@ -32,11 +34,20 @@ export default function SkillsTab({ profile, draft, mode, setDraft }: TabViewPro
             if (e.key === "Enter") {
               e.preventDefault();
               const normalized = newSkill.trim();
-              if (!normalized) return;
+              if (!normalized) {
+                enqueueSnackbar("Skill is required.", { variant: "error" });
+                return;
+              }
+              const duplicate = draft.skills.some((skill) => skill.trim().toLowerCase() === normalized.toLowerCase());
+              if (duplicate) {
+                enqueueSnackbar("Skill already exists.", { variant: "error" });
+                return;
+              }
               setDraft((prev) => ({
                 ...prev,
                 skills: [...prev.skills, normalized],
               }));
+              enqueueSnackbar("Skill added.", { variant: "success" });
               setNewSkill("");
             }
           }}
@@ -45,11 +56,20 @@ export default function SkillsTab({ profile, draft, mode, setDraft }: TabViewPro
           variant="outlined"
           onClick={() => {
             const normalized = newSkill.trim();
-            if (!normalized) return;
+            if (!normalized) {
+              enqueueSnackbar("Skill is required.", { variant: "error" });
+              return;
+            }
+            const duplicate = draft.skills.some((skill) => skill.trim().toLowerCase() === normalized.toLowerCase());
+            if (duplicate) {
+              enqueueSnackbar("Skill already exists.", { variant: "error" });
+              return;
+            }
             setDraft((prev) => ({
               ...prev,
               skills: [...prev.skills, normalized],
             }));
+            enqueueSnackbar("Skill added.", { variant: "success" });
             setNewSkill("");
           }}
         >
@@ -77,12 +97,13 @@ export default function SkillsTab({ profile, draft, mode, setDraft }: TabViewPro
           <Button
             color="error"
             variant="text"
-            onClick={() =>
+            onClick={() => {
               setDraft((prev) => ({
                 ...prev,
                 skills: prev.skills.filter((_, i) => i !== index),
-              }))
-            }
+              }));
+              enqueueSnackbar("Skill removed.", { variant: "success" });
+            }}
           >
             Remove
           </Button>

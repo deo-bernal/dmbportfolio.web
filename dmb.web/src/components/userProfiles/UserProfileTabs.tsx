@@ -3,6 +3,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+import { useSnackbar } from "notistack";
 import FormUtils from "components/common/FormUtils";
 import type { Profile } from "models";
 import { agenticPageSx } from "styles/main_style";
@@ -21,12 +22,47 @@ function cloneProfile(profile: Profile): Profile {
   return JSON.parse(JSON.stringify(profile));
 }
 
+function normalizeProfileForSave(profile: Profile): Profile {
+  const normalizedSkills = Array.from(
+    new Set(
+      (profile.skills ?? [])
+        .map((s) => (s ?? "").trim())
+        .filter(Boolean)
+    )
+  );
+
+  const normalizedCategories = (profile.projectCategories ?? [])
+    .map((category) => ({
+      title: (category.title ?? "").trim(),
+      items: (category.items ?? [])
+        .map((item) => ({
+          name: (item.name ?? "").trim(),
+          description: (item.description ?? "").trim(),
+        }))
+        .filter((item) => item.name.length > 0 || item.description.length > 0),
+    }))
+    .filter((category) => category.title.length > 0);
+
+  return {
+    ...profile,
+    summary: (profile.summary ?? "").trim(),
+    video: (profile.video ?? "").trim(),
+    skills: normalizedSkills,
+    projectCategories: normalizedCategories,
+    contact: {
+      email: (profile.contact?.email ?? "").trim(),
+      phone: (profile.contact?.phone ?? "").trim(),
+    },
+  };
+}
+
 export default function UserProfileTabs({
   profile,
   onSave,
   initialMode = "view",
   saveMode = "update",
 }: UserProfileTabsProps) {
+  const { enqueueSnackbar } = useSnackbar();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [mode, setMode] = useState<"view" | "edit">(initialMode);
   const [isSaving, setIsSaving] = useState(false);
@@ -51,9 +87,14 @@ export default function UserProfileTabs({
     setIsSaving(true);
     setSaveError(null);
     try {
-      await onSave(draft, saveMode);
+      const normalizedDraft = normalizeProfileForSave(draft);
+      await onSave(normalizedDraft, saveMode);
+      enqueueSnackbar("Profile changes saved successfully.", { variant: "success" });
       setMode("view");
     } catch (error: any) {
+      enqueueSnackbar(error?.response?.data?.message ?? "Unable to save profile changes.", {
+        variant: "error",
+      });
       setSaveError(error?.response?.data?.message ?? "Unable to save profile changes.");
     } finally {
       setIsSaving(false);
