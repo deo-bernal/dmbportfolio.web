@@ -10,8 +10,6 @@ import { getPublicProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
 import { agenticPageSx } from "styles/main_style";
 
-const DEVICON_SIZE = 28;
-
 export default function PublicProfilePage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -53,26 +51,15 @@ export default function PublicProfilePage() {
         <Box sx={agenticPageSx.panelBody}>
           <Box component="header" sx={agenticPageSx.headerRow}>
             <Box sx={agenticPageSx.headerLeft}>
+              <Typography
+                component="p"
+                sx={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#64748b", mb: 0.5 }}
+              >
+                Public Profile
+              </Typography>
               <Typography component="h1" data-testid="profile-name" sx={agenticPageSx.profileName}>
                 {profile.name}
               </Typography>
-              <Box sx={agenticPageSx.stackLogos} aria-label="Built with React and .NET">
-                <img
-                  src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg"
-                  alt="React logo"
-                  width={DEVICON_SIZE}
-                  height={DEVICON_SIZE}
-                />
-                <Box component="span" sx={agenticPageSx.stackPlus}>
-                  +
-                </Box>
-                <img
-                  src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dotnetcore/dotnetcore-original.svg"
-                  alt=".NET logo"
-                  width={DEVICON_SIZE}
-                  height={DEVICON_SIZE}
-                />
-              </Box>
             </Box>
             <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", width: { xs: "100%", sm: "auto" } }}>
               <Button

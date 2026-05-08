@@ -45,6 +45,10 @@ export default function createRouter({
       element: token ? <Navigate to="/accent-sidebar" replace /> : <Navigate to="/login" replace />,
     },
     {
+      path: "/portfolio",
+      element: token ? <Navigate to="/accent-sidebar/portfolio" replace /> : <Navigate to="/login" replace />,
+    },
+    {
       path: "/accent-sidebar",
       element: token ? <AccentSidebarLayout /> : <Navigate to="/login" replace />,
       children: [
@@ -64,7 +68,17 @@ export default function createRouter({
     },
     {
       path: "/:username",
-      element: <PublicProfilePage />,
+      element: <AccentSidebarLayout />,
+      children: [
+        {
+          path: "",
+          element: <PublicProfilePage />,
+        },
+        {
+          path: "resume",
+          element: <ResumePage />,
+        },
+      ],
     },
     {
       path: "*",

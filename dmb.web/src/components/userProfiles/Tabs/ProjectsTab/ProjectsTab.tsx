@@ -372,7 +372,11 @@ export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImme
 
       <ProjectModal
         open={addModalCategoryIndex !== null}
-        title="Add project item"
+        title={
+          addModalCategoryIndex !== null
+            ? `Add project for ${(draft.projectCategories[addModalCategoryIndex]?.title ?? "selected")} category`
+            : "Add project item"
+        }
         name={projectModalName}
         description={projectModalDescription}
         error={projectError}
