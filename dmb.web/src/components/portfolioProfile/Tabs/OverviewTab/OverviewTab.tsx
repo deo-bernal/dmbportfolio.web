@@ -14,7 +14,6 @@ import PageHeader from "../PageHeader";
 export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewProps) {
   const { enqueueSnackbar } = useSnackbar();
   const publicPortfolioUrl = profile.username ? `https://www.dmbwebsolutions.com/${profile.username}` : "";
-  const publicResumeUrl = profile.username ? `https://www.dmbwebsolutions.com/${profile.username}/resume` : "";
 
   const copyUrl = async (value: string, missingMessage: string) => {
     if (!value) {
@@ -35,10 +34,6 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
       return;
     }
     await copyUrl(publicPortfolioUrl, "Public portfolio URL is unavailable.");
-  };
-
-  const copyPublicResumeUrl = async () => {
-    await copyUrl(publicResumeUrl, "Public resume URL is unavailable.");
   };
 
   if (mode === "view") {

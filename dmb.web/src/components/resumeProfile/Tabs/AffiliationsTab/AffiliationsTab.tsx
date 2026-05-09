@@ -206,14 +206,10 @@ export default function AffiliationsTab({ draft, setDraft, onImmediateSave }: Re
       });
   }, [draft.affiliations]);
 
-  const columns = useMemo(
-    () =>
-      getColumns({
-        onEdit: openEdit,
-        onDelete: (row) => setDeleteIndex(row.itemIndex),
-      }),
-    [draft.affiliations]
-  );
+  const columns = getColumns({
+    onEdit: openEdit,
+    onDelete: (row) => setDeleteIndex(row.itemIndex),
+  });
 
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();

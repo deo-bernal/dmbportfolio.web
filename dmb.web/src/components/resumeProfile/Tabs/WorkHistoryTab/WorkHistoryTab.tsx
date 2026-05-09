@@ -149,14 +149,10 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
       });
   }, [draft.workHistory]);
 
-  const columns = useMemo(
-    () =>
-      getColumns({
-        onEdit: openEdit,
-        onDelete: (row) => setDeleteIndex(row.itemIndex),
-      }),
-    [draft.workHistory]
-  );
+  const columns = getColumns({
+    onEdit: openEdit,
+    onDelete: (row) => setDeleteIndex(row.itemIndex),
+  });
 
   const filteredRows = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();

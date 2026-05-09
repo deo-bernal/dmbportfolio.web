@@ -207,14 +207,10 @@ export default function EducationTab({ draft, setDraft, onImmediateSave }: Resum
     });
   }, [draft.education]);
 
-  const columns = useMemo(
-    () =>
-      getColumns({
-        onEdit: openEdit,
-        onDelete: (row) => setDeleteIndex(row.itemIndex),
-      }),
-    [draft.education]
-  );
+  const columns = getColumns({
+    onEdit: openEdit,
+    onDelete: (row) => setDeleteIndex(row.itemIndex),
+  });
 
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
