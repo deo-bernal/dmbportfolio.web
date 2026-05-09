@@ -82,17 +82,33 @@ export default function PortfolioProfileTabs({
     setMode(initialMode === "edit" ? "edit" : "view");
   };
 
+  const validateDraftForActiveTab = (normalizedDraft: Profile) => {
+    switch (activeTab) {
+      case "skills":
+        skillsTabSchema.validateSync({ skills: normalizedDraft.skills });
+        break;
+      case "projects":
+        projectsTabSchema.validateSync({ projectCategories: normalizedDraft.projectCategories });
+        break;
+      case "contact":
+        contactTabSchema.validateSync({
+          email: normalizedDraft.contact.email,
+          phone: normalizedDraft.contact.phone,
+        });
+        break;
+      case "overview":
+      default:
+        // Overview updates should not be blocked by other tab validations.
+        break;
+    }
+  };
+
   const saveEdit = async () => {
     setIsSaving(true);
     setSaveError(null);
     try {
       const normalizedDraft = normalizeProfileForSave(draft);
-      skillsTabSchema.validateSync({ skills: normalizedDraft.skills });
-      projectsTabSchema.validateSync({ projectCategories: normalizedDraft.projectCategories });
-      contactTabSchema.validateSync({
-        email: normalizedDraft.contact.email,
-        phone: normalizedDraft.contact.phone,
-      });
+      validateDraftForActiveTab(normalizedDraft);
       await onSave(normalizedDraft, saveMode);
       enqueueSnackbar("Profile changes saved successfully.", { variant: "success" });
     } catch (error: any) {
@@ -110,12 +126,7 @@ export default function PortfolioProfileTabs({
     setSaveError(null);
     try {
       const normalizedDraft = normalizeProfileForSave(nextProfile);
-      skillsTabSchema.validateSync({ skills: normalizedDraft.skills });
-      projectsTabSchema.validateSync({ projectCategories: normalizedDraft.projectCategories });
-      contactTabSchema.validateSync({
-        email: normalizedDraft.contact.email,
-        phone: normalizedDraft.contact.phone,
-      });
+      validateDraftForActiveTab(normalizedDraft);
       await onSave(normalizedDraft, saveMode);
       setDraft(normalizedDraft);
       enqueueSnackbar(successMessage, { variant: "success" });
