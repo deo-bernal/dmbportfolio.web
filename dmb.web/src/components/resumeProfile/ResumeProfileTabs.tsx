@@ -6,14 +6,14 @@ import Tabs from "@mui/material/Tabs";
 import FormUtils from "components/common/FormUtils";
 import type { ResumeProfile } from "models";
 import { agenticPageSx } from "styles/main_style";
-import { EducationTab, PersonalInfoTab, WorkHistoryTab } from "./Tabs";
+import { AffiliationsTab, EducationTab, PersonalInfoTab, WorkHistoryTab } from "./Tabs";
 
 type ResumeProfileTabsProps = {
   profile: ResumeProfile;
   onSave: (profile: ResumeProfile) => Promise<void>;
 };
 
-type TabKey = "personalInfo" | "workHistory" | "education";
+type TabKey = "personalInfo" | "workHistory" | "education" | "affiliations";
 
 function cloneResumeProfile(profile: ResumeProfile): ResumeProfile {
   return JSON.parse(JSON.stringify(profile));
@@ -49,6 +49,20 @@ export default function ResumeProfileTabs({ profile, onSave }: ResumeProfileTabs
     }
   };
 
+  const immediateSave = async (nextDraft: ResumeProfile) => {
+    setDraft(nextDraft);
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await onSave(nextDraft);
+    } catch (error: any) {
+      setSaveError(error?.response?.data?.message ?? error?.message ?? "Unable to save resume changes.");
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Box sx={agenticPageSx.panelBody}>
       <Tabs
@@ -61,6 +75,7 @@ export default function ResumeProfileTabs({ profile, onSave }: ResumeProfileTabs
         <Tab label="Personal Info" value="personalInfo" />
         <Tab label="Work History" value="workHistory" />
         <Tab label="Education" value="education" />
+        <Tab label="Affiliations" value="affiliations" />
       </Tabs>
 
       <FormUtils
@@ -69,11 +84,13 @@ export default function ResumeProfileTabs({ profile, onSave }: ResumeProfileTabs
         onCancel={cancelEdit}
         onSave={saveEdit}
         isSaving={isSaving}
+        showSaveCancelActions={activeTab === "personalInfo"}
       >
         {saveError ? <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert> : null}
         {activeTab === "personalInfo" ? <PersonalInfoTab draft={draft} setDraft={setDraft} /> : null}
         {activeTab === "workHistory" ? <WorkHistoryTab draft={draft} setDraft={setDraft} /> : null}
-        {activeTab === "education" ? <EducationTab draft={draft} setDraft={setDraft} /> : null}
+        {activeTab === "education" ? <EducationTab draft={draft} setDraft={setDraft} onImmediateSave={immediateSave} /> : null}
+        {activeTab === "affiliations" ? <AffiliationsTab draft={draft} setDraft={setDraft} onImmediateSave={immediateSave} /> : null}
       </FormUtils>
     </Box>
   );

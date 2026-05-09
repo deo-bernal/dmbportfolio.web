@@ -1,20 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { ResumeProfileView } from "components/resumeProfile";
 import type { ResumeProfile } from "models";
 import { EMPTY_RESUME_PROFILE } from "models";
-import useAuth from "hooks/useAuth";
 import api from "services/http.service";
 import { agenticPageSx } from "styles/main_style";
 
 export default function PublicResumePage() {
-  const auth = useAuth();
-  const navigate = useNavigate();
   const { username = "" } = useParams<{ username: string }>();
   const [resume, setResume] = useState<ResumeProfile>(EMPTY_RESUME_PROFILE);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,6 +52,12 @@ export default function PublicResumePage() {
             courseTaken: item.courseTaken ?? "",
             startDate: item.startDate ? String(item.startDate).slice(0, 10) : "",
             endDate: item.endDate ? String(item.endDate).slice(0, 10) : "",
+          })),
+          affiliations: (data?.affiliations ?? []).map((item: any) => ({
+            organization: item.organization ?? "",
+            title: item.title ?? "",
+            issueDate: item.issueDate ? String(item.issueDate).slice(0, 10) : "",
+            details: item.details ?? "",
           })),
         });
       } catch (err: any) {
@@ -108,16 +110,6 @@ export default function PublicResumePage() {
               <Typography component="h1" sx={agenticPageSx.profileName}>
                 {fullName}
               </Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", width: { xs: "100%", sm: "auto" } }}>
-              <Button
-                variant="contained"
-                disableElevation
-                onClick={() => navigate(auth.isAuthenticated ? "/accent-sidebar/resume" : "/login")}
-                sx={agenticPageSx.logoutButton}
-              >
-                {auth.isAuthenticated ? "My Resume" : "Log in"}
-              </Button>
             </Box>
           </Box>
         </Box>

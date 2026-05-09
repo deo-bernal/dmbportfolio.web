@@ -52,6 +52,20 @@ export default function AccentSidebarLayout() {
           <ShellNavItem to={resumePath} label="Resume" end />
         </Box>
 
+        {!auth.isAuthenticated ? (
+          <Box sx={{ mt: 3 }}>
+            <Button
+              fullWidth
+              variant="contained"
+              disableElevation
+              onClick={() => navigate("/login")}
+              sx={{ ...layoutShellSx.navItemActive, textTransform: "uppercase", letterSpacing: "0.08em" }}
+            >
+              Log in
+            </Button>
+          </Box>
+        ) : null}
+
         {auth.isAuthenticated && !isPublicRoute ? (
           <Box sx={{ mt: 3 }}>
             <Button
@@ -59,7 +73,17 @@ export default function AccentSidebarLayout() {
               variant="contained"
               disableElevation
               onClick={handleLogout}
-              sx={{ ...layoutShellSx.navItemActive, textTransform: "uppercase", letterSpacing: "0.08em" }}
+              sx={{
+                ...layoutShellSx.navItemActive,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                bgcolor: "rgba(185, 28, 28, 0.7)",
+                borderColor: "rgba(248, 113, 113, 0.35)",
+                "&:hover": {
+                  bgcolor: "rgba(153, 27, 27, 0.82)",
+                  borderColor: "rgba(248, 113, 113, 0.45)",
+                },
+              }}
             >
               Log out
             </Button>

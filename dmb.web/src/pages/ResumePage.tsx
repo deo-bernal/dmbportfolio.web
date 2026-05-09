@@ -51,6 +51,12 @@ export default function ResumePage() {
             startDate: item.startDate ? String(item.startDate).slice(0, 10) : "",
             endDate: item.endDate ? String(item.endDate).slice(0, 10) : "",
           })),
+          affiliations: (data?.affiliations ?? []).map((item: any) => ({
+            organization: item.organization ?? "",
+            title: item.title ?? "",
+            issueDate: item.issueDate ? String(item.issueDate).slice(0, 10) : "",
+            details: item.details ?? "",
+          })),
         });
       } catch (err: any) {
         if (err?.response?.status !== 404) {
@@ -95,9 +101,14 @@ export default function ResumePage() {
           startDate: item.startDate || null,
           endDate: item.endDate || null,
         })),
+        affiliations: nextResume.affiliations.map((item) => ({
+          organization: item.organization,
+          title: item.title,
+          issueDate: item.issueDate || null,
+          details: item.details,
+        })),
       });
       setResume(nextResume);
-      setIsEditing(false);
     } catch (saveError: any) {
       throw saveError;
     }
@@ -136,7 +147,7 @@ export default function ResumePage() {
                   mb: 0.5,
                 }}
               >
-                Resume Profile
+                Resume
               </Typography>
               <Typography component="h1" sx={agenticPageSx.profileName}>
                 {fullName}

@@ -92,7 +92,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
                 component="p"
                 sx={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#64748b", mb: 0.5 }}
               >
-                Portfolio Profile
+                Portfolio
               </Typography>
               <Typography
                 component="h1"
@@ -109,7 +109,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
                   onClick={() => setIsEditing(true)}
                   sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
-                  {isCreateMode ? "Create profile" : "Edit profile"}
+                  {isCreateMode ? "Create portfolio" : "Edit portfolio"}
                 </Button>
               ) : (
                 <Button

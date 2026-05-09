@@ -90,24 +90,13 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
           {draft.isViewable ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: { xs: "100%", sm: 420 }, flex: 1 }}>
               <TextField
-                label="Public Portfolio Profile"
+                label="Public Profile"
                 value={publicPortfolioUrl}
                 slotProps={{ input: { readOnly: true } }}
                 sx={{ flex: 1 }}
               />
               <Tooltip title="Copy public URL">
-                <IconButton onClick={copyPublicPortfolioUrl} aria-label="Copy public portfolio URL">
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <TextField
-                label="Public Resume Profile"
-                value={publicResumeUrl}
-                slotProps={{ input: { readOnly: true } }}
-                sx={{ flex: 1, minWidth: { xs: "100%", sm: 420 } }}
-              />
-              <Tooltip title="Copy public URL">
-                <IconButton onClick={copyPublicResumeUrl} aria-label="Copy public resume URL">
+                <IconButton onClick={copyPublicPortfolioUrl} aria-label="Copy public profile URL">
                   <ContentCopyIcon fontSize="small" />
                 </IconButton>
               </Tooltip>

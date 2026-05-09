@@ -6,7 +6,7 @@ import ResetPassword from "../pages/Auth/ResetPassword";
 import Register from "../pages/Register";
 import ActivateAccount from "../pages/ActivateAccount";
 import PortfolioPage from "../pages/PortfolioPage";
-import PublicProfilePage from "../pages/PublicProfilePage";
+import PublicPortfolioPage from "../pages/PublicPortfolioPage";
 import PublicResumePage from "../pages/PublicResumePage";
 import ResumePage from "../pages/ResumePage";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
@@ -63,7 +63,7 @@ export default function createRouter({
         },
         {
           path: "resume",
-          element: <PublicResumePage />,
+          element: <ResumePage />,
         },
       ],
     },
@@ -73,11 +73,11 @@ export default function createRouter({
       children: [
         {
           path: "",
-          element: <PublicProfilePage />,
+          element: <PublicPortfolioPage />,
         },
         {
           path: "resume",
-          element: <ResumePage />,
+          element: <PublicResumePage />,
         },
       ],
     },

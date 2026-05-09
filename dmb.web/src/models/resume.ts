@@ -23,10 +23,18 @@ export type EducationItem = {
   endDate: string;
 };
 
+export type AffiliationItem = {
+  organization: string;
+  title: string;
+  issueDate: string;
+  details: string;
+};
+
 export type ResumeProfile = {
   personalInfo: ResumePersonalInfo;
   workHistory: WorkHistoryItem[];
   education: EducationItem[];
+  affiliations: AffiliationItem[];
 };
 
 export const EMPTY_RESUME_PROFILE: ResumeProfile = {
@@ -40,4 +48,5 @@ export const EMPTY_RESUME_PROFILE: ResumeProfile = {
   },
   workHistory: [],
   education: [],
+  affiliations: [],
 };

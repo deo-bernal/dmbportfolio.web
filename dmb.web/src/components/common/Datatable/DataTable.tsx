@@ -50,13 +50,53 @@ export default function DataTable<TRow>({
             <CardContent sx={{ display: "grid", gap: 1 }}>
               {columns.map((column, columnIndex) => (
                 <Box key={`${getRowId(row)}-${column.key}`}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
-                    <Typography sx={{ fontWeight: 700 }}>{column.header}</Typography>
-                    <Box sx={{ textAlign: "right" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: column.key === "actions" ? "center" : "stretch",
+                      gap: 0.5,
+                    }}
+                  >
+                    <Typography
+                      component="div"
+                      variant="caption"
+                      sx={{
+                        fontWeight: 700,
+                        color: "#64748b",
+                        letterSpacing: "0.02em",
+                        textTransform: "uppercase",
+                        textAlign: column.key === "actions" ? "center" : undefined,
+                        width: column.key === "actions" ? "100%" : undefined,
+                      }}
+                    >
+                      {column.header}
+                    </Typography>
+                    <Box
+                      sx={{
+                        textAlign: column.key === "actions" ? "center" : "left",
+                        width: "100%",
+                        ...(column.key === "actions"
+                          ? {
+                              "& .MuiStack-root": {
+                                width: "100%",
+                                justifyContent: "center",
+                                alignItems: "center",
+                              },
+                              "& .MuiIconButton-root": { flexShrink: 0 },
+                              "& .MuiStack-root > span": { display: "inline-flex", flexShrink: 0 },
+                            }
+                          : {
+                              "& .MuiButton-root": { justifyContent: "flex-start", px: 0, minWidth: 0 },
+                            }),
+                      }}
+                    >
                       {column.render ? (
                         column.render(row)
                       ) : (
-                        <Typography>{String((row as Record<string, unknown>)[column.key] ?? "")}</Typography>
+                        <Typography sx={{ textAlign: "justify", hyphens: "auto", wordBreak: "break-word" }}>
+                          {String((row as Record<string, unknown>)[column.key] ?? "")}
+                        </Typography>
                       )}
                     </Box>
                   </Box>
@@ -77,6 +117,8 @@ export default function DataTable<TRow>({
     minWidth: 150,
     sortable: false,
     filterable: !hideColumnFilter,
+    align: column.key === "actions" ? "center" : "left",
+    headerAlign: column.key === "actions" ? "center" : undefined,
     renderCell: (params) => {
       const row = params.row as TRow;
       return column.render ? column.render(row) : String((row as Record<string, unknown>)[column.key] ?? "");
@@ -85,7 +127,7 @@ export default function DataTable<TRow>({
 
   return (
     <Paper variant="outlined" sx={{ borderRadius: 2, overflowX: "auto" }}>
-      <Box sx={{ height: 520, width: "100%" }}>
+      <Box sx={{ width: "100%" }}>
         <DataGrid
           disableColumnFilter={hideColumnFilter}
           disableRowSelectionOnClick
@@ -97,7 +139,66 @@ export default function DataTable<TRow>({
             pagination: { paginationModel: { pageSize: defaultPageSize, page: 0 } },
           }}
           pageSizeOptions={[5, 10, 20, 50, 100]}
-          autoHeight={false}
+          autoHeight
+          sx={{
+            // Paper provides the outer border; keep grid clean and add subtle separators.
+            border: 0,
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: "#f8fafc",
+              borderBottom: "1px solid rgba(15, 23, 42, 0.12)",
+            },
+            "& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell": {
+              px: 2,
+            },
+            "& .MuiDataGrid-columnHeader": {
+              justifyContent: "center",
+            },
+            "& .MuiDataGrid-columnHeaderTitleContainer": {
+              justifyContent: "center",
+            },
+            "& .MuiDataGrid-columnHeaderTitle": {
+              fontWeight: 700,
+              textAlign: "center",
+              width: "100%",
+            },
+            "& .MuiDataGrid-cell": {
+              borderBottom: "1px solid rgba(15, 23, 42, 0.08)",
+            },
+            '& .MuiDataGrid-columnHeader[data-field="actions"]': {
+              display: "flex",
+              justifyContent: "center",
+            },
+            '& .MuiDataGrid-cell[data-field="actions"]': {
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            },
+            "& .MuiDataGrid-row:hover": {
+              backgroundColor: "rgba(2, 6, 23, 0.02)",
+            },
+            // Align pagination: rows-per-page label, select, and arrows
+            "& .MuiTablePagination-toolbar": {
+              minHeight: 56,
+              alignItems: "center",
+              gap: 1,
+              paddingTop: 0,
+              paddingBottom: 0,
+            },
+            "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+              margin: 0,
+              alignSelf: "center",
+            },
+            "& .MuiTablePagination-input": {
+              margin: 0,
+              alignSelf: "center",
+            },
+            "& .MuiTablePagination-actions": {
+              marginLeft: 0,
+              alignSelf: "center",
+              display: "flex",
+              alignItems: "center",
+            },
+          }}
         />
       </Box>
     </Paper>
