@@ -43,7 +43,7 @@ export const projectsTabSchema = Yup.object({
                 ),
             })
           )
-          .min(1, "At least one project item is required")
+          // Allow creating a category first, then adding project items later.
           .required("Project items are required"),
       })
     )
