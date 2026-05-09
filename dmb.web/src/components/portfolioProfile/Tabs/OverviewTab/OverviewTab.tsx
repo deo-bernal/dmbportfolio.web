@@ -60,8 +60,11 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
       <PageHeader title="Overview" subtitle="Update your profile summary and intro video" />
       <TextField
         label="Summary"
+        required
         multiline
         minRows={4}
+        error={mode === "edit" && draft.summary.trim().length === 0}
+        helperText={mode === "edit" && draft.summary.trim().length === 0 ? "Summary is required." : undefined}
         value={draft.summary}
         onChange={(e) => setDraft((prev) => ({ ...prev, summary: e.target.value }))}
       />

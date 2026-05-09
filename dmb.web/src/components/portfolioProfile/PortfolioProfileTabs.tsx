@@ -97,6 +97,10 @@ export default function PortfolioProfileTabs({
         });
         break;
       case "overview":
+        if (!normalizedDraft.summary || normalizedDraft.summary.trim().length === 0) {
+          throw new Error("Summary is required.");
+        }
+        break;
       default:
         // Overview updates should not be blocked by other tab validations.
         break;
