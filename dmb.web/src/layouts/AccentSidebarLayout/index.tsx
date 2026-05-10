@@ -59,7 +59,17 @@ export default function AccentSidebarLayout() {
               variant="contained"
               disableElevation
               onClick={() => navigate("/login")}
-              sx={{ ...layoutShellSx.navItemActive, textTransform: "uppercase", letterSpacing: "0.08em" }}
+              sx={{
+                ...layoutShellSx.navItemActive,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                bgcolor: "rgba(185, 28, 28, 0.7)",
+                borderColor: "rgba(248, 113, 113, 0.35)",
+                "&:hover": {
+                  bgcolor: "rgba(153, 27, 27, 0.82)",
+                  borderColor: "rgba(248, 113, 113, 0.45)",
+                },
+              }}
             >
               Log in
             </Button>
