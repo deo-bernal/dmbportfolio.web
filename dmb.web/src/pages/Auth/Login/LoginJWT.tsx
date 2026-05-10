@@ -123,7 +123,15 @@ const LoginJWT: FC = () => {
       />
 
       <Button
-        sx={loginJwtSx.submitButton}
+        sx={{
+          ...loginJwtSx.submitButton,
+          bgcolor: "rgba(185, 28, 28, 0.7)",
+          borderColor: "rgba(248, 113, 113, 0.35)",
+          "&:hover": {
+            bgcolor: "rgba(153, 27, 27, 0.82)",
+            borderColor: "rgba(248, 113, 113, 0.45)",
+          },
+        }}
         startIcon={
           isSubmitting ? <CircularProgress size="1rem" sx={loginJwtSx.submitSpinner} /> : null
         }
