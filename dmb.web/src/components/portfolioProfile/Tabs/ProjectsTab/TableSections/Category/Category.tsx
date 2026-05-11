@@ -95,9 +95,6 @@ export default function Category(props: ProjectsTabCategorySectionProps) {
       <CategoryFilter
         categoryQuery={categoryQuery}
         onCategoryQueryChange={onCategoryQueryChange}
-        selectedCategoryTags={selectedCategoryTags}
-        onSelectedCategoryTagsChange={(_, value) => onSelectedCategoryTagsChange(value)}
-        categoryOptions={categoryAutocompleteOptions}
       />
 
       <Box

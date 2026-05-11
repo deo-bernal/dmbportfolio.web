@@ -7,26 +7,16 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import AutocompleteFilter, { type AutocompleteFilterOption } from "components/common/Filter/AutocompleteFilter/AutocompleteFilter";
 import { tableFilterSx } from "styles/main_style";
-
-export type { AutocompleteFilterOption };
 
 type CategoryFilterProps = {
   categoryQuery: string;
   onCategoryQueryChange: (value: string) => void;
-  selectedCategoryTags: AutocompleteFilterOption[];
-  onSelectedCategoryTagsChange: (event: SyntheticEvent, value: AutocompleteFilterOption[]) => void;
-
-  categoryOptions: AutocompleteFilterOption[];
 };
 
 export default function CategoryFilter({
   categoryQuery,
-  onCategoryQueryChange,
-  selectedCategoryTags,
-  onSelectedCategoryTagsChange,
-  categoryOptions,
+  onCategoryQueryChange
 }: CategoryFilterProps) {
   const [open, setOpen] = useState(true);
   const categorySearchRef = useRef<HTMLInputElement | null>(null);
@@ -67,16 +57,6 @@ export default function CategoryFilter({
                   value={categoryQuery}
                   onChange={(e) => onCategoryQueryChange(e.target.value)}
                 />
-                {/* <Box sx={{ flex: 1, minWidth: { xs: "100%", md: 260 } }}>
-                  <AutocompleteFilter
-                    options={categoryOptions}
-                    value={selectedCategoryTags}
-                    onChange={onSelectedCategoryTagsChange}
-                    label="Categories"
-                    placeholder="Select categories to show…"
-                    limitTags={4}
-                  />
-                </Box> */}
               </Box>
             </Box>
           </Box>
