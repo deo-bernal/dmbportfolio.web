@@ -6,6 +6,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { dateToIsoDate, isoDateToDate } from "utils/date";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
+import { modalDialogSx } from "styles/main_style";
 
 export type AffiliationFieldKey = "organization" | "title" | "issueDate" | "details";
 
@@ -47,7 +49,7 @@ export default function AffiliationsModal({
   return (
     <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ display: "grid", gap: 1.5 }}>
+      <DialogContent sx={modalDialogSx.contentGrid}>
         <TextField
           autoFocus
           margin="dense"
@@ -101,8 +103,13 @@ export default function AffiliationsModal({
         <Button onClick={onClose} disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button variant="contained" onClick={onSubmit} disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : submitLabel}
+        <Button
+          variant="contained"
+          onClick={onSubmit}
+          disabled={isSubmitting}
+          startIcon={isSubmitting ? <ButtonLoadingIcon /> : null}
+        >
+          {submitLabel}
         </Button>
       </DialogActions>
     </Dialog>

@@ -5,6 +5,7 @@ import { useSnackbar } from "notistack";
 import DataTable from "components/common/Datatable";
 import type { TabViewProps } from "../types";
 import PageHeader from "../PageHeader";
+import { agenticPageSx } from "styles/main_style";
 import getColumns, { type SkillRow } from "./columns";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import SkillModal from "./SkillModal";
@@ -13,7 +14,14 @@ import SkillFilter from "./TableSections/SkillFilter";
 type DeleteTarget = SkillRow | null;
 type EditTarget = SkillRow | null;
 
-export default function SkillsTab({ profile, draft, mode, cloneProfile, onImmediatePersist }: TabViewProps) {
+export default function SkillsTab({
+  profile,
+  draft,
+  mode,
+  cloneProfile,
+  onImmediatePersist,
+  isPersisting = false,
+}: TabViewProps) {
   const { enqueueSnackbar } = useSnackbar();
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
@@ -116,7 +124,7 @@ export default function SkillsTab({ profile, draft, mode, cloneProfile, onImmedi
     return (
       <>
         <PageHeader title="Skills" subtitle="Core competencies and technologies" />
-        <Box component="ul" sx={{ m: 0, pl: 3 }}>
+        <Box component="ul" sx={agenticPageSx.skillsViewList}>
           {profile.skills.map((s, i) => (
             <Box component="li" key={i}>
               {s}
@@ -128,7 +136,7 @@ export default function SkillsTab({ profile, draft, mode, cloneProfile, onImmedi
   }
 
   return (
-    <Box sx={{ display: "grid", gap: 2 }}>
+    <Box sx={agenticPageSx.editGrid}>
       <PageHeader title="Skills" subtitle="Manage skills" />
 
       <Button variant="outlined" onClick={openAddModal}>
@@ -151,6 +159,7 @@ export default function SkillsTab({ profile, draft, mode, cloneProfile, onImmedi
         }}
         onSubmit={addSkill}
         submitLabel="Add"
+        isSubmitting={isPersisting}
       />
 
       <SkillModal
@@ -164,9 +173,15 @@ export default function SkillsTab({ profile, draft, mode, cloneProfile, onImmedi
           if (skillError) setSkillError(null);
         }}
         onSubmit={saveSkillEdit}
+        isSubmitting={isPersisting}
       />
 
-      <ConfirmDeleteModal open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} onConfirm={deleteSkill} />
+      <ConfirmDeleteModal
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={deleteSkill}
+        isBusy={isPersisting}
+      />
     </Box>
   );
 }

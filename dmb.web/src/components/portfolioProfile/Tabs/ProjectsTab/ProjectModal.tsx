@@ -4,6 +4,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
 
 type ProjectModalProps = {
   open: boolean;
@@ -14,8 +15,9 @@ type ProjectModalProps = {
   onClose: () => void;
   onNameChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: () => void | Promise<void>;
   submitLabel?: string;
+  isSubmitting?: boolean;
 };
 
 export default function ProjectModal({
@@ -29,9 +31,10 @@ export default function ProjectModal({
   onDescriptionChange,
   onSubmit,
   submitLabel = "Save",
+  isSubmitting = false,
 }: ProjectModalProps) {
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <TextField autoFocus margin="dense" fullWidth label="Project name" value={name} onChange={(e) => onNameChange(e.target.value)} />
@@ -48,8 +51,15 @@ export default function ProjectModal({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit}>
+        <Button onClick={onClose} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => void onSubmit()}
+          disabled={isSubmitting}
+          startIcon={isSubmitting ? <ButtonLoadingIcon /> : null}
+        >
           {submitLabel}
         </Button>
       </DialogActions>

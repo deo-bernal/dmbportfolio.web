@@ -7,6 +7,7 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { tableFilterSx } from "styles/main_style";
 
 type AffiliationsFilterProps = {
   query: string;
@@ -24,14 +25,14 @@ export default function AffiliationsFilter({ query, onQueryChange }: Affiliation
   }, [open]);
 
   return (
-    <Card sx={{ p: 2, display: "flex", alignItems: "center" }}>
+    <Card sx={tableFilterSx.card}>
       {!open ? (
-        <Typography onClick={() => setOpen(true)} sx={{ cursor: "pointer", flex: 1, fontWeight: 600, color: "#475569" }}>
+        <Typography onClick={() => setOpen(true)} sx={tableFilterSx.title}>
           Show affiliations filters
         </Typography>
       ) : null}
-      <Collapse in={open} sx={{ width: "100%" }}>
-        <Box sx={{ width: "100%" }}>
+      <Collapse in={open} sx={tableFilterSx.collapse}>
+        <Box sx={tableFilterSx.inner}>
           <TextField
             fullWidth
             inputRef={inputRef}
@@ -42,7 +43,7 @@ export default function AffiliationsFilter({ query, onQueryChange }: Affiliation
           />
         </Box>
       </Collapse>
-      <IconButton onClick={() => setOpen((prev) => !prev)} sx={{ ml: 1 }}>
+      <IconButton onClick={() => setOpen((prev) => !prev)} sx={tableFilterSx.toggleIcon}>
         {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
       </IconButton>
     </Card>

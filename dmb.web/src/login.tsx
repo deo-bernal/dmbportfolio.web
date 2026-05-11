@@ -6,6 +6,7 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
 import Row from "react-bootstrap/Row";
+import Spinner from "react-bootstrap/Spinner";
 import api from "./services/http.service";
 
 type LoginProps = {
@@ -77,7 +78,14 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 </Form.Group>
                 <div className="d-grid">
                   <Button type="submit" variant="primary" disabled={submitting}>
-                    {submitting ? "Signing in..." : "Login"}
+                    {submitting ? (
+                      <>
+                        <Spinner animation="border" size="sm" role="status" className="me-2" aria-hidden />
+                        Signing in…
+                      </>
+                    ) : (
+                      "Login"
+                    )}
                   </Button>
                 </div>
               </Form>

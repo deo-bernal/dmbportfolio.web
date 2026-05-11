@@ -151,7 +151,7 @@ export default function PortfolioProfileTabs({
         onChange={(_, value) => setActiveTab(value)}
         variant="scrollable"
         allowScrollButtonsMobile
-        sx={{ mb: 2 }}
+        sx={agenticPageSx.tabsMarginBottom}
       >
         <Tab label="Overview" value="overview" />
         <Tab label="Skills" value="skills" />
@@ -168,7 +168,7 @@ export default function PortfolioProfileTabs({
         showSaveCancelActions={!(mode === "edit" && (activeTab === "skills" || activeTab === "projects"))}
       >
         {saveError ? (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error" sx={agenticPageSx.alertBelowTabs}>
             {saveError}
           </Alert>
         ) : null}
@@ -190,6 +190,7 @@ export default function PortfolioProfileTabs({
             setDraft={setDraft}
             cloneProfile={cloneProfile}
             onImmediatePersist={persistProfileImmediately}
+            isPersisting={isSaving}
           />
         ) : null}
         {activeTab === "projects" ? (
@@ -200,6 +201,7 @@ export default function PortfolioProfileTabs({
             setDraft={setDraft}
             cloneProfile={cloneProfile}
             onImmediatePersist={persistProfileImmediately}
+            isPersisting={isSaving}
           />
         ) : null}
         {activeTab === "contact" ? (

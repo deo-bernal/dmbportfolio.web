@@ -37,7 +37,7 @@ export default function ResumeProfileView({ profile }: ResumeProfileViewProps) {
           <Typography>No work history added yet.</Typography>
         ) : (
           profile.workHistory.map((item, index) => (
-            <Box key={`work-${index}`} sx={{ mb: 2 }}>
+            <Box key={`work-${index}`} sx={agenticPageSx.resumeSectionBlock}>
               <Typography sx={agenticPageSx.categoryTitle}>
                 {item.position} - {item.company}
               </Typography>
@@ -60,7 +60,7 @@ export default function ResumeProfileView({ profile }: ResumeProfileViewProps) {
           <Typography>No education added yet.</Typography>
         ) : (
           profile.education.map((item, index) => (
-            <Box key={`education-${index}`} sx={{ mb: 2 }}>
+            <Box key={`education-${index}`} sx={agenticPageSx.resumeSectionBlock}>
               <Typography sx={agenticPageSx.categoryTitle}>{item.school}</Typography>
               <Typography component="p" sx={agenticPageSx.resumeMuted}>
                 {item.startDate ? isoDateToAu(item.startDate) : "-"} to {item.endDate ? isoDateToAu(item.endDate) : "Present"}
@@ -84,7 +84,7 @@ export default function ResumeProfileView({ profile }: ResumeProfileViewProps) {
           <Typography>No affiliations added yet.</Typography>
         ) : (
           profile.affiliations.map((item, index) => (
-            <Box key={`aff-${index}`} sx={{ mb: 2 }}>
+            <Box key={`aff-${index}`} sx={agenticPageSx.resumeSectionBlock}>
               <Typography sx={agenticPageSx.categoryTitle}>
                 {item.title} - {item.organization}
               </Typography>

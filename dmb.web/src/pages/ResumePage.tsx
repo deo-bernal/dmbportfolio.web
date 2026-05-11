@@ -136,17 +136,7 @@ export default function ResumePage() {
         <Box sx={agenticPageSx.panelBody}>
           <Box component="header" sx={agenticPageSx.headerRow}>
             <Box sx={agenticPageSx.headerLeft}>
-              <Typography
-                component="p"
-                sx={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "#64748b",
-                  mb: 0.5,
-                }}
-              >
+              <Typography component="p" sx={agenticPageSx.pageKindLabel}>
                 Resume
               </Typography>
               <Typography component="h1" sx={agenticPageSx.profileName}>

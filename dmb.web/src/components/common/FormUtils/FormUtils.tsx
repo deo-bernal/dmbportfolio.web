@@ -1,5 +1,7 @@
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
+import { formUtilsSx } from "styles/main_style";
 
 type FormMode = "view" | "edit";
 
@@ -30,7 +32,7 @@ export default function FormUtils({
 }: FormUtilsProps) {
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
+      <Box sx={formUtilsSx.actionsRow}>
         {mode === "view" ? (
           <Button variant="contained" onClick={onEdit}>
             Edit
@@ -47,8 +49,13 @@ export default function FormUtils({
                 <Button variant="outlined" onClick={onCancel} disabled={isSaving}>
                   Cancel
                 </Button>
-                <Button variant="contained" onClick={onSave} disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save"}
+                <Button
+                  variant="contained"
+                  onClick={() => void onSave()}
+                  disabled={isSaving}
+                  startIcon={isSaving ? <ButtonLoadingIcon /> : null}
+                >
+                  Save
                 </Button>
               </>
             ) : null}

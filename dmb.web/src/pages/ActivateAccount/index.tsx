@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import { Box, Button, Card, Container, FormHelperText, Link, Typography, CircularProgress } from "@mui/material";
 import axios from "axios";
-import { LoginMainContent, LoginTopWrapper, loginPageSx } from "styles/main_style";
-import { loginJwtSx } from "styles/main_style";
+import { LoginMainContent, LoginTopWrapper, authFlowSx, loginPageSx, loginJwtSx } from "styles/main_style";
 import api from "services/http.service";
 import type { ActivateAccountRequest, ActivateStatus, ApiMessageResponse } from "models";
 
@@ -71,13 +70,13 @@ export default function ActivateAccount() {
 
             <Box sx={loginJwtSx.form}>
               {status === "loading" ? (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                <Box sx={authFlowSx.activateLoadingBox}>
                   <CircularProgress />
                 </Box>
               ) : null}
 
               {status === "success" ? (
-                <Typography color="success.main" sx={{ mb: 2 }}>
+                <Typography color="success.main" sx={authFlowSx.successMessage}>
                   {message}
                 </Typography>
               ) : null}
@@ -100,8 +99,8 @@ export default function ActivateAccount() {
             </Box>
 
             {status === "error" && tokenFromUrl ? (
-              <Box sx={{ mt: 2, textAlign: "right" }}>
-                <Link component={RouterLink} to="/register" sx={{ fontWeight: 700 }}>
+              <Box sx={authFlowSx.footerRow}>
+                <Link component={RouterLink} to="/register" sx={authFlowSx.footerLink}>
                   Register again
                 </Link>
               </Box>

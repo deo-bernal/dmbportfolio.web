@@ -88,10 +88,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
         <Box sx={agenticPageSx.panelBody}>
           <Box component="header" sx={agenticPageSx.headerRow}>
             <Box sx={agenticPageSx.headerLeft}>
-              <Typography
-                component="p"
-                sx={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#64748b", mb: 0.5 }}
-              >
+              <Typography component="p" sx={agenticPageSx.pageKindLabel}>
                 Portfolio
               </Typography>
               <Typography
@@ -102,21 +99,13 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
                 {activeProfile.name}
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap", width: { xs: "100%", sm: "auto" } }}>
+            <Box sx={agenticPageSx.headerActionsRow}>
               {!isEditing ? (
-                <Button
-                  variant="outlined"
-                  onClick={() => setIsEditing(true)}
-                  sx={{ width: { xs: "100%", sm: "auto" } }}
-                >
+                <Button variant="outlined" onClick={() => setIsEditing(true)} sx={agenticPageSx.headerOutlinedButton}>
                   {isCreateMode ? "Create portfolio" : "Edit portfolio"}
                 </Button>
               ) : (
-                <Button
-                  variant="outlined"
-                  onClick={() => setIsEditing(false)}
-                  sx={{ width: { xs: "100%", sm: "auto" } }}
-                >
+                <Button variant="outlined" onClick={() => setIsEditing(false)} sx={agenticPageSx.headerOutlinedButton}>
                   Back to view
                 </Button>
               )}

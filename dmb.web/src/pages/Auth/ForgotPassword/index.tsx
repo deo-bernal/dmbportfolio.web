@@ -13,13 +13,12 @@ import {
   Slide,
   TextField,
   Typography,
-  CircularProgress,
 } from "@mui/material";
 import type { TransitionProps } from "@mui/material/transitions";
 import axios from "axios";
 import { forgotPasswordSchema } from "validations/schema/auth";
-import { LoginMainContent, LoginTopWrapper, loginPageSx } from "styles/main_style";
-import { loginJwtSx } from "styles/main_style";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
+import { LoginMainContent, LoginTopWrapper, authFlowSx, loginPageSx, loginJwtSx } from "styles/main_style";
 import api from "services/http.service";
 import type { ApiMessageResponse, ForgotFormValues, ForgotPasswordRequest } from "models";
 
@@ -96,7 +95,7 @@ export default function ForgotPassword() {
                 variant="contained"
                 disableElevation
                 disabled={isSubmitting}
-                startIcon={isSubmitting ? <CircularProgress size="1rem" sx={loginJwtSx.submitSpinner} /> : null}
+                startIcon={isSubmitting ? <ButtonLoadingIcon /> : null}
               >
                 Send reset link
               </Button>
@@ -107,11 +106,11 @@ export default function ForgotPassword() {
               ) : null}
             </Box>
 
-            <Box sx={{ mt: 2, textAlign: "right" }}>
-              <Typography component="span" variant="subtitle2" color="text.primary" sx={{ fontWeight: 700 }}>
+            <Box sx={authFlowSx.footerRow}>
+              <Typography component="span" variant="subtitle2" color="text.primary" sx={authFlowSx.footerStrong}>
                 Want to sign in again?{" "}
               </Typography>
-              <Link component={RouterLink} to="/login" sx={{ fontWeight: 700 }}>
+              <Link component={RouterLink} to="/login" sx={authFlowSx.footerLink}>
                 Back to login
               </Link>
             </Box>
@@ -127,11 +126,11 @@ export default function ForgotPassword() {
         slots={{ transition: Transition }}
         keepMounted
       >
-        <Box sx={{ px: 4, pb: 4, pt: 4 }}>
-          <Typography variant="h3" align="center" sx={{ mb: 2 }}>
+        <Box sx={authFlowSx.dialogContent}>
+          <Typography variant="h3" sx={authFlowSx.dialogHeading}>
             Check your email
           </Typography>
-          <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
+          <Typography variant="body1" color="text.secondary" sx={authFlowSx.dialogBody}>
             If that address is registered, password reset instructions have been sent. The link expires in one hour.
           </Typography>
           <Button component={RouterLink} to="/login" fullWidth size="large" variant="contained">

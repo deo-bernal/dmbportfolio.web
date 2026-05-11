@@ -11,7 +11,6 @@ import {
   Link,
   TextField,
   Typography,
-  CircularProgress,
   InputAdornment,
   IconButton,
   Tooltip,
@@ -20,8 +19,8 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "axios";
 import { Controller } from "react-hook-form";
 import { resetPasswordSchema } from "validations/schema/auth";
-import { LoginMainContent, LoginTopWrapper, loginPageSx } from "styles/main_style";
-import { loginJwtSx } from "styles/main_style";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
+import { LoginMainContent, LoginTopWrapper, authFlowSx, loginPageSx, loginJwtSx } from "styles/main_style";
 import api from "services/http.service";
 import type { ApiMessageResponse, ResetFormValues, ResetPasswordRequest } from "models";
 
@@ -83,7 +82,7 @@ export default function ResetPassword() {
             </Box>
 
             {!tokenFromUrl ? (
-              <Typography color="error" sx={{ mb: 2 }}>
+              <Typography color="error" sx={authFlowSx.errorBanner}>
                 This page needs a valid reset link. Request a new one from forgot password.
               </Typography>
             ) : null}
@@ -167,7 +166,7 @@ export default function ResetPassword() {
                 variant="contained"
                 disableElevation
                 disabled={isSubmitting || !tokenFromUrl}
-                startIcon={isSubmitting ? <CircularProgress size="1rem" sx={loginJwtSx.submitSpinner} /> : null}
+                startIcon={isSubmitting ? <ButtonLoadingIcon /> : null}
               >
                 Update password
               </Button>
@@ -178,8 +177,8 @@ export default function ResetPassword() {
               ) : null}
             </Box>
 
-            <Box sx={{ mt: 2, textAlign: "right" }}>
-              <Link component={RouterLink} to="/login" sx={{ fontWeight: 700 }}>
+            <Box sx={authFlowSx.footerRow}>
+              <Link component={RouterLink} to="/login" sx={authFlowSx.footerLink}>
                 Back to login
               </Link>
             </Box>

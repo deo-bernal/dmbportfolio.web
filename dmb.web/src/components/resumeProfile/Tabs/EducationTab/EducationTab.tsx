@@ -9,6 +9,7 @@ import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import EducationModal, { type EducationFieldKey } from "./EducationModal";
 import getColumns, { type EducationGridRow } from "./columns";
 import EducationFilter from "./TableSections/EducationFilter";
+import { agenticPageSx } from "styles/main_style";
 
 function mapYupFieldErrors(error: Yup.ValidationError): Partial<Record<EducationFieldKey, string>> {
   const out: Partial<Record<EducationFieldKey, string>> = {};
@@ -227,7 +228,7 @@ export default function EducationTab({ draft, setDraft, onImmediateSave }: Resum
   }, [rows, query]);
 
   return (
-    <Box sx={{ display: "grid", gap: 2 }}>
+    <Box sx={agenticPageSx.editGrid}>
       <Button variant="outlined" onClick={openAdd} fullWidth>
         Add Education
       </Button>

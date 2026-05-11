@@ -5,6 +5,7 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import type { DataTableColumn } from "components/common/Datatable";
+import { dataGridRowActionsSx } from "styles/main_style";
 import { isoDateToAu } from "utils/date";
 
 export type WorkHistoryGridRow = {
@@ -36,8 +37,8 @@ export default function getColumns(actions: Actions): DataTableColumn<WorkHistor
         <Stack
           direction="row"
           spacing={1}
-          divider={<Divider orientation="vertical" flexItem sx={{ alignSelf: "stretch", my: 0.5 }} />}
-          sx={{ flexWrap: "wrap" }}
+          divider={<Divider orientation="vertical" flexItem sx={dataGridRowActionsSx.stackDivider} />}
+          sx={dataGridRowActionsSx.stack}
         >
           <Tooltip title="Edit">
             <IconButton size="small" onClick={() => actions.onEdit(row)} aria-label="Edit">

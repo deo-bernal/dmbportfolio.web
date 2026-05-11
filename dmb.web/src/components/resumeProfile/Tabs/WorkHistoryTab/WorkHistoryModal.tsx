@@ -6,6 +6,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { dateToIsoDate, isoDateToDate } from "utils/date";
+import { modalDialogSx } from "styles/main_style";
 
 type WorkHistoryModalProps = {
   open: boolean;
@@ -47,7 +48,7 @@ export default function WorkHistoryModal({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ display: "grid", gap: 1.5 }}>
+      <DialogContent sx={modalDialogSx.contentGrid}>
         <TextField autoFocus margin="dense" fullWidth label="Company" value={company} onChange={(e) => onCompanyChange(e.target.value)} />
         <TextField margin="dense" fullWidth label="Position" value={position} onChange={(e) => onPositionChange(e.target.value)} />
         <DatePicker

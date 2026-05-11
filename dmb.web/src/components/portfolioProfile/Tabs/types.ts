@@ -10,5 +10,7 @@ export type TabViewProps = {
   setDraft: Dispatch<SetStateAction<Profile>>;
   cloneProfile: (profile: Profile) => Profile;
   onImmediatePersist: (nextProfile: Profile, successMessage: string) => Promise<void>;
+  /** True while `onImmediatePersist` / profile save is in flight (for button spinners). */
+  isPersisting?: boolean;
 };
 

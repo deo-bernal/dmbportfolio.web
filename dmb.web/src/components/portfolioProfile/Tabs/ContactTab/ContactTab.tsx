@@ -21,7 +21,7 @@ export default function ContactTab({ profile, draft, mode, setDraft }: TabViewPr
   }
 
   return (
-    <Box sx={{ display: "grid", gap: 2 }}>
+    <Box sx={agenticPageSx.editGrid}>
       <PageHeader title="Contact" subtitle="Update your contact details" />
       <TextField
         label="Email"

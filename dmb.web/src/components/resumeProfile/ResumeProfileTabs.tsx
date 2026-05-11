@@ -70,7 +70,7 @@ export default function ResumeProfileTabs({ profile, onSave }: ResumeProfileTabs
         onChange={(_, value) => setActiveTab(value)}
         variant="scrollable"
         allowScrollButtonsMobile
-        sx={{ mb: 2 }}
+        sx={agenticPageSx.tabsMarginBottom}
       >
         <Tab label="Personal Info" value="personalInfo" />
         <Tab label="Work History" value="workHistory" />
@@ -86,7 +86,7 @@ export default function ResumeProfileTabs({ profile, onSave }: ResumeProfileTabs
         isSaving={isSaving}
         showSaveCancelActions={activeTab === "personalInfo"}
       >
-        {saveError ? <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert> : null}
+        {saveError ? <Alert severity="error" sx={agenticPageSx.alertBelowTabs}>{saveError}</Alert> : null}
         {activeTab === "personalInfo" ? <PersonalInfoTab draft={draft} setDraft={setDraft} /> : null}
         {activeTab === "workHistory" ? <WorkHistoryTab draft={draft} setDraft={setDraft} /> : null}
         {activeTab === "education" ? <EducationTab draft={draft} setDraft={setDraft} onImmediateSave={immediateSave} /> : null}

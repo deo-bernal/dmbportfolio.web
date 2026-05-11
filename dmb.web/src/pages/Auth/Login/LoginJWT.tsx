@@ -8,7 +8,6 @@ import {
   Button,
   FormHelperText,
   TextField,
-  CircularProgress,
   InputAdornment,
   IconButton,
   Tooltip,
@@ -20,7 +19,8 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "axios";
 import useAuth from "hooks/useAuth";
 import { authSchema } from "validations/schema/auth";
-import { loginJwtSx } from "styles/main_style";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
+import { loginJwtSubmitButtonSignInSx, loginJwtSx } from "styles/main_style";
 import type { ApiMessageResponse, AuthFormValues } from "models";
 
 const LoginJWT: FC = () => {
@@ -123,18 +123,8 @@ const LoginJWT: FC = () => {
       />
 
       <Button
-        sx={{
-          ...loginJwtSx.submitButton,
-          bgcolor: "rgba(185, 28, 28, 0.7)",
-          borderColor: "rgba(248, 113, 113, 0.35)",
-          "&:hover": {
-            bgcolor: "rgba(153, 27, 27, 0.82)",
-            borderColor: "rgba(248, 113, 113, 0.45)",
-          },
-        }}
-        startIcon={
-          isSubmitting ? <CircularProgress size="1rem" sx={loginJwtSx.submitSpinner} /> : null
-        }
+        sx={loginJwtSubmitButtonSignInSx}
+        startIcon={isSubmitting ? <ButtonLoadingIcon /> : null}
         disabled={isSubmitting}
         type="submit"
         fullWidth
@@ -144,20 +134,11 @@ const LoginJWT: FC = () => {
       >
         Sign in
       </Button>
-      <Box
-        sx={{
-          mt: 1,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 1,
-        }}
-      >
-        <Link component={RouterLink} to="/register" variant="body2" underline="hover" sx={{ fontWeight: 600 }}>
+      <Box sx={loginJwtSx.authLinksRow}>
+        <Link component={RouterLink} to="/register" variant="body2" underline="hover" sx={loginJwtSx.authLinkEmphasis}>
           Create account
         </Link>
-        <Link component={RouterLink} to="/forgot-password" variant="body2" underline="hover" sx={{ fontWeight: 600 }}>
+        <Link component={RouterLink} to="/forgot-password" variant="body2" underline="hover" sx={loginJwtSx.authLinkEmphasis}>
           Forgot password?
         </Link>
       </Box>

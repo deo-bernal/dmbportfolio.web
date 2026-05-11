@@ -13,7 +13,6 @@ import {
   Slide,
   TextField,
   Typography,
-  CircularProgress,
   InputAdornment,
   IconButton,
   Tooltip,
@@ -22,8 +21,8 @@ import type { TransitionProps } from "@mui/material/transitions";
 import axios from "axios";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { registerSchema } from "validations/schema/auth";
-import { LoginMainContent, LoginTopWrapper, loginPageSx } from "styles/main_style";
-import { loginJwtSx } from "styles/main_style";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
+import { LoginMainContent, LoginTopWrapper, authFlowSx, loginPageSx, loginJwtSx } from "styles/main_style";
 import api from "services/http.service";
 import type { ApiMessageResponse, RegisterFormValues, RegisterRequest } from "models";
 
@@ -176,7 +175,7 @@ export default function Register() {
                 variant="contained"
                 disableElevation
                 disabled={isSubmitting}
-                startIcon={isSubmitting ? <CircularProgress size="1rem" sx={loginJwtSx.submitSpinner} /> : null}
+                startIcon={isSubmitting ? <ButtonLoadingIcon /> : null}
               >
                 Register
               </Button>
@@ -187,11 +186,11 @@ export default function Register() {
               ) : null}
             </Box>
 
-            <Box sx={{ mt: 2, textAlign: "right" }}>
-              <Typography component="span" variant="subtitle2" color="text.primary" sx={{ fontWeight: 700 }}>
+            <Box sx={authFlowSx.footerRow}>
+              <Typography component="span" variant="subtitle2" color="text.primary" sx={authFlowSx.footerStrong}>
                 Already have an account?{" "}
               </Typography>
-              <Link component={RouterLink} to="/login" sx={{ fontWeight: 700 }}>
+              <Link component={RouterLink} to="/login" sx={authFlowSx.footerLink}>
                 Sign in
               </Link>
             </Box>
@@ -207,11 +206,11 @@ export default function Register() {
         slots={{ transition: Transition }}
         keepMounted
       >
-        <Box sx={{ px: 4, pb: 4, pt: 4 }}>
-          <Typography variant="h3" align="center" sx={{ mb: 2 }}>
+        <Box sx={authFlowSx.dialogContent}>
+          <Typography variant="h3" sx={authFlowSx.dialogHeading}>
             Check your email
           </Typography>
-          <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
+          <Typography variant="body1" color="text.secondary" sx={authFlowSx.dialogBody}>
             We sent an activation link to your address. Open it to confirm your email before signing in. The link expires
             in 48 hours.
           </Typography>

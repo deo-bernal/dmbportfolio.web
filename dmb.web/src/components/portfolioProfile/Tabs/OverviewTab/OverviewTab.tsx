@@ -48,7 +48,7 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
         <Typography component="p" sx={agenticPageSx.summary}>
           {profile.summary}
         </Typography>
-        <Typography component="p" sx={{ mt: 1, color: "#475569" }}>
+        <Typography component="p" sx={agenticPageSx.overviewViewableLine}>
           <strong>Is Viewable:</strong> {profile.isViewable ? "Yes" : "No"}
         </Typography>
       </>
@@ -56,7 +56,7 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
   }
 
   return (
-    <Box sx={{ display: "grid", gap: 2 }}>
+    <Box sx={agenticPageSx.editGrid}>
       <PageHeader title="Overview" subtitle="Update your profile summary and intro video" />
       <TextField
         label="Summary"
@@ -73,8 +73,8 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
         value={draft.video}
         onChange={(e) => setDraft((prev) => ({ ...prev, video: e.target.value }))}
       />
-      <Box sx={{ display: "grid", gap: 1 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+      <Box sx={agenticPageSx.editGridTight}>
+        <Box sx={agenticPageSx.overviewSettingsRow}>
           <FormControlLabel
             control={
               <Checkbox
@@ -83,15 +83,15 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
               />
             }
             label="Is Viewable (allow anonymous viewing)"
-            sx={{ m: 0 }}
+            sx={agenticPageSx.formControlLabelFlush}
           />
           {draft.isViewable ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: { xs: "100%", sm: 420 }, flex: 1 }}>
+            <Box sx={agenticPageSx.overviewPublicUrlRow}>
               <TextField
                 label="Public Profile"
                 value={publicPortfolioUrl}
                 slotProps={{ input: { readOnly: true } }}
-                sx={{ flex: 1 }}
+                sx={agenticPageSx.overviewPublicUrlField}
               />
               <Tooltip title="Copy public URL">
                 <IconButton onClick={copyPublicPortfolioUrl} aria-label="Copy public profile URL">

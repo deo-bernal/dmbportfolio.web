@@ -8,6 +8,7 @@ import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import WorkHistoryModal from "./WorkHistoryModal";
 import getColumns, { type WorkHistoryGridRow } from "./columns";
 import WorkHistoryFilter from "./TableSections/WorkHistoryFilter";
+import { agenticPageSx } from "styles/main_style";
 
 export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
   const { enqueueSnackbar } = useSnackbar();
@@ -169,7 +170,7 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
   }, [rows, query]);
 
   return (
-    <Box sx={{ display: "grid", gap: 2 }}>
+    <Box sx={agenticPageSx.editGrid}>
       <Button variant="outlined" onClick={openAdd} fullWidth>
         Add Work History
       </Button>

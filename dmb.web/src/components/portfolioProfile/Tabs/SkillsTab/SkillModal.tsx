@@ -4,6 +4,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
 
 type SkillModalProps = {
   open: boolean;
@@ -12,8 +13,9 @@ type SkillModalProps = {
   error: string | null;
   onClose: () => void;
   onValueChange: (value: string) => void;
-  onSubmit: () => void;
+  onSubmit: () => void | Promise<void>;
   submitLabel?: string;
+  isSubmitting?: boolean;
 };
 
 export default function SkillModal({
@@ -25,9 +27,10 @@ export default function SkillModal({
   onValueChange,
   onSubmit,
   submitLabel = "Save",
+  isSubmitting = false,
 }: SkillModalProps) {
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <TextField
@@ -49,12 +52,18 @@ export default function SkillModal({
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={onSubmit}>
+        <Button onClick={onClose} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => void onSubmit()}
+          disabled={isSubmitting}
+          startIcon={isSubmitting ? <ButtonLoadingIcon /> : null}
+        >
           {submitLabel}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
-

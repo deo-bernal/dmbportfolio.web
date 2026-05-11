@@ -8,6 +8,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useSnackbar } from "notistack";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
 import DataTable from "components/common/Datatable";
 import { agenticPageSx } from "styles/main_style";
 import { addCategorySchema, addProjectItemSchema } from "validations/schema/projectsTab";
@@ -29,7 +30,14 @@ type EditTarget =
   | { kind: "project"; categoryIndex: number; itemIndex: number }
   | null;
 
-export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImmediatePersist }: TabViewProps) {
+export default function ProjectsTab({
+  profile,
+  draft,
+  mode,
+  cloneProfile,
+  onImmediatePersist,
+  isPersisting = false,
+}: TabViewProps) {
   const { enqueueSnackbar } = useSnackbar();
   const [query, setQuery] = useState("");
 
@@ -314,14 +322,14 @@ export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImme
   }
 
   return (
-    <Box sx={{ display: "grid", gap: 3 }}>
+    <Box sx={agenticPageSx.portfolioProjectsEditRoot}>
       <PageHeader title="Projects" subtitle="Manage project categories and items" />
 
       <Button variant="outlined" onClick={openCategoryModal}>
         Add New Category
       </Button>
 
-      <Dialog open={isCategoryModalOpen} onClose={closeCategoryModal} fullWidth maxWidth="sm">
+      <Dialog open={isCategoryModalOpen} onClose={isPersisting ? undefined : closeCategoryModal} fullWidth maxWidth="sm">
         <DialogTitle>Add project category</DialogTitle>
         <DialogContent>
           <TextField
@@ -345,8 +353,15 @@ export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImme
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeCategoryModal}>Cancel</Button>
-          <Button variant="contained" onClick={addCategory}>
+          <Button onClick={closeCategoryModal} disabled={isPersisting}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void addCategory()}
+            disabled={isPersisting}
+            startIcon={isPersisting ? <ButtonLoadingIcon /> : null}
+          >
             Add
           </Button>
         </DialogActions>
@@ -376,6 +391,7 @@ export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImme
         }}
         onSubmit={addProjectItem}
         submitLabel="Add"
+        isSubmitting={isPersisting}
       />
 
       <ProjectModal
@@ -394,6 +410,7 @@ export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImme
           if (projectError) setProjectError(null);
         }}
         onSubmit={saveProjectEdit}
+        isSubmitting={isPersisting}
       />
 
       <CategoryModal
@@ -411,6 +428,7 @@ export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImme
           if (categoryEditError) setCategoryEditError(null);
         }}
         onSubmit={saveCategoryEdit}
+        isSubmitting={isPersisting}
       />
 
       <ConfirmDeleteModal
@@ -423,6 +441,7 @@ export default function ProjectsTab({ profile, draft, mode, cloneProfile, onImme
         }
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
+        isBusy={isPersisting}
       />
     </Box>
   );

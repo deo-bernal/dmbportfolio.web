@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import { agenticPageSx } from "styles/main_style";
 
 type PageHeaderProps = {
   title: string;
@@ -8,12 +9,12 @@ type PageHeaderProps = {
 
 export default function PageHeader({ title, subtitle }: PageHeaderProps) {
   return (
-    <Box sx={{ mb: 2 }}>
-      <Typography component="h3" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
+    <Box sx={agenticPageSx.pageHeaderWrap}>
+      <Typography component="h3" sx={agenticPageSx.pageHeaderTitle}>
         {title}
       </Typography>
       {subtitle ? (
-        <Typography component="p" sx={{ color: "#64748b", m: 0 }}>
+        <Typography component="p" sx={agenticPageSx.pageHeaderSubtitle}>
           {subtitle}
         </Typography>
       ) : null}

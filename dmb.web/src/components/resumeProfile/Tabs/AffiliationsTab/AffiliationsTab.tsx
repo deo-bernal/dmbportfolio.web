@@ -9,6 +9,7 @@ import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import AffiliationsModal, { type AffiliationFieldKey } from "./AffiliationsModal";
 import getColumns, { type AffiliationGridRow } from "./columns";
 import AffiliationsFilter from "./TableSections/AffiliationsFilter";
+import { agenticPageSx } from "styles/main_style";
 
 function mapYupFieldErrors(error: Yup.ValidationError): Partial<Record<AffiliationFieldKey, string>> {
   const out: Partial<Record<AffiliationFieldKey, string>> = {};
@@ -225,7 +226,7 @@ export default function AffiliationsTab({ draft, setDraft, onImmediateSave }: Re
   }, [rows, query]);
 
   return (
-    <Box sx={{ display: "grid", gap: 2 }}>
+    <Box sx={agenticPageSx.editGrid}>
       <Button variant="outlined" onClick={openAdd} fullWidth>
         Add Affiliation
       </Button>

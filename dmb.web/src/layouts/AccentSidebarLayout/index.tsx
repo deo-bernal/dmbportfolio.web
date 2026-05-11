@@ -1,21 +1,17 @@
+import { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import api from "services/http.service";
 import useAuth from "hooks/useAuth";
-import { layoutShellSx } from "styles/main_style";
+import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
+import { layoutShellSidebarCtaButtonSx, layoutShellSx, shellNavItemSx } from "styles/main_style";
 
 function ShellNavItem({ to, label, end }: { to: string; label: string; end?: boolean }) {
   return (
     <NavLink to={to} end={end} style={{ textDecoration: "none" }}>
       {({ isActive }) => (
-        <Box
-          component="span"
-          sx={{
-            ...layoutShellSx.navItem,
-            ...(isActive ? layoutShellSx.navItemActive : {}),
-          }}
-        >
+        <Box component="span" sx={shellNavItemSx(isActive)}>
           {label}
         </Box>
       )}
@@ -27,12 +23,14 @@ export default function AccentSidebarLayout() {
   const auth = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [logoutBusy, setLogoutBusy] = useState(false);
   const { username } = useParams<{ username?: string }>();
   const isPublicRoute = Boolean(username) && !location.pathname.startsWith("/accent-sidebar");
   const portfolioPath = isPublicRoute ? `/${username}` : "/accent-sidebar/portfolio";
   const resumePath = isPublicRoute ? `/${username}/resume` : "/accent-sidebar/resume";
 
   const handleLogout = async () => {
+    setLogoutBusy(true);
     try {
       await api.post("/auth/logout");
     } catch {
@@ -53,47 +51,23 @@ export default function AccentSidebarLayout() {
         </Box>
 
         {!auth.isAuthenticated ? (
-          <Box sx={{ mt: 3 }}>
-            <Button
-              fullWidth
-              variant="contained"
-              disableElevation
-              onClick={() => navigate("/login")}
-              sx={{
-                ...layoutShellSx.navItemActive,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                bgcolor: "rgba(185, 28, 28, 0.7)",
-                borderColor: "rgba(248, 113, 113, 0.35)",
-                "&:hover": {
-                  bgcolor: "rgba(153, 27, 27, 0.82)",
-                  borderColor: "rgba(248, 113, 113, 0.45)",
-                },
-              }}
-            >
+          <Box sx={layoutShellSx.sidebarCtaWrap}>
+            <Button fullWidth variant="contained" disableElevation onClick={() => navigate("/login")} sx={layoutShellSidebarCtaButtonSx}>
               Log in
             </Button>
           </Box>
         ) : null}
 
         {auth.isAuthenticated && !isPublicRoute ? (
-          <Box sx={{ mt: 3 }}>
+          <Box sx={layoutShellSx.sidebarCtaWrap}>
             <Button
               fullWidth
               variant="contained"
               disableElevation
-              onClick={handleLogout}
-              sx={{
-                ...layoutShellSx.navItemActive,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                bgcolor: "rgba(185, 28, 28, 0.7)",
-                borderColor: "rgba(248, 113, 113, 0.35)",
-                "&:hover": {
-                  bgcolor: "rgba(153, 27, 27, 0.82)",
-                  borderColor: "rgba(248, 113, 113, 0.45)",
-                },
-              }}
+              onClick={() => void handleLogout()}
+              disabled={logoutBusy}
+              sx={layoutShellSidebarCtaButtonSx}
+              startIcon={logoutBusy ? <ButtonLoadingIcon /> : null}
             >
               Log out
             </Button>

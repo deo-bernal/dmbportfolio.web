@@ -8,6 +8,21 @@ export const pageFonts = {
   mono: '"IBM Plex Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace',
 } as const;
 
+/** EMS.WEB-style `CircularProgress` inside Button `startIcon` */
+export const buttonSpinnerSx = {
+  color: "inherit",
+} satisfies SxProps<Theme>;
+
+/** Login + sidebar primary CTAs (red accent) */
+export const accentRedContainedButtonSx = {
+  bgcolor: "rgba(185, 28, 28, 0.7)",
+  borderColor: "rgba(248, 113, 113, 0.35)",
+  "&:hover": {
+    bgcolor: "rgba(153, 27, 27, 0.82)",
+    borderColor: "rgba(248, 113, 113, 0.45)",
+  },
+} satisfies SxProps<Theme>;
+
 /** Panel surface — same visual language as LoginJWT form */
 export const agenticSurfaceSx = {
   panel: {
@@ -66,6 +81,44 @@ export const loginPageSx = {
     fontWeight: "normal",
     fontFamily: pageFonts.sans,
     color: "#475569",
+  } satisfies SxProps<Theme>,
+} as const;
+
+/** Forgot / register / reset / activate copy blocks */
+export const authFlowSx = {
+  footerRow: {
+    mt: 2,
+    textAlign: "right",
+  } satisfies SxProps<Theme>,
+  footerStrong: {
+    fontWeight: 700,
+  } satisfies SxProps<Theme>,
+  footerLink: {
+    fontWeight: 700,
+  } satisfies SxProps<Theme>,
+  dialogContent: {
+    px: 4,
+    pb: 4,
+    pt: 4,
+  } satisfies SxProps<Theme>,
+  dialogHeading: {
+    mb: 2,
+    textAlign: "center",
+  } satisfies SxProps<Theme>,
+  dialogBody: {
+    mb: 3,
+    textAlign: "center",
+  } satisfies SxProps<Theme>,
+  errorBanner: {
+    mb: 2,
+  } satisfies SxProps<Theme>,
+  successMessage: {
+    mb: 2,
+  } satisfies SxProps<Theme>,
+  activateLoadingBox: {
+    display: "flex",
+    justifyContent: "center",
+    py: 3,
   } satisfies SxProps<Theme>,
 } as const;
 
@@ -199,8 +252,19 @@ export const loginJwtSx = {
     },
   } satisfies SxProps<Theme>,
 
-  submitSpinner: {
-    color: "inherit",
+  submitSpinner: buttonSpinnerSx,
+
+  authLinksRow: {
+    mt: 1,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 1,
+  } satisfies SxProps<Theme>,
+
+  authLinkEmphasis: {
+    fontWeight: 600,
   } satisfies SxProps<Theme>,
 
   rootErrorHelper: {
@@ -211,6 +275,11 @@ export const loginJwtSx = {
     lineHeight: 1.5,
   } satisfies SxProps<Theme>,
 } as const;
+
+export const loginJwtSubmitButtonSignInSx = {
+  ...loginJwtSx.submitButton,
+  ...accentRedContainedButtonSx,
+} satisfies SxProps<Theme>;
 
 /* ——— App shell: sidebar + main (agentic gray) ——— */
 
@@ -294,7 +363,24 @@ export const layoutShellSx = {
     px: { xs: 2, sm: 3 },
     background: `linear-gradient(180deg, ${alpha("#f1f5f9", 1)} 0%, ${alpha("#e2e8f0", 0.55)} 48%, ${alpha("#cbd5e1", 0.35)} 100%)`,
   } satisfies SxProps<Theme>,
+
+  sidebarCtaWrap: {
+    mt: 3,
+  } satisfies SxProps<Theme>,
 } as const;
+
+export const layoutShellSidebarCtaButtonSx = {
+  ...layoutShellSx.navItemActive,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  ...accentRedContainedButtonSx,
+} satisfies SxProps<Theme>;
+
+export function shellNavItemSx(isActive: boolean): SxProps<Theme> {
+  return isActive
+    ? { ...layoutShellSx.navItem, ...layoutShellSx.navItemActive }
+    : layoutShellSx.navItem;
+}
 
 /* ——— Portfolio / Resume content ——— */
 
@@ -500,5 +586,281 @@ export const agenticPageSx = {
     color: "#64748b",
     lineHeight: 1.6,
     m: 0,
+  } satisfies SxProps<Theme>,
+
+  pageKindLabel: {
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: "#64748b",
+    mb: 0.5,
+  } satisfies SxProps<Theme>,
+
+  headerActionsRow: {
+    display: "flex",
+    gap: 1,
+    alignItems: "center",
+    flexWrap: "wrap",
+    width: { xs: "100%", sm: "auto" },
+  } satisfies SxProps<Theme>,
+
+  headerOutlinedButton: {
+    width: { xs: "100%", sm: "auto" },
+  } satisfies SxProps<Theme>,
+
+  overviewViewableLine: {
+    mt: 1,
+    color: "#475569",
+  } satisfies SxProps<Theme>,
+
+  editGrid: {
+    display: "grid",
+    gap: 2,
+  } satisfies SxProps<Theme>,
+
+  editGridTight: {
+    display: "grid",
+    gap: 1,
+  } satisfies SxProps<Theme>,
+
+  overviewSettingsRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 2,
+    flexWrap: "wrap",
+  } satisfies SxProps<Theme>,
+
+  formControlLabelFlush: {
+    m: 0,
+  } satisfies SxProps<Theme>,
+
+  overviewPublicUrlRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 1,
+    minWidth: { xs: "100%", sm: 420 },
+    flex: 1,
+  } satisfies SxProps<Theme>,
+
+  overviewPublicUrlField: {
+    flex: 1,
+  } satisfies SxProps<Theme>,
+
+  skillsViewList: {
+    m: 0,
+    pl: 3,
+  } satisfies SxProps<Theme>,
+
+  tabsMarginBottom: {
+    mb: 2,
+  } satisfies SxProps<Theme>,
+
+  alertBelowTabs: {
+    mb: 2,
+  } satisfies SxProps<Theme>,
+
+  pageHeaderWrap: {
+    mb: 2,
+  } satisfies SxProps<Theme>,
+
+  pageHeaderTitle: {
+    fontWeight: 700,
+    color: "#1e293b",
+    mb: 0.5,
+  } satisfies SxProps<Theme>,
+
+  pageHeaderSubtitle: {
+    color: "#64748b",
+    m: 0,
+  } satisfies SxProps<Theme>,
+
+  portfolioProjectsEditRoot: {
+    display: "grid",
+    gap: 3,
+  } satisfies SxProps<Theme>,
+
+  resumeSectionBlock: {
+    mb: 2,
+  } satisfies SxProps<Theme>,
+} as const;
+
+export const formUtilsSx = {
+  actionsRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 1,
+    mb: 2,
+  } satisfies SxProps<Theme>,
+} as const;
+
+export const modalDialogSx = {
+  contentGrid: {
+    display: "grid",
+    gap: 1.5,
+  } satisfies SxProps<Theme>,
+} as const;
+
+export const dataTableSx = {
+  emptyMessage: {
+    color: "#64748b",
+  } satisfies SxProps<Theme>,
+  mobileStack: {
+    display: "grid",
+    gap: 1.5,
+  } satisfies SxProps<Theme>,
+  mobileCardContent: {
+    display: "grid",
+    gap: 1,
+  } satisfies SxProps<Theme>,
+  mobileCellColumn: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 0.5,
+  } satisfies SxProps<Theme>,
+  mobileCellColumnActions: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 0.5,
+  } satisfies SxProps<Theme>,
+  mobileHeaderCaption: {
+    fontWeight: 700,
+    color: "#64748b",
+    letterSpacing: "0.02em",
+    textTransform: "uppercase",
+  } satisfies SxProps<Theme>,
+  mobileHeaderCaptionActions: {
+    fontWeight: 700,
+    color: "#64748b",
+    letterSpacing: "0.02em",
+    textTransform: "uppercase",
+    textAlign: "center",
+    width: "100%",
+  } satisfies SxProps<Theme>,
+  mobileValueCell: {
+    textAlign: "left",
+    width: "100%",
+  } satisfies SxProps<Theme>,
+  mobileValueCellActions: {
+    textAlign: "center",
+    width: "100%",
+    "& .MuiStack-root": {
+      width: "100%",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    "& .MuiIconButton-root": { flexShrink: 0 },
+    "& .MuiStack-root > span": { display: "inline-flex", flexShrink: 0 },
+  } satisfies SxProps<Theme>,
+  mobileBodyTypography: {
+    textAlign: "justify",
+    hyphens: "auto",
+    wordBreak: "break-word",
+  } satisfies SxProps<Theme>,
+  mobileValueCellDefault: {
+    "& .MuiButton-root": { justifyContent: "flex-start", px: 0, minWidth: 0 },
+  } satisfies SxProps<Theme>,
+  mobileDivider: {
+    mt: 1,
+  } satisfies SxProps<Theme>,
+  fullWidth: {
+    width: "100%",
+  } satisfies SxProps<Theme>,
+
+  paper: {
+    borderRadius: 2,
+    overflowX: "auto",
+  } satisfies SxProps<Theme>,
+  gridRoot: {
+    border: 0,
+    "& .MuiDataGrid-columnHeaders": {
+      backgroundColor: "#f8fafc",
+      borderBottom: "1px solid rgba(15, 23, 42, 0.12)",
+    },
+    "& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell": {
+      px: 2,
+    },
+    "& .MuiDataGrid-columnHeader": {
+      justifyContent: "center",
+    },
+    "& .MuiDataGrid-columnHeaderTitleContainer": {
+      justifyContent: "center",
+    },
+    "& .MuiDataGrid-columnHeaderTitle": {
+      fontWeight: 700,
+      textAlign: "center",
+      width: "100%",
+    },
+    "& .MuiDataGrid-cell": {
+      borderBottom: "1px solid rgba(15, 23, 42, 0.08)",
+    },
+    '& .MuiDataGrid-columnHeader[data-field="actions"]': {
+      display: "flex",
+      justifyContent: "center",
+    },
+    '& .MuiDataGrid-cell[data-field="actions"]': {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    "& .MuiDataGrid-row:hover": {
+      backgroundColor: "rgba(2, 6, 23, 0.02)",
+    },
+    "& .MuiTablePagination-toolbar": {
+      minHeight: 56,
+      alignItems: "center",
+      gap: 1,
+      paddingTop: 0,
+      paddingBottom: 0,
+    },
+    "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+      margin: 0,
+      alignSelf: "center",
+    },
+    "& .MuiTablePagination-input": {
+      margin: 0,
+      alignSelf: "center",
+    },
+    "& .MuiTablePagination-actions": {
+      marginLeft: 0,
+      alignSelf: "center",
+      display: "flex",
+      alignItems: "center",
+    },
+  } satisfies SxProps<Theme>,
+} as const;
+
+export const tableFilterSx = {
+  card: {
+    p: 2,
+    display: "flex",
+    alignItems: "center",
+  } satisfies SxProps<Theme>,
+  title: {
+    cursor: "pointer",
+    flex: 1,
+    fontWeight: 600,
+    color: "#475569",
+  } satisfies SxProps<Theme>,
+  collapse: {
+    width: "100%",
+  } satisfies SxProps<Theme>,
+  inner: {
+    width: "100%",
+  } satisfies SxProps<Theme>,
+  toggleIcon: {
+    ml: 1,
+  } satisfies SxProps<Theme>,
+} as const;
+
+export const dataGridRowActionsSx = {
+  stackDivider: {
+    alignSelf: "stretch",
+    my: 0.5,
+  } satisfies SxProps<Theme>,
+  stack: {
+    flexWrap: "wrap",
   } satisfies SxProps<Theme>,
 } as const;
