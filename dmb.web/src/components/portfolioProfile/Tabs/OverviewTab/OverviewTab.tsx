@@ -1,5 +1,11 @@
+import { useState } from "react";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
@@ -11,8 +17,10 @@ import { agenticPageSx } from "styles/main_style";
 import type { TabViewProps } from "../types";
 import PageHeader from "../PageHeader";
 
-export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewProps) {
+export default function OverviewTab({ profile, draft, mode, setDraft, onDeleteAccount, isPersisting = false }: TabViewProps) {
   const { enqueueSnackbar } = useSnackbar();
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const publicPortfolioUrl = profile.username ? `https://www.dmbwebsolutions.com/${profile.username}` : "";
 
   const copyUrl = async (value: string, missingMessage: string) => {
@@ -34,6 +42,21 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
       return;
     }
     await copyUrl(publicPortfolioUrl, "Public portfolio URL is unavailable.");
+  };
+
+  const confirmDeleteAccount = async () => {
+    if (!onDeleteAccount) return;
+
+    setIsDeletingAccount(true);
+    try {
+      await onDeleteAccount();
+      enqueueSnackbar("Your account has been deleted.", { variant: "success" });
+    } catch (error: any) {
+      enqueueSnackbar(error?.response?.data?.message ?? "Unable to delete account.", { variant: "error" });
+    } finally {
+      setIsDeletingAccount(false);
+      setIsDeleteConfirmOpen(false);
+    }
   };
 
   if (mode === "view") {
@@ -102,6 +125,39 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
           ) : null}
         </Box>
       </Box>
+      <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={() => setIsDeleteConfirmOpen(true)}
+          disabled={!onDeleteAccount || isPersisting || isDeletingAccount}
+        >
+          Delete Account
+        </Button>
+      </Box>
+
+      <Dialog
+        open={isDeleteConfirmOpen}
+        onClose={isDeletingAccount ? undefined : () => setIsDeleteConfirmOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Delete Account</DialogTitle>
+        <DialogContent>
+          <Typography>
+            This will permanently delete your account and all related portfolio/resume records. This action cannot be
+            undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsDeleteConfirmOpen(false)} disabled={isDeletingAccount}>
+            Cancel
+          </Button>
+          <Button color="error" variant="contained" onClick={() => void confirmDeleteAccount()} disabled={isDeletingAccount}>
+            Delete Account
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

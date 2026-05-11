@@ -15,6 +15,7 @@ import { ContactTab, OverviewTab, ProjectsTab, SkillsTab } from "./Tabs";
 type PortfolioProfileTabsProps = {
   profile: Profile;
   onSave: (profile: Profile, mode: "create" | "update") => Promise<void>;
+  onDeleteAccount?: () => Promise<void>;
   initialMode?: "view" | "edit";
   saveMode?: "create" | "update";
 };
@@ -58,6 +59,7 @@ function normalizeProfileForSave(profile: Profile): Profile {
 export default function PortfolioProfileTabs({
   profile,
   onSave,
+  onDeleteAccount,
   initialMode = "view",
   saveMode = "update",
 }: PortfolioProfileTabsProps) {
@@ -180,6 +182,8 @@ export default function PortfolioProfileTabs({
             setDraft={setDraft}
             cloneProfile={cloneProfile}
             onImmediatePersist={persistProfileImmediately}
+            onDeleteAccount={onDeleteAccount}
+            isPersisting={isSaving}
           />
         ) : null}
         {activeTab === "skills" ? (

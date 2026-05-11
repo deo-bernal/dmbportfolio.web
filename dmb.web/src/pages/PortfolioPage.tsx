@@ -61,6 +61,11 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
     await dispatch(getProfile(onLogout) as any);
   };
 
+  const handleDeleteAccount = async () => {
+    await api.delete("/account");
+    onLogout();
+  };
+
   if (!profile && isLoading) {
     return (
       <Container sx={agenticPageSx.container}>
@@ -116,6 +121,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
           <PortfolioProfileTabs
             profile={activeProfile}
             onSave={handleSaveProfile}
+            onDeleteAccount={handleDeleteAccount}
             initialMode="edit"
             saveMode={isCreateMode ? "create" : "update"}
           />
