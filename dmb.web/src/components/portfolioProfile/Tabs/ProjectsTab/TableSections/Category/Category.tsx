@@ -8,7 +8,6 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
 import DataTable from "components/common/Datatable";
-import type { AutocompleteFilterOption } from "components/common/Filter/AutocompleteFilter/AutocompleteFilter";
 import { agenticPageSx } from "styles/main_style";
 import type { DataTableColumn } from "components/common/Datatable";
 import CategoryFilter from "./CategoryFilter";
@@ -26,9 +25,6 @@ export type ProjectsTabCategorySectionProps = {
 
   categoryQuery: string;
   onCategoryQueryChange: (value: string) => void;
-  selectedCategoryTags: AutocompleteFilterOption[];
-  onSelectedCategoryTagsChange: (value: AutocompleteFilterOption[]) => void;
-  categoryAutocompleteOptions: AutocompleteFilterOption[];
 
   filteredCategoryRows: CategoryGridRow[];
   categoryColumns: DataTableColumn<CategoryGridRow>[];
@@ -46,9 +42,6 @@ export default function Category(props: ProjectsTabCategorySectionProps) {
     isPersisting,
     categoryQuery,
     onCategoryQueryChange,
-    selectedCategoryTags,
-    onSelectedCategoryTagsChange,
-    categoryAutocompleteOptions,
     filteredCategoryRows,
     categoryColumns,
   } = props;
@@ -92,10 +85,7 @@ export default function Category(props: ProjectsTabCategorySectionProps) {
         </DialogActions>
       </Dialog>
 
-      <CategoryFilter
-        categoryQuery={categoryQuery}
-        onCategoryQueryChange={onCategoryQueryChange}
-      />
+      <CategoryFilter categoryQuery={categoryQuery} onCategoryQueryChange={onCategoryQueryChange} />
 
       <Box
         sx={{

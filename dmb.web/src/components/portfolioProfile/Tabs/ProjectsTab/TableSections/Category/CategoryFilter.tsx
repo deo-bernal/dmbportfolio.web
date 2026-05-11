@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type SyntheticEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
 import Collapse from "@mui/material/Collapse";
@@ -14,10 +14,7 @@ type CategoryFilterProps = {
   onCategoryQueryChange: (value: string) => void;
 };
 
-export default function CategoryFilter({
-  categoryQuery,
-  onCategoryQueryChange
-}: CategoryFilterProps) {
+export default function CategoryFilter({ categoryQuery, onCategoryQueryChange }: CategoryFilterProps) {
   const [open, setOpen] = useState(true);
   const categorySearchRef = useRef<HTMLInputElement | null>(null);
 
@@ -31,7 +28,7 @@ export default function CategoryFilter({
     <Card sx={tableFilterSx.card}>
       {!open ? (
         <Typography onClick={() => setOpen(true)} sx={tableFilterSx.title}>
-          Show category
+          Show category filters
         </Typography>
       ) : null}
       <Collapse in={open} sx={tableFilterSx.collapse}>
@@ -41,23 +38,14 @@ export default function CategoryFilter({
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: "text.secondary" }}>
                 Categories
               </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: { xs: "column", md: "row" },
-                  gap: 2,
-                  alignItems: { xs: "stretch", md: "flex-start" },
-                }}
-              >
-                <TextField
-                  fullWidth
-                  inputRef={categorySearchRef}
-                  label="Search categories"
-                  placeholder="Filter by category name"
-                  value={categoryQuery}
-                  onChange={(e) => onCategoryQueryChange(e.target.value)}
-                />
-              </Box>
+              <TextField
+                fullWidth
+                inputRef={categorySearchRef}
+                label="Search categories"
+                placeholder="Filter by category name"
+                value={categoryQuery}
+                onChange={(e) => onCategoryQueryChange(e.target.value)}
+              />
             </Box>
           </Box>
         </Box>

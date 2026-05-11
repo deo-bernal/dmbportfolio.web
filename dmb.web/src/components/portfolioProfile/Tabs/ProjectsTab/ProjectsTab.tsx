@@ -33,7 +33,6 @@ export default function ProjectsTab({
 }: TabViewProps) {
   const { enqueueSnackbar } = useSnackbar();
   const [categoryQuery, setCategoryQuery] = useState("");
-  const [selectedCategoryTags, setSelectedCategoryTags] = useState<AutocompleteFilterOption[]>([]);
   const [projectQuery, setProjectQuery] = useState("");
   const [selectedProjectCategoryTags, setSelectedProjectCategoryTags] = useState<AutocompleteFilterOption[]>([]);
 
@@ -73,7 +72,6 @@ export default function ProjectsTab({
 
   useEffect(() => {
     const n = draft.projectCategories.length;
-    setSelectedCategoryTags((prev) => prev.filter((o) => Number(o.value) >= 0 && Number(o.value) < n));
     setSelectedProjectCategoryTags((prev) => prev.filter((o) => Number(o.value) >= 0 && Number(o.value) < n));
   }, [draft.projectCategories.length]);
 
@@ -181,15 +179,10 @@ export default function ProjectsTab({
   }, [draft.projectCategories]);
 
   const filteredCategoryRows = useMemo(() => {
-    let rows = categoryRows;
-    if (selectedCategoryTags.length > 0) {
-      const allowed = new Set(selectedCategoryTags.map((o) => Number(o.value)));
-      rows = rows.filter((row) => allowed.has(row.categoryIndex));
-    }
     const normalizedQuery = categoryQuery.trim().toLowerCase();
-    if (!normalizedQuery) return rows;
-    return rows.filter((row) => row.title.toLowerCase().includes(normalizedQuery));
-  }, [categoryRows, categoryQuery, selectedCategoryTags]);
+    if (!normalizedQuery) return categoryRows;
+    return categoryRows.filter((row) => row.title.toLowerCase().includes(normalizedQuery));
+  }, [categoryRows, categoryQuery]);
 
   const projectRows: ProjectGridRow[] = useMemo(() => {
     const rows: ProjectGridRow[] = [];
@@ -387,9 +380,6 @@ export default function ProjectsTab({
         isPersisting={isPersisting}
         categoryQuery={categoryQuery}
         onCategoryQueryChange={setCategoryQuery}
-        selectedCategoryTags={selectedCategoryTags}
-        onSelectedCategoryTagsChange={setSelectedCategoryTags}
-        categoryAutocompleteOptions={categoryAutocompleteOptions}
         filteredCategoryRows={filteredCategoryRows}
         categoryColumns={categoryColumns}
       />
