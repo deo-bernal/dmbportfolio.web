@@ -1,4 +1,3 @@
-import AddTwoToneIcon from "@mui/icons-material/AddTwoTone";
 import DeleteTwoToneIcon from "@mui/icons-material/DeleteTwoTone";
 import EditTwoToneIcon from "@mui/icons-material/EditTwoTone";
 import Divider from "@mui/material/Divider";
@@ -9,17 +8,13 @@ import type { DataTableColumn } from "components/common/Datatable";
 import { dataGridRowActionsSx } from "styles/main_style";
 
 export type CategoryGridRow = {
-  kind: "category";
   id: string;
   categoryIndex: number;
-  category: string;
-  name: string; // used by DataTable column mapping
-  description: string; // used by DataTable column mapping
+  title: string;
   hasProjects: boolean;
 };
 
 export type ProjectGridRow = {
-  kind: "project";
   id: string;
   categoryIndex: number;
   itemIndex: number;
@@ -28,81 +23,80 @@ export type ProjectGridRow = {
   description: string;
 };
 
-export type ProjectsGridRow = CategoryGridRow | ProjectGridRow;
-
-type Actions = {
+type CategoryActions = {
   onEditCategory: (row: CategoryGridRow) => void;
   onDeleteCategory: (row: CategoryGridRow) => void;
-  onAddProjectItem: (categoryIndex: number) => void;
+};
+
+type ProjectActions = {
   onEditProject: (row: ProjectGridRow) => void;
   onDeleteProject: (row: ProjectGridRow) => void;
 };
 
-export default function getColumns(actions: Actions): DataTableColumn<ProjectsGridRow>[] {
+export function getCategoryColumns(actions: CategoryActions): DataTableColumn<CategoryGridRow>[] {
   return [
-    { key: "category", header: "Category" },
-    { key: "name", header: "Project Name" },
-    { key: "description", header: "Description" },
+    { key: "title", header: "Category" },
     {
       key: "actions",
       header: "Actions",
-      render: (row) => {
-        if (row.kind === "category") {
-          return (
-            <Stack
-              direction="row"
-              spacing={1}
-              divider={<Divider orientation="vertical" flexItem sx={dataGridRowActionsSx.stackDivider} />}
-              sx={dataGridRowActionsSx.stack}
-            >
-              <Tooltip title="Edit category">
-                <IconButton size="small" onClick={() => actions.onEditCategory(row)} aria-label="Edit category">
-                  <EditTwoToneIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={row.hasProjects ? "Cannot delete category with projects" : "Delete category"}>
-                <span>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    disabled={row.hasProjects}
-                    onClick={() => actions.onDeleteCategory(row)}
-                    aria-label="Delete category"
-                  >
-                    <DeleteTwoToneIcon />
-                  </IconButton>
-                </span>
-              </Tooltip>
-              <Tooltip title="Add item">
-                <IconButton size="small" onClick={() => actions.onAddProjectItem(row.categoryIndex)} aria-label="Add item">
-                  <AddTwoToneIcon />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          );
-        }
-
-        return (
-          <Stack
-            direction="row"
-            spacing={1}
-            divider={<Divider orientation="vertical" flexItem sx={dataGridRowActionsSx.stackDivider} />}
-            sx={dataGridRowActionsSx.stack}
-          >
-            <Tooltip title="Edit">
-              <IconButton size="small" onClick={() => actions.onEditProject(row)} aria-label="Edit project">
-                <EditTwoToneIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete">
-              <IconButton size="small" color="error" onClick={() => actions.onDeleteProject(row)} aria-label="Delete project">
+      render: (row) => (
+        <Stack
+          direction="row"
+          spacing={1}
+          divider={<Divider orientation="vertical" flexItem sx={dataGridRowActionsSx.stackDivider} />}
+          sx={dataGridRowActionsSx.stack}
+        >
+          <Tooltip title="Edit category">
+            <IconButton size="small" onClick={() => actions.onEditCategory(row)} aria-label="Edit category">
+              <EditTwoToneIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={row.hasProjects ? "Cannot delete category with existing projects" : "Delete category"}>
+            <span>
+              <IconButton
+                size="small"
+                color="error"
+                disabled={row.hasProjects}
+                onClick={() => actions.onDeleteCategory(row)}
+                aria-label="Delete category"
+              >
                 <DeleteTwoToneIcon />
               </IconButton>
-            </Tooltip>
-          </Stack>
-        );
-      },
+            </span>
+          </Tooltip>
+        </Stack>
+      ),
     },
   ];
 }
 
+export function getProjectColumns(actions: ProjectActions): DataTableColumn<ProjectGridRow>[] {
+  return [
+    { key: "name", header: "Project Name" },
+    { key: "category", header: "Category" },
+    { key: "description", header: "Description" },
+    {
+      key: "actions",
+      header: "Actions",
+      render: (row) => (
+        <Stack
+          direction="row"
+          spacing={1}
+          divider={<Divider orientation="vertical" flexItem sx={dataGridRowActionsSx.stackDivider} />}
+          sx={dataGridRowActionsSx.stack}
+        >
+          <Tooltip title="Edit">
+            <IconButton size="small" onClick={() => actions.onEditProject(row)} aria-label="Edit project">
+              <EditTwoToneIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete">
+            <IconButton size="small" color="error" onClick={() => actions.onDeleteProject(row)} aria-label="Delete project">
+              <DeleteTwoToneIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      ),
+    },
+  ];
+}

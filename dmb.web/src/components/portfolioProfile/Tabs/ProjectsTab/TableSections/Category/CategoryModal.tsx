@@ -6,48 +6,48 @@ import DialogTitle from "@mui/material/DialogTitle";
 import TextField from "@mui/material/TextField";
 import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
 
-type ProjectModalProps = {
+type CategoryModalProps = {
   open: boolean;
   title: string;
-  name: string;
-  description: string;
+  value: string;
   error: string | null;
   onClose: () => void;
-  onNameChange: (value: string) => void;
-  onDescriptionChange: (value: string) => void;
+  onValueChange: (value: string) => void;
   onSubmit: () => void | Promise<void>;
   submitLabel?: string;
   isSubmitting?: boolean;
 };
 
-export default function ProjectModal({
+export default function CategoryModal({
   open,
   title,
-  name,
-  description,
+  value,
   error,
   onClose,
-  onNameChange,
-  onDescriptionChange,
+  onValueChange,
   onSubmit,
   submitLabel = "Save",
   isSubmitting = false,
-}: ProjectModalProps) {
+}: CategoryModalProps) {
   return (
     <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <TextField autoFocus margin="dense" fullWidth label="Project name" value={name} onChange={(e) => onNameChange(e.target.value)} />
         <TextField
+          autoFocus
           margin="dense"
           fullWidth
-          multiline
-          minRows={3}
-          label="Project description"
-          value={description}
+          label="Category name"
+          value={value}
           error={Boolean(error)}
           helperText={error ?? ""}
-          onChange={(e) => onDescriptionChange(e.target.value)}
+          onChange={(e) => onValueChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
         />
       </DialogContent>
       <DialogActions>
@@ -66,4 +66,3 @@ export default function ProjectModal({
     </Dialog>
   );
 }
-
