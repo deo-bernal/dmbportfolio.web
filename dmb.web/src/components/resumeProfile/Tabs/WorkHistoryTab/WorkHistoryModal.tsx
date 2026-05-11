@@ -9,7 +9,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { dateToIsoDate, isoDateToDate } from "utils/date";
 import { modalDialogSx } from "styles/main_style";
 
-export type WorkHistoryFieldKey = "fromDate" | "toDate";
+export type WorkHistoryFieldKey = "company" | "position" | "fromDate" | "toDate" | "jobDescription";
 
 type WorkHistoryModalProps = {
   open: boolean;
@@ -19,7 +19,6 @@ type WorkHistoryModalProps = {
   fromDate: string;
   toDate: string;
   jobDescription: string;
-  error: string | null;
   fieldErrors?: Partial<Record<WorkHistoryFieldKey, string>>;
   onClose: () => void;
   onCompanyChange: (value: string) => void;
@@ -40,7 +39,6 @@ export default function WorkHistoryModal({
   fromDate,
   toDate,
   jobDescription,
-  error,
   fieldErrors = {},
   onClose,
   onCompanyChange,
@@ -56,8 +54,25 @@ export default function WorkHistoryModal({
     <Dialog open={open} onClose={isSubmitting ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={modalDialogSx.contentGrid}>
-        <TextField autoFocus margin="dense" fullWidth label="Company" value={company} onChange={(e) => onCompanyChange(e.target.value)} />
-        <TextField margin="dense" fullWidth label="Position" value={position} onChange={(e) => onPositionChange(e.target.value)} />
+        <TextField
+          autoFocus
+          margin="dense"
+          fullWidth
+          label="Company"
+          value={company}
+          error={Boolean(fieldErrors.company)}
+          helperText={fieldErrors.company ?? " "}
+          onChange={(e) => onCompanyChange(e.target.value)}
+        />
+        <TextField
+          margin="dense"
+          fullWidth
+          label="Position"
+          value={position}
+          error={Boolean(fieldErrors.position)}
+          helperText={fieldErrors.position ?? " "}
+          onChange={(e) => onPositionChange(e.target.value)}
+        />
         <DatePicker
           label="From Date"
           format="dd/MM/yyyy"
@@ -93,8 +108,8 @@ export default function WorkHistoryModal({
           minRows={3}
           label="Job Description"
           value={jobDescription}
-          error={Boolean(error)}
-          helperText={error ?? ""}
+          error={Boolean(fieldErrors.jobDescription)}
+          helperText={fieldErrors.jobDescription ?? " "}
           onChange={(e) => onJobDescriptionChange(e.target.value)}
         />
       </DialogContent>

@@ -27,7 +27,6 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [jobDescription, setJobDescription] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<WorkHistoryFieldKey, string>>>({});
 
   const resetForm = () => {
@@ -36,9 +35,10 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
     setFromDate("");
     setToDate("");
     setJobDescription("");
-    setFormError(null);
     setFieldErrors({});
   };
+
+  const WORK_HISTORY_FIELD_KEYS: WorkHistoryFieldKey[] = ["company", "position", "fromDate", "toDate", "jobDescription"];
 
   const clearFieldError = (key: WorkHistoryFieldKey) => {
     setFieldErrors((prev) => {
@@ -51,9 +51,9 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
 
   const mapYupFieldErrors = (error: Yup.ValidationError): Partial<Record<WorkHistoryFieldKey, string>> => {
     const out: Partial<Record<WorkHistoryFieldKey, string>> = {};
-    for (const err of error.inner) {
+    for (const err of error.inner.length > 0 ? error.inner : [error]) {
       const path = err.path as WorkHistoryFieldKey | undefined;
-      if ((path === "fromDate" || path === "toDate") && out[path] === undefined) {
+      if (path && WORK_HISTORY_FIELD_KEYS.includes(path) && out[path] === undefined) {
         out[path] = err.message;
       }
     }
@@ -83,7 +83,8 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
     } catch (e) {
       if (e instanceof Yup.ValidationError) {
         setFieldErrors(mapYupFieldErrors(e));
-        return e.message || "Please review the form fields.";
+        const firstInner = e.inner.find(Boolean);
+        return firstInner?.message ?? e.message ?? "Please review the form fields.";
       }
       return "Please review the form fields.";
     }
@@ -121,14 +122,12 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
     setFromDate(item.fromDate ?? "");
     setToDate(item.toDate ?? "");
     setJobDescription(item.jobDescription ?? "");
-    setFormError(null);
     setFieldErrors({});
   };
 
   const addItem = async () => {
     const error = validate();
     if (error) {
-      setFormError(error);
       enqueueSnackbar(error, { variant: "error" });
       return;
     }
@@ -159,7 +158,6 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
     if (editIndex === null) return;
     const error = validate();
     if (error) {
-      setFormError(error);
       enqueueSnackbar(error, { variant: "error" });
       return;
     }
@@ -276,16 +274,15 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
         fromDate={fromDate}
         toDate={toDate}
         jobDescription={jobDescription}
-        error={formError}
         fieldErrors={fieldErrors}
         onClose={closeModal}
         onCompanyChange={(value) => {
           setCompany(value);
-          if (formError) setFormError(null);
+          clearFieldError("company");
         }}
         onPositionChange={(value) => {
           setPosition(value);
-          if (formError) setFormError(null);
+          clearFieldError("position");
         }}
         onFromDateChange={(value) => {
           setFromDate(value);
@@ -297,7 +294,7 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
         }}
         onJobDescriptionChange={(value) => {
           setJobDescription(value);
-          if (formError) setFormError(null);
+          clearFieldError("jobDescription");
         }}
         onSubmit={addItem}
         submitLabel="Add"
@@ -312,16 +309,15 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
         fromDate={fromDate}
         toDate={toDate}
         jobDescription={jobDescription}
-        error={formError}
         fieldErrors={fieldErrors}
         onClose={closeModal}
         onCompanyChange={(value) => {
           setCompany(value);
-          if (formError) setFormError(null);
+          clearFieldError("company");
         }}
         onPositionChange={(value) => {
           setPosition(value);
-          if (formError) setFormError(null);
+          clearFieldError("position");
         }}
         onFromDateChange={(value) => {
           setFromDate(value);
@@ -333,7 +329,7 @@ export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: Res
         }}
         onJobDescriptionChange={(value) => {
           setJobDescription(value);
-          if (formError) setFormError(null);
+          clearFieldError("jobDescription");
         }}
         onSubmit={saveEdit}
         isSubmitting={isPersisting && editIndex !== null}

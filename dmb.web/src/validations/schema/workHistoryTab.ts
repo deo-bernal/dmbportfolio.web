@@ -32,27 +32,27 @@ export const workHistoryItemFormSchema: Yup.ObjectSchema<WorkHistoryFormValues> 
   fromDate: Yup.string()
     .trim()
     .test("from-valid", "From date is invalid.", (value) => !value || isValidIsoDate(value))
-    .test("from-before-today", "From date must be before today.", (value) => {
+    .test("from-on-or-before-today", "From date must be on or before today.", (value) => {
       if (!value) return true;
       if (!isValidIsoDate(value)) return true; // let the previous test surface the error
-      return toDateOnly(value) < startOfToday();
+      return toDateOnly(value) <= startOfToday();
     }),
   toDate: Yup.string()
     .trim()
     .test("to-valid", "To date is invalid.", (value) => !value || isValidIsoDate(value))
-    .test("to-before-today", "To date must be before today.", (value) => {
+    .test("to-on-or-before-today", "To date must be on or before today.", (value) => {
       if (!value) return true;
       if (!isValidIsoDate(value)) return true;
-      return toDateOnly(value) < startOfToday();
+      return toDateOnly(value) <= startOfToday();
+    })
+    .test("after-from", "From date must be before To date.", function (value) {
+      const parent = this.parent as WorkHistoryFormValues;
+      const from = (parent.fromDate ?? "").trim();
+      const to = (value ?? "").trim();
+      if (!from || !to) return true;
+      if (!isValidIsoDate(from) || !isValidIsoDate(to)) return true;
+      return toDateOnly(from) < toDateOnly(to);
     }),
   jobDescription: Yup.string().trim().max(2000, "Job description is too long."),
-})
-  .test("from-before-to", "From date must be before To date.", (values) => {
-    const from = values?.fromDate?.trim() ?? "";
-    const to = values?.toDate?.trim() ?? "";
-    if (!from || !to) return true;
-    if (!isValidIsoDate(from) || !isValidIsoDate(to)) return true;
-    return toDateOnly(from) < toDateOnly(to);
-  })
-  .required();
+}).required();
 
