@@ -88,7 +88,7 @@ export default function ResumeProfileTabs({ profile, onSave }: ResumeProfileTabs
       >
         {saveError ? <Alert severity="error" sx={agenticPageSx.alertBelowTabs}>{saveError}</Alert> : null}
         {activeTab === "personalInfo" ? <PersonalInfoTab draft={draft} setDraft={setDraft} /> : null}
-        {activeTab === "workHistory" ? <WorkHistoryTab draft={draft} setDraft={setDraft} /> : null}
+        {activeTab === "workHistory" ? <WorkHistoryTab draft={draft} setDraft={setDraft} onImmediateSave={immediateSave} /> : null}
         {activeTab === "education" ? <EducationTab draft={draft} setDraft={setDraft} onImmediateSave={immediateSave} /> : null}
         {activeTab === "affiliations" ? <AffiliationsTab draft={draft} setDraft={setDraft} onImmediateSave={immediateSave} /> : null}
       </FormUtils>

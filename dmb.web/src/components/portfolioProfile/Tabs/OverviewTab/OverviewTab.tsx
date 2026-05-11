@@ -88,7 +88,7 @@ export default function OverviewTab({ profile, draft, mode, setDraft }: TabViewP
           {draft.isViewable ? (
             <Box sx={agenticPageSx.overviewPublicUrlRow}>
               <TextField
-                label="Public Profile"
+                label="Public Profile URL (for anonymous viewing)"
                 value={publicPortfolioUrl}
                 slotProps={{ input: { readOnly: true } }}
                 sx={agenticPageSx.overviewPublicUrlField}

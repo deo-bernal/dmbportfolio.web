@@ -5,18 +5,22 @@ import { useSnackbar } from "notistack";
 import DataTable from "components/common/Datatable";
 import type { ResumeTabProps } from "../types";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
-import WorkHistoryModal from "./WorkHistoryModal";
+import WorkHistoryModal, { type WorkHistoryFieldKey } from "./WorkHistoryModal";
 import getColumns, { type WorkHistoryGridRow } from "./columns";
 import WorkHistoryFilter from "./TableSections/WorkHistoryFilter";
 import { agenticPageSx } from "styles/main_style";
+import * as Yup from "yup";
+import { workHistoryItemFormSchema } from "validations/schema/workHistoryTab";
 
-export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
+export default function WorkHistoryTab({ draft, setDraft, onImmediateSave }: ResumeTabProps) {
   const { enqueueSnackbar } = useSnackbar();
   const [query, setQuery] = useState("");
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
+  const [isPersisting, setIsPersisting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
@@ -24,6 +28,7 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
   const [toDate, setToDate] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<WorkHistoryFieldKey, string>>>({});
 
   const resetForm = () => {
     setCompany("");
@@ -32,6 +37,27 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
     setToDate("");
     setJobDescription("");
     setFormError(null);
+    setFieldErrors({});
+  };
+
+  const clearFieldError = (key: WorkHistoryFieldKey) => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const mapYupFieldErrors = (error: Yup.ValidationError): Partial<Record<WorkHistoryFieldKey, string>> => {
+    const out: Partial<Record<WorkHistoryFieldKey, string>> = {};
+    for (const err of error.inner) {
+      const path = err.path as WorkHistoryFieldKey | undefined;
+      if ((path === "fromDate" || path === "toDate") && out[path] === undefined) {
+        out[path] = err.message;
+      }
+    }
+    return out;
   };
 
   const closeModal = () => {
@@ -41,22 +67,45 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
   };
 
   const validate = () => {
-    const normalizedCompany = company.trim();
-    const normalizedPosition = position.trim();
-    const normalizedDescription = jobDescription.trim();
-
-    if (!normalizedCompany || !normalizedPosition) {
-      return "Company and position are required.";
+    try {
+      workHistoryItemFormSchema.validateSync(
+        {
+          company: company.trim(),
+          position: position.trim(),
+          fromDate: fromDate.trim(),
+          toDate: toDate.trim(),
+          jobDescription: jobDescription.trim(),
+        },
+        { abortEarly: false }
+      );
+      setFieldErrors({});
+      return null;
+    } catch (e) {
+      if (e instanceof Yup.ValidationError) {
+        setFieldErrors(mapYupFieldErrors(e));
+        return e.message || "Please review the form fields.";
+      }
+      return "Please review the form fields.";
     }
-    if (normalizedDescription.length > 2000) {
-      return "Job description is too long.";
-    }
-    return null;
   };
 
   const openAdd = () => {
     resetForm();
+    setDeleteIndex(null);
     setIsAddModalOpen(true);
+  };
+
+  const persistDraft = async (nextDraft: typeof draft) => {
+    if (!onImmediateSave) {
+      setDraft(nextDraft);
+      return;
+    }
+    setIsPersisting(true);
+    try {
+      await onImmediateSave(nextDraft);
+    } finally {
+      setIsPersisting(false);
+    }
   };
 
   const openEdit = (row: WorkHistoryGridRow) => {
@@ -73,9 +122,10 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
     setToDate(item.toDate ?? "");
     setJobDescription(item.jobDescription ?? "");
     setFormError(null);
+    setFieldErrors({});
   };
 
-  const addItem = () => {
+  const addItem = async () => {
     const error = validate();
     if (error) {
       setFormError(error);
@@ -83,18 +133,29 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
       return;
     }
 
-    setDraft((prev) => ({
-      ...prev,
+    const nextDraft = {
+      ...draft,
       workHistory: [
-        ...prev.workHistory,
-        { company: company.trim(), position: position.trim(), fromDate: fromDate.trim(), toDate: toDate.trim(), jobDescription: jobDescription.trim() },
+        ...draft.workHistory,
+        {
+          company: company.trim(),
+          position: position.trim(),
+          fromDate: fromDate.trim(),
+          toDate: toDate.trim(),
+          jobDescription: jobDescription.trim(),
+        },
       ],
-    }));
-    enqueueSnackbar("Work history added.", { variant: "success" });
-    closeModal();
+    };
+    try {
+      await persistDraft(nextDraft);
+      enqueueSnackbar("Work history added.", { variant: "success" });
+      closeModal();
+    } catch {
+      // Error surfaced in ResumeProfileTabs
+    }
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (editIndex === null) return;
     const error = validate();
     if (error) {
@@ -103,24 +164,47 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
       return;
     }
 
-    setDraft((prev) => ({
-      ...prev,
-      workHistory: prev.workHistory.map((item, i) =>
+    const nextDraft = {
+      ...draft,
+      workHistory: draft.workHistory.map((item, i) =>
         i === editIndex
-          ? { company: company.trim(), position: position.trim(), fromDate: fromDate.trim(), toDate: toDate.trim(), jobDescription: jobDescription.trim() }
+          ? {
+              company: company.trim(),
+              position: position.trim(),
+              fromDate: fromDate.trim(),
+              toDate: toDate.trim(),
+              jobDescription: jobDescription.trim(),
+            }
           : item
       ),
-    }));
-    enqueueSnackbar("Work history updated.", { variant: "success" });
-    closeModal();
+    };
+    try {
+      await persistDraft(nextDraft);
+      enqueueSnackbar("Work history updated.", { variant: "success" });
+      closeModal();
+    } catch {
+      // Error surfaced in ResumeProfileTabs
+    }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteIndex === null) return;
-    setDraft((prev) => ({
-      ...prev,
-      workHistory: prev.workHistory.filter((_, i) => i !== deleteIndex),
-    }));
+
+    const nextDraft = {
+      ...draft,
+      workHistory: draft.workHistory.filter((_, i) => i !== deleteIndex),
+    };
+    if (onImmediateSave) {
+      setIsDeleting(true);
+      try {
+        await onImmediateSave(nextDraft);
+      } finally {
+        setIsDeleting(false);
+      }
+    } else {
+      setDraft(nextDraft);
+    }
+
     enqueueSnackbar("Work history deleted.", { variant: "success" });
     setDeleteIndex(null);
     if (editIndex === deleteIndex) {
@@ -193,6 +277,7 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
         toDate={toDate}
         jobDescription={jobDescription}
         error={formError}
+        fieldErrors={fieldErrors}
         onClose={closeModal}
         onCompanyChange={(value) => {
           setCompany(value);
@@ -202,14 +287,21 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
           setPosition(value);
           if (formError) setFormError(null);
         }}
-        onFromDateChange={setFromDate}
-        onToDateChange={setToDate}
+        onFromDateChange={(value) => {
+          setFromDate(value);
+          clearFieldError("fromDate");
+        }}
+        onToDateChange={(value) => {
+          setToDate(value);
+          clearFieldError("toDate");
+        }}
         onJobDescriptionChange={(value) => {
           setJobDescription(value);
           if (formError) setFormError(null);
         }}
         onSubmit={addItem}
         submitLabel="Add"
+        isSubmitting={isPersisting && isAddModalOpen}
       />
 
       <WorkHistoryModal
@@ -221,6 +313,7 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
         toDate={toDate}
         jobDescription={jobDescription}
         error={formError}
+        fieldErrors={fieldErrors}
         onClose={closeModal}
         onCompanyChange={(value) => {
           setCompany(value);
@@ -230,20 +323,30 @@ export default function WorkHistoryTab({ draft, setDraft }: ResumeTabProps) {
           setPosition(value);
           if (formError) setFormError(null);
         }}
-        onFromDateChange={setFromDate}
-        onToDateChange={setToDate}
+        onFromDateChange={(value) => {
+          setFromDate(value);
+          clearFieldError("fromDate");
+        }}
+        onToDateChange={(value) => {
+          setToDate(value);
+          clearFieldError("toDate");
+        }}
         onJobDescriptionChange={(value) => {
           setJobDescription(value);
           if (formError) setFormError(null);
         }}
         onSubmit={saveEdit}
+        isSubmitting={isPersisting && editIndex !== null}
       />
 
       <ConfirmDeleteModal
         open={deleteIndex !== null}
         title="Delete work history"
         message="Are you sure you want to delete this work history item?"
-        onClose={() => setDeleteIndex(null)}
+        isBusy={isDeleting}
+        onClose={() => {
+          if (!isDeleting) setDeleteIndex(null);
+        }}
         onConfirm={confirmDelete}
       />
     </Box>
