@@ -1,7 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { AppThunk } from "../store";
+import { resolvePublicApiBaseUrl } from "../config";
 import api from "../services/http.service";
+import {
+  readPublicProfileCache,
+  writePublicProfileCache,
+} from "../services/publicContentCache";
 import type { ApiUser, Profile, ProjectCategory, ProjectItem } from "models";
 
 type UserState = {
@@ -112,11 +117,26 @@ export const getProfile =
   };
 
 export const getPublicProfile = (username: string): AppThunk => async (dispatch): Promise<void> => {
-  dispatch(slice.actions.getProfileStart());
+  const cachedApiUser = readPublicProfileCache<ApiUser>(username);
+  const cachedProfile = cachedApiUser ? mapProfileDetailsToProfile(cachedApiUser) : null;
+
+  if (cachedProfile) {
+    dispatch(slice.actions.getProfileSuccess({ profile: cachedProfile }));
+  } else {
+    dispatch(slice.actions.getProfileStart());
+  }
+
   try {
-    const res = await api.get<ApiUser>("/publicprofile", { params: { username } });
+    const res = await api.get<ApiUser>("/publicprofile", {
+      baseURL: resolvePublicApiBaseUrl(),
+      params: { username },
+    });
+    writePublicProfileCache(username, res.data);
     dispatch(slice.actions.getProfileSuccess({ profile: mapProfileDetailsToProfile(res.data) }));
   } catch (error: any) {
+    if (cachedProfile) {
+      return;
+    }
     if (error?.response?.status === 404) {
       dispatch(slice.actions.getProfileFailure({ error: "This portfolio is not publicly viewable." }));
       return;

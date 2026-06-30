@@ -27,10 +27,10 @@ export default function PublicPortfolioPage() {
     dispatch(getPublicProfile(username) as any);
   }, [dispatch, username]);
 
-  if (isLoading) {
+  if (isLoading && !profile) {
     return (
       <Container sx={agenticPageSx.container}>
-        <Box sx={agenticPageSx.loadingState}>Loading...</Box>
+        <Box sx={agenticPageSx.loadingState}>Loading portfolio...</Box>
       </Container>
     );
   }

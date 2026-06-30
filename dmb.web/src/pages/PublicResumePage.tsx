@@ -7,8 +7,46 @@ import Typography from "@mui/material/Typography";
 import { ResumeProfileView } from "components/resumeProfile";
 import type { ResumeProfile } from "models";
 import { EMPTY_RESUME_PROFILE } from "models";
+import { resolvePublicApiBaseUrl } from "config";
 import api from "services/http.service";
+import {
+  readPublicResumeCache,
+  writePublicResumeCache,
+} from "services/publicContentCache";
 import { agenticPageSx } from "styles/main_style";
+
+function mapPublicResume(data: any): ResumeProfile {
+  return {
+    personalInfo: {
+      firstName: data?.personalInfo?.firstName ?? "",
+      lastName: data?.personalInfo?.lastName ?? "",
+      contactNo: data?.personalInfo?.contactNo ?? "",
+      email: data?.personalInfo?.email ?? "",
+      address: data?.personalInfo?.address ?? "",
+      summary: data?.personalInfo?.summary ?? "",
+    },
+    workHistory: (data?.workHistory ?? []).map((item: any) => ({
+      company: item.company ?? "",
+      position: item.position ?? "",
+      fromDate: item.fromDate ? String(item.fromDate).slice(0, 10) : "",
+      toDate: item.toDate ? String(item.toDate).slice(0, 10) : "",
+      jobDescription: item.jobDescription ?? "",
+    })),
+    education: (data?.education ?? []).map((item: any) => ({
+      school: item.school ?? "",
+      address: item.address ?? "",
+      courseTaken: item.courseTaken ?? "",
+      startDate: item.startDate ? String(item.startDate).slice(0, 10) : "",
+      endDate: item.endDate ? String(item.endDate).slice(0, 10) : "",
+    })),
+    affiliations: (data?.affiliations ?? []).map((item: any) => ({
+      organization: item.organization ?? "",
+      title: item.title ?? "",
+      issueDate: item.issueDate ? String(item.issueDate).slice(0, 10) : "",
+      details: item.details ?? "",
+    })),
+  };
+}
 
 export default function PublicResumePage() {
   const { username = "" } = useParams<{ username: string }>();
@@ -26,42 +64,26 @@ export default function PublicResumePage() {
     hasFetched.current = true;
 
     const load = async () => {
-      setIsLoading(true);
+      const cached = readPublicResumeCache<ResumeProfile>(username);
+      if (cached) {
+        setResume(cached);
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
       setError(null);
       try {
-        const { data } = await api.get("/publicresume", { params: { username } });
-        setResume({
-          personalInfo: {
-            firstName: data?.personalInfo?.firstName ?? "",
-            lastName: data?.personalInfo?.lastName ?? "",
-            contactNo: data?.personalInfo?.contactNo ?? "",
-            email: data?.personalInfo?.email ?? "",
-            address: data?.personalInfo?.address ?? "",
-            summary: data?.personalInfo?.summary ?? "",
-          },
-          workHistory: (data?.workHistory ?? []).map((item: any) => ({
-            company: item.company ?? "",
-            position: item.position ?? "",
-            fromDate: item.fromDate ? String(item.fromDate).slice(0, 10) : "",
-            toDate: item.toDate ? String(item.toDate).slice(0, 10) : "",
-            jobDescription: item.jobDescription ?? "",
-          })),
-          education: (data?.education ?? []).map((item: any) => ({
-            school: item.school ?? "",
-            address: item.address ?? "",
-            courseTaken: item.courseTaken ?? "",
-            startDate: item.startDate ? String(item.startDate).slice(0, 10) : "",
-            endDate: item.endDate ? String(item.endDate).slice(0, 10) : "",
-          })),
-          affiliations: (data?.affiliations ?? []).map((item: any) => ({
-            organization: item.organization ?? "",
-            title: item.title ?? "",
-            issueDate: item.issueDate ? String(item.issueDate).slice(0, 10) : "",
-            details: item.details ?? "",
-          })),
+        const { data } = await api.get("/publicresume", {
+          baseURL: resolvePublicApiBaseUrl(),
+          params: { username },
         });
+        const nextResume = mapPublicResume(data);
+        writePublicResumeCache(username, nextResume);
+        setResume(nextResume);
       } catch (err: any) {
-        setError(err?.response?.data?.message ?? "Unable to load public resume.");
+        if (!cached) {
+          setError(err?.response?.data?.message ?? "Unable to load public resume.");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -70,10 +92,10 @@ export default function PublicResumePage() {
     void load();
   }, [username]);
 
-  if (isLoading) {
+  if (isLoading && resume === EMPTY_RESUME_PROFILE) {
     return (
       <Container sx={agenticPageSx.container}>
-        <Box sx={agenticPageSx.loadingState}>Loading...</Box>
+        <Box sx={agenticPageSx.loadingState}>Loading resume...</Box>
       </Container>
     );
   }

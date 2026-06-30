@@ -31,6 +31,43 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Deo Bernal Portfolio</title>
+    <script>
+      (function () {
+        var host = location.hostname.toLowerCase();
+        if (host !== "dmbwebsolutions.com" && host !== "www.dmbwebsolutions.com") {
+          return;
+        }
+
+        var segment = location.pathname.replace(/^\/|\/$/g, "").split("/")[0];
+        if (!segment || segment.indexOf("@") === -1) {
+          return;
+        }
+
+        var cacheKey = "dmb:early-public-profile:" + segment.toLowerCase();
+        try {
+          if (sessionStorage.getItem(cacheKey)) {
+            return;
+          }
+        } catch (error) {}
+
+        fetch("/api/publicprofile?username=" + encodeURIComponent(segment))
+          .then(function (response) {
+            return response.ok ? response.json() : null;
+          })
+          .then(function (data) {
+            if (!data) {
+              return;
+            }
+            try {
+              sessionStorage.setItem(
+                cacheKey,
+                JSON.stringify({ data: data, cachedAt: Date.now() })
+              );
+            } catch (error) {}
+          })
+          .catch(function () {});
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

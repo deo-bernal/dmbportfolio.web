@@ -1,3 +1,9 @@
+const PRODUCTION_HOSTS = new Set(["dmbwebsolutions.com", "www.dmbwebsolutions.com"]);
+
+export function isProductionSiteHost(hostname: string): boolean {
+  return PRODUCTION_HOSTS.has(hostname.toLowerCase());
+}
+
 const apiTarget = (process.env.REACT_APP_DMB_API_TARGET || "local").toLowerCase();
 
 const deploymentApiTargets = new Set([
@@ -24,3 +30,11 @@ export const dmbApiConfig = {
     envApiUrl ||
     (useDeploymentApi ? deploymentApiUrl : localApiUrl),
 };
+
+export function resolvePublicApiBaseUrl(): string {
+  if (typeof window !== "undefined" && isProductionSiteHost(window.location.hostname)) {
+    return "/api";
+  }
+
+  return dmbApiConfig.dmb_api_url;
+}
