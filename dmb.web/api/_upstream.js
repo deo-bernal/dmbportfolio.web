@@ -1,28 +1,69 @@
-const UPSTREAM_BASE =
-  process.env.DMB_API_UPSTREAM_URL || "https://dmbportfolio-api.onrender.com/api";
+const RENDER_UPSTREAM = "https://dmbportfolio-api.onrender.com/api";
+const AZURE_UPSTREAM = "https://dmbportfolio-api.azurewebsites.net/api";
+
+function getUpstreamCandidates() {
+  const configured = process.env.DMB_API_UPSTREAM_URL?.trim();
+  const candidates = [];
+
+  if (configured) {
+    candidates.push(configured);
+  }
+
+  for (const fallback of [RENDER_UPSTREAM, AZURE_UPSTREAM]) {
+    if (!candidates.includes(fallback)) {
+      candidates.push(fallback);
+    }
+  }
+
+  return candidates;
+}
+
+async function fetchUpstream(url, signal) {
+  const upstream = await fetch(url, {
+    signal,
+    headers: { Accept: "application/json" },
+  });
+  const body = await upstream.text();
+  return { upstream, body };
+}
 
 async function proxyGet(req, res, path) {
   const query = new URLSearchParams(req.query).toString();
-  const url = `${UPSTREAM_BASE}${path}${query ? `?${query}` : ""}`;
+  const suffix = `${path}${query ? `?${query}` : ""}`;
+  const candidates = getUpstreamCandidates();
+  const errors = [];
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55000);
+  for (const base of candidates) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 55000);
 
-  try {
-    const upstream = await fetch(url, {
-      signal: controller.signal,
-      headers: { Accept: "application/json" },
-    });
-    const body = await upstream.text();
+    try {
+      const { upstream, body } = await fetchUpstream(`${base}${suffix}`, controller.signal);
 
-    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.status(upstream.status).send(body);
-  } catch {
-    res.status(504).json({ message: "Upstream API timed out." });
-  } finally {
-    clearTimeout(timeout);
+      if (upstream.status >= 500 && candidates.indexOf(base) < candidates.length - 1) {
+        errors.push(`${base}: HTTP ${upstream.status}`);
+        continue;
+      }
+
+      res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.status(upstream.status).send(body);
+      return;
+    } catch (error) {
+      const message =
+        error?.name === "AbortError"
+          ? "timed out"
+          : error?.message || "connection failed";
+      errors.push(`${base}: ${message}`);
+    } finally {
+      clearTimeout(timeout);
+    }
   }
+
+  res.status(504).json({
+    message: "Upstream API unavailable.",
+    details: errors,
+  });
 }
 
 module.exports = { proxyGet };

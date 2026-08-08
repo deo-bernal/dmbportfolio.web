@@ -1,7 +1,18 @@
-const PRODUCTION_HOSTS = new Set(["dmbwebsolutions.com", "www.dmbwebsolutions.com"]);
+const PRODUCTION_HOSTS = new Set(
+  (process.env.REACT_APP_PRODUCTION_HOSTS || "dmbwebsolutions.com,www.dmbwebsolutions.com")
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean)
+);
+
+export const deployPlatform = (process.env.REACT_APP_DEPLOY_PLATFORM || "vercel").toLowerCase();
 
 export function isProductionSiteHost(hostname: string): boolean {
   return PRODUCTION_HOSTS.has(hostname.toLowerCase());
+}
+
+export function usesPublicApiProxy(): boolean {
+  return deployPlatform === "vercel";
 }
 
 const apiTarget = (process.env.REACT_APP_DMB_API_TARGET || "local").toLowerCase();
@@ -32,7 +43,11 @@ export const dmbApiConfig = {
 };
 
 export function resolvePublicApiBaseUrl(): string {
-  if (typeof window !== "undefined" && isProductionSiteHost(window.location.hostname)) {
+  if (
+    usesPublicApiProxy() &&
+    typeof window !== "undefined" &&
+    isProductionSiteHost(window.location.hostname)
+  ) {
     return "/api";
   }
 

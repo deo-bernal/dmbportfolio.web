@@ -9,6 +9,8 @@ import PortfolioPage from "../pages/PortfolioPage";
 import PublicPortfolioPage from "../pages/PublicPortfolioPage";
 import PublicResumePage from "../pages/PublicResumePage";
 import ResumePage from "../pages/ResumePage";
+import LandingPage from "../pages/Landing";
+import OnboardingPage from "../pages/Onboarding";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
 
 type RouterConfig = {
@@ -42,8 +44,12 @@ export default function createRouter({
       element: <ActivateAccount />,
     },
     {
+      path: "/onboarding",
+      element: token ? <OnboardingPage /> : <Navigate to="/login" replace />,
+    },
+    {
       path: "/",
-      element: token ? <Navigate to="/accent-sidebar" replace /> : <Navigate to="/login" replace />,
+      element: token ? <Navigate to="/accent-sidebar" replace /> : <LandingPage />,
     },
     {
       path: "/portfolio",
@@ -83,7 +89,7 @@ export default function createRouter({
     },
     {
       path: "*",
-      element: <Navigate to={token ? "/accent-sidebar" : "/login"} replace />,
+      element: <Navigate to={token ? "/accent-sidebar" : "/"} replace />,
     },
   ];
 }

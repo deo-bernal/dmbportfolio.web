@@ -1,4 +1,4 @@
-name: Keep API warm
+name: Keep API warm (Vercel)
 
 on:
   schedule:

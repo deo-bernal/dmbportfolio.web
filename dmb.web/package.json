@@ -32,8 +32,16 @@
     "yup": "^1.7.1"
   },
   "scripts": {
+    "prestart": "node scripts/ensure-deploy-target.js",
     "start": "react-scripts start",
+    "prebuild": "node scripts/ensure-deploy-target.js",
     "build": "react-scripts build",
+    "deploy:switch:vercel": "node scripts/switch-deploy.js vercel",
+    "deploy:switch:azure": "node scripts/switch-deploy.js azure",
+    "build:vercel": "node scripts/switch-deploy.js vercel && react-scripts build",
+    "build:azure": "node scripts/switch-deploy.js azure && react-scripts build",
+    "start:vercel": "node scripts/switch-deploy.js vercel && react-scripts start",
+    "start:azure": "node scripts/switch-deploy.js azure && react-scripts start",
     "test": "react-scripts test",
     "test:e2e": "cypress run",
     "test:e2e:open": "cypress open",

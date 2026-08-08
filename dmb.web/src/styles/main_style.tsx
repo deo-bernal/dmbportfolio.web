@@ -864,3 +864,221 @@ export const dataGridRowActionsSx = {
     flexWrap: "wrap",
   } satisfies SxProps<Theme>,
 } as const;
+
+/* ——— Landing page ——— */
+
+export const landingPageSx = {
+  root: {
+    bgcolor: "#f1f5f9",
+    minHeight: "100vh",
+  } satisfies SxProps<Theme>,
+  header: {
+    position: "sticky",
+    top: 0,
+    zIndex: 10,
+    backdropFilter: "blur(12px)",
+    bgcolor: alpha("#f8fafc", 0.88),
+    borderBottom: `1px solid ${alpha("#475569", 0.12)}`,
+  } satisfies SxProps<Theme>,
+  headerInner: {
+    py: 1.5,
+  } satisfies SxProps<Theme>,
+  logo: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: "1.05rem",
+    letterSpacing: "-0.02em",
+    color: "#0f172a",
+  } satisfies SxProps<Theme>,
+  headerButtonOutline: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 600,
+    textTransform: "none",
+    borderColor: alpha("#475569", 0.35),
+    color: "#334155",
+  } satisfies SxProps<Theme>,
+  headerButtonPrimary: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 600,
+    textTransform: "none",
+    boxShadow: "none",
+  } satisfies SxProps<Theme>,
+  main: {
+    flex: 1,
+    py: { xs: 3, md: 5 },
+  } satisfies SxProps<Theme>,
+  heroPanel: {
+    ...agenticSurfaceSx.panel,
+    p: { xs: 3, md: 5 },
+    mb: 3,
+  } satisfies SxProps<Theme>,
+  heroBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 0.75,
+    px: 1.25,
+    py: 0.75,
+    borderRadius: 999,
+    bgcolor: alpha("#64748b", 0.12),
+    color: "#475569",
+    fontFamily: pageFonts.mono,
+    fontWeight: 600,
+    letterSpacing: "0.02em",
+  } satisfies SxProps<Theme>,
+  heroTitle: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: { xs: "2rem", sm: "2.6rem", md: "3rem" },
+    lineHeight: 1.08,
+    letterSpacing: "-0.03em",
+    color: "#0f172a",
+    maxWidth: "18ch",
+  } satisfies SxProps<Theme>,
+  heroSubtitle: {
+    fontFamily: pageFonts.sans,
+    fontSize: { xs: "1rem", md: "1.125rem" },
+    lineHeight: 1.65,
+    color: "#475569",
+    maxWidth: "62ch",
+  } satisfies SxProps<Theme>,
+  heroFootnote: {
+    fontFamily: pageFonts.sans,
+    fontSize: "0.9375rem",
+    color: "#64748b",
+  } satisfies SxProps<Theme>,
+  inlineLink: {
+    fontWeight: 700,
+    color: "#334155",
+  } satisfies SxProps<Theme>,
+  ctaPrimary: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    textTransform: "none",
+    px: 3,
+    boxShadow: "none",
+  } satisfies SxProps<Theme>,
+  ctaSecondary: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 600,
+    textTransform: "none",
+    px: 3,
+    borderColor: alpha("#475569", 0.35),
+    color: "#334155",
+  } satisfies SxProps<Theme>,
+  featureGrid: {
+    mb: 3,
+  } satisfies SxProps<Theme>,
+  featureCard: {
+    ...agenticSurfaceSx.panel,
+    height: "100%",
+    p: 2.5,
+  } satisfies SxProps<Theme>,
+  featureIconWrap: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 40,
+    height: 40,
+    mb: 1.5,
+    borderRadius: 1.25,
+    bgcolor: alpha("#ffffff", 0.72),
+    border: `1px solid ${alpha("#475569", 0.12)}`,
+  } satisfies SxProps<Theme>,
+  featureTitle: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: "1rem",
+    color: "#0f172a",
+    mb: 1,
+  } satisfies SxProps<Theme>,
+  featureBody: {
+    fontFamily: pageFonts.sans,
+    fontSize: "0.9375rem",
+    lineHeight: 1.6,
+    color: "#64748b",
+  } satisfies SxProps<Theme>,
+  bottomCta: {
+    ...agenticSurfaceSx.panel,
+    textAlign: "center",
+    p: { xs: 3, md: 4 },
+  } satisfies SxProps<Theme>,
+  bottomCtaTitle: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: { xs: "1.5rem", md: "1.75rem" },
+    color: "#0f172a",
+    mb: 1,
+  } satisfies SxProps<Theme>,
+  bottomCtaBody: {
+    fontFamily: pageFonts.sans,
+    color: "#64748b",
+    mb: 2.5,
+  } satisfies SxProps<Theme>,
+  footer: {
+    py: 2.5,
+    borderTop: `1px solid ${alpha("#475569", 0.12)}`,
+    bgcolor: alpha("#f8fafc", 0.72),
+  } satisfies SxProps<Theme>,
+  footerText: {
+    fontFamily: pageFonts.sans,
+    fontSize: "0.875rem",
+    color: "#64748b",
+    textAlign: "center",
+  } satisfies SxProps<Theme>,
+} as const;
+
+/* ——— Onboarding wizard ——— */
+
+export const onboardingPageSx = {
+  container: {
+    py: { xs: 3, md: 5 },
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+  } satisfies SxProps<Theme>,
+  panel: {
+    ...agenticSurfaceSx.panel,
+    width: "100%",
+    p: { xs: 3, md: 4 },
+  } satisfies SxProps<Theme>,
+  kicker: {
+    fontFamily: pageFonts.mono,
+    fontSize: "0.75rem",
+    fontWeight: 600,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    color: "#64748b",
+  } satisfies SxProps<Theme>,
+  title: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: { xs: "1.75rem", md: "2.125rem" },
+    letterSpacing: "-0.02em",
+    color: "#0f172a",
+    mb: 1,
+  } satisfies SxProps<Theme>,
+  subtitle: {
+    fontFamily: pageFonts.sans,
+    fontSize: "1rem",
+    lineHeight: 1.6,
+    color: "#64748b",
+  } satisfies SxProps<Theme>,
+  primaryButton: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    textTransform: "none",
+    boxShadow: "none",
+  } satisfies SxProps<Theme>,
+  secondaryButton: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 600,
+    textTransform: "none",
+    borderColor: alpha("#475569", 0.35),
+    color: "#334155",
+  } satisfies SxProps<Theme>,
+  successText: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 600,
+    color: "#15803d",
+  } satisfies SxProps<Theme>,
+} as const;

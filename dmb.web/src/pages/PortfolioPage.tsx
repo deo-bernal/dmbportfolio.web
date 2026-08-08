@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
@@ -8,7 +9,7 @@ import { PortfolioProfileTabs, PortfolioProfileView } from "components/portfolio
 import api from "services/http.service";
 import { getProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
-import { agenticPageSx } from "styles/main_style";
+import { accentRedContainedButtonSx, agenticPageSx } from "styles/main_style";
 import type { PortfolioPageProps, Profile, UpdateProfileRequest } from "models";
 
 const EMPTY_PROFILE: Profile = {
@@ -106,9 +107,21 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
             </Box>
             <Box sx={agenticPageSx.headerActionsRow}>
               {!isEditing ? (
-                <Button variant="outlined" onClick={() => setIsEditing(true)} sx={agenticPageSx.headerOutlinedButton}>
-                  {isCreateMode ? "Create portfolio" : "Edit portfolio"}
-                </Button>
+                <>
+                  {isCreateMode ? (
+                    <Button
+                      component={RouterLink}
+                      to="/onboarding"
+                      variant="contained"
+                      sx={[agenticPageSx.headerOutlinedButton, accentRedContainedButtonSx]}
+                    >
+                      Build with AI
+                    </Button>
+                  ) : null}
+                  <Button variant="outlined" onClick={() => setIsEditing(true)} sx={agenticPageSx.headerOutlinedButton}>
+                    {isCreateMode ? "Create portfolio" : "Edit portfolio"}
+                  </Button>
+                </>
               ) : (
                 <Button variant="outlined" onClick={() => setIsEditing(false)} sx={agenticPageSx.headerOutlinedButton}>
                   Back to view

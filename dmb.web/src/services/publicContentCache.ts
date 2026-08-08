@@ -1,3 +1,5 @@
+import { dmbApiConfig, isProductionSiteHost, usesPublicApiProxy } from "config";
+
 const PROFILE_CACHE_PREFIX = "dmb:public-profile:";
 const EARLY_PROFILE_CACHE_PREFIX = "dmb:early-public-profile:";
 const CACHE_TTL_MS = 30 * 60 * 1000;
@@ -87,16 +89,11 @@ export function prefetchPublicProfile(username: string): void {
     return;
   }
 
-  const base =
-    typeof window !== "undefined" &&
-    (window.location.hostname === "dmbwebsolutions.com" ||
-      window.location.hostname === "www.dmbwebsolutions.com")
-      ? "/api"
-      : null;
-
-  if (!base) {
+  if (typeof window === "undefined" || !isProductionSiteHost(window.location.hostname)) {
     return;
   }
+
+  const base = usesPublicApiProxy() ? "/api" : dmbApiConfig.dmb_api_url;
 
   fetch(`${base}/publicprofile?username=${encodeURIComponent(normalized)}`)
     .then((response) => (response.ok ? response.json() : null))

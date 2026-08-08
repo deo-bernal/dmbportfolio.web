@@ -17,6 +17,7 @@
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="preconnect" href="https://dmbportfolio-api.azurewebsites.net" crossorigin />
     <title>Deo Bernal Portfolio</title>
     <script>
       (function () {
@@ -37,7 +38,10 @@
           }
         } catch (error) {}
 
-        fetch("/api/publicprofile?username=" + encodeURIComponent(segment))
+        fetch(
+          "https://dmbportfolio-api.azurewebsites.net/api/publicprofile?username=" +
+            encodeURIComponent(segment)
+        )
           .then(function (response) {
             return response.ok ? response.json() : null;
           })

@@ -1,0 +1,16 @@
+name: Keep API warm (Azure)
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Warm Azure API
+        run: |
+          curl -fsS -o /dev/null -w "azure=%{time_total}s code=%{http_code}\n" \
+            "https://dmbportfolio-api.azurewebsites.net/api/publicprofile?username=deobernal@gmail.com" \
+            --max-time 120

@@ -20,6 +20,7 @@ import axios from "axios";
 import useAuth from "hooks/useAuth";
 import { authSchema } from "validations/schema/auth";
 import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
+import { resolvePostLoginPath } from "services/postLoginNavigation";
 import { loginJwtSubmitButtonSignInSx, loginJwtSx } from "styles/main_style";
 import type { ApiMessageResponse, AuthFormValues } from "models";
 
@@ -41,7 +42,9 @@ const LoginJWT: FC = () => {
   const onSubmit = async ({ username, password }: AuthFormValues) => {
     try {
       await login(username, password);
-      navigate("/accent-sidebar/portfolio", { replace: true });
+      sessionStorage.setItem("dmb:account-username", username.trim());
+      const nextPath = await resolvePostLoginPath();
+      navigate(nextPath, { replace: true });
     } catch (error: unknown) {
       let errorMessage = "An unexpected error occurred. Please try again later.";
       if (axios.isAxiosError(error)) {
