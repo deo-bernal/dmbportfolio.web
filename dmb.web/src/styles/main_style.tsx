@@ -687,7 +687,7 @@ export const agenticPageSx = {
 
 export const formUtilsSx = {
   actionsRow: {
-    // display: "flex",
+    display: "flex",
     justifyContent: "flex-end",
     gap: 1,
     mb: 2,
