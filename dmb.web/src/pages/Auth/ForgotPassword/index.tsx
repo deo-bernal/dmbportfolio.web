@@ -18,9 +18,10 @@ import type { TransitionProps } from "@mui/material/transitions";
 import axios from "axios";
 import { forgotPasswordSchema } from "validations/schema/auth";
 import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
-import { LoginMainContent, LoginTopWrapper, authFlowSx, loginPageSx, loginJwtSx } from "styles/main_style";
+import { LoginTopWrapper, authFlowSx, loginPageSx, loginJwtSx, onboardingPageSx } from "styles/main_style";
 import api from "services/http.service";
 import type { ApiMessageResponse, ForgotFormValues, ForgotPasswordRequest } from "models";
+import MarketingLayout from "components/layout/MarketingLayout";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: ReactElement },
@@ -62,7 +63,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <LoginMainContent>
+    <MarketingLayout mainSx={onboardingPageSx.container}>
       <LoginTopWrapper>
         <Container maxWidth="sm">
           <Card elevation={0} sx={loginPageSx.card}>
@@ -138,6 +139,6 @@ export default function ForgotPassword() {
           </Button>
         </Box>
       </Dialog>
-    </LoginMainContent>
+    </MarketingLayout>
   );
 }
