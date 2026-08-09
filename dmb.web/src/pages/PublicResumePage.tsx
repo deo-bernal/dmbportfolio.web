@@ -13,7 +13,8 @@ import {
   readPublicResumeCache,
   writePublicResumeCache,
 } from "services/publicContentCache";
-import { agenticPageSx } from "styles/main_style";
+import { agenticPageSx, onboardingPageSx } from "styles/main_style";
+import MarketingLayout from "components/layout/MarketingLayout";
 
 function mapPublicResume(data: any): ResumeProfile {
   return {
@@ -111,7 +112,7 @@ export default function PublicResumePage() {
   const fullName = `${resume.personalInfo.firstName} ${resume.personalInfo.lastName}`.trim() || "Public Resume";
 
   return (
-    <Container sx={agenticPageSx.container}>
+    <MarketingLayout mainSx={onboardingPageSx.container}>
       <Stack sx={agenticPageSx.stackSections}>
         <Box sx={agenticPageSx.panelBody}>
           <Box component="header" sx={agenticPageSx.headerRow}>
@@ -127,7 +128,7 @@ export default function PublicResumePage() {
         </Box>
         <ResumeProfileView profile={resume} />
       </Stack>
-    </Container>
+    </MarketingLayout>
   );
 }
 

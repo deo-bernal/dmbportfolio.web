@@ -5,7 +5,9 @@ import {
   LoginMainContent,
   accentRedContainedButtonSx,
   landingPageSx,
+  layoutShellSx,
 } from "styles/main_style";
+import useAuth from "hooks/useAuth";
 
 type MarketingLayoutProps = {
   children: ReactNode;
@@ -13,6 +15,7 @@ type MarketingLayoutProps = {
 };
 
 export default function MarketingLayout({ children, mainSx }: MarketingLayoutProps) {
+  const auth = useAuth();
   return (
     <LoginMainContent sx={landingPageSx.root}>
       <Box component="header" sx={landingPageSx.header}>
@@ -32,24 +35,29 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
               DMB Profiles
             </Typography>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-              <Button
-                component={RouterLink}
-                to="/login"
-                variant="outlined"
-                size="small"
-                sx={landingPageSx.headerButtonOutline}
-              >
-                Sign in
-              </Button>
-              <Button
-                component={RouterLink}
-                to="/register"
-                variant="contained"
-                size="small"
-                sx={[landingPageSx.headerButtonPrimary, accentRedContainedButtonSx]}
-              >
-                Create free profile
-              </Button>
+            {!auth.isAuthenticated ? (
+              <>
+                <Button
+                  component={RouterLink}
+                  to="/login"
+                  variant="outlined"
+                  size="small"
+                  sx={landingPageSx.headerButtonOutline}
+                >
+                  Sign in
+                </Button>
+                <Button
+                  component={RouterLink}
+                  to="/register"
+                  variant="contained"
+                  size="small"
+                  sx={[landingPageSx.headerButtonPrimary, accentRedContainedButtonSx]}
+                >
+                  Create free profile
+                </Button>
+              </>
+            ) : null}
+
             </Stack>
           </Stack>
         </Container>
