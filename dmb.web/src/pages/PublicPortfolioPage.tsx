@@ -7,7 +7,8 @@ import Typography from "@mui/material/Typography";
 import { PortfolioProfileView } from "components/portfolioProfile";
 import { getPublicProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
-import { agenticPageSx } from "styles/main_style";
+import { agenticPageSx, onboardingPageSx } from "styles/main_style";
+import MarketingLayout from "components/layout/MarketingLayout";
 
 export default function PublicPortfolioPage() {
   const dispatch = useDispatch();
@@ -44,7 +45,7 @@ export default function PublicPortfolioPage() {
   }
 
   return (
-    <Container sx={agenticPageSx.container}>
+    <MarketingLayout mainSx={onboardingPageSx.container}>
       <Stack sx={agenticPageSx.stackSections}>
         <Box sx={agenticPageSx.panelBody}>
           <Box component="header" sx={agenticPageSx.headerRow}>
@@ -60,7 +61,7 @@ export default function PublicPortfolioPage() {
         </Box>
         <PortfolioProfileView profile={profile} />
       </Stack>
-    </Container>
+    </MarketingLayout>
   );
 }
 
