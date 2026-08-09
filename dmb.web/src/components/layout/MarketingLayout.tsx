@@ -4,8 +4,7 @@ import { Box, Button, Container, Link, Stack, Typography } from "@mui/material";
 import {
   LoginMainContent,
   accentRedContainedButtonSx,
-  landingPageSx,
-  layoutShellSx,
+  landingPageSx
 } from "styles/main_style";
 import useAuth from "hooks/useAuth";
 
