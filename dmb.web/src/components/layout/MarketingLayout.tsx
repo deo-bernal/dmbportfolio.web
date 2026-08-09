@@ -62,7 +62,7 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
         </Container>
       </Box>
 
-      <Box component="main" sx={[landingPageSx.main, mainSx ?? {}]}>
+      <Box component="main" sx={[landingPageSx.main, mainSx ?? landingPageSx.main]}>
         {children}
       </Box>
 
