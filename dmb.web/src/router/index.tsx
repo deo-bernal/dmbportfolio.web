@@ -54,16 +54,6 @@ export default function createRouter({
     //   element: <Navigate to={ONBOARD_PATH} replace />,
     // },
     {
-      path: "/:username",
-      element: <AccentSidebarLayout />,
-      children: [
-        {
-          path: "/onboarding",
-          element: <OnboardingPage />,
-        },
-      ],
-    },
-    {
       path: "/",
       element: token ? <Navigate to="/accent-sidebar" replace /> : <LandingPage />,
     },
@@ -96,6 +86,10 @@ export default function createRouter({
         {
           path: "",
           element: <PublicPortfolioPage />,
+        },
+        {
+          path: "onboarding",
+          element: <OnboardingPage />,
         },
         {
           path: "resume",
