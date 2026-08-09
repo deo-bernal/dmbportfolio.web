@@ -397,9 +397,6 @@ export const agenticPageSx = {
 
   panelBody: {
     ...agenticSurfaceSx.panel,
-    width: "100%",
-    display: "flex",
-    maxWidth: "100%",
     p: { xs: 2.5, sm: 3 },
   } satisfies SxProps<Theme>,
 
