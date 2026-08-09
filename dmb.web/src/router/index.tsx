@@ -49,9 +49,19 @@ export default function createRouter({
       path: ONBOARD_PATH,
       element: token ? <OnboardingPage /> : <Navigate to={`/login?redirect=${encodeURIComponent(ONBOARD_PATH)}`} replace />,
     },
+    // {
+    //   path: "/onboarding",
+    //   element: <Navigate to={ONBOARD_PATH} replace />,
+    // },
     {
-      path: "/onboarding",
-      element: <Navigate to={ONBOARD_PATH} replace />,
+      path: "/:username",
+      element: <AccentSidebarLayout />,
+      children: [
+        {
+          path: "/onboarding",
+          element: <OnboardingPage />,
+        },
+      ],
     },
     {
       path: "/",

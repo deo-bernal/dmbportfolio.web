@@ -28,6 +28,7 @@ export default function AccentSidebarLayout() {
   const isPublicRoute = Boolean(username) && !location.pathname.startsWith("/accent-sidebar");
   const portfolioPath = isPublicRoute ? `/${username}` : "/accent-sidebar/portfolio";
   const resumePath = isPublicRoute ? `/${username}/resume` : "/accent-sidebar/resume";
+  const aiProfileBuilderPath = isPublicRoute ? `/${username}/onboarding` : "/accent-sidebar/onboarding";
 
   const handleLogout = async () => {
     setLogoutBusy(true);
@@ -48,6 +49,7 @@ export default function AccentSidebarLayout() {
         <Box sx={layoutShellSx.navStack}>
           <ShellNavItem to={portfolioPath} label="Portfolio" end />
           <ShellNavItem to={resumePath} label="Resume" end />
+          <ShellNavItem to={aiProfileBuilderPath} label="AI Profile Builder" end />
         </Box>
 
         {!auth.isAuthenticated ? (
