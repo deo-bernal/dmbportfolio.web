@@ -15,11 +15,10 @@ import {
 } from "@mui/material";
 import { generateProfileWithAi } from "services/aiProfile.service";
 import api from "services/http.service";
+import MarketingLayout from "components/layout/MarketingLayout";
 import {
   accentRedContainedButtonSx,
   agenticPageSx,
-  landingPageSx,
-  LoginMainContent,
   onboardingPageSx,
 } from "styles/main_style";
 import type { GeneratedProfile, UpdateProfileRequest } from "models";
@@ -183,8 +182,8 @@ export default function OnboardingPage() {
   };
 
   return (
-    <LoginMainContent sx={landingPageSx.root}>
-      <Container maxWidth="md" sx={onboardingPageSx.container}>
+    <MarketingLayout mainSx={onboardingPageSx.container}>
+      <Container maxWidth="md">
         <Box sx={onboardingPageSx.panel}>
           <Stack spacing={3}>
             <Box>
@@ -421,7 +420,7 @@ export default function OnboardingPage() {
           </Stack>
         </Box>
       </Container>
-    </LoginMainContent>
+    </MarketingLayout>
   );
 }
 

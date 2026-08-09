@@ -11,7 +11,9 @@ import PublicResumePage from "../pages/PublicResumePage";
 import ResumePage from "../pages/ResumePage";
 import LandingPage from "../pages/Landing";
 import OnboardingPage from "../pages/Onboarding";
+import AuthRedirect from "../components/auth/AuthRedirect";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
+import { ONBOARD_PATH } from "../utils/navigation";
 
 type RouterConfig = {
   token: string | null;
@@ -25,7 +27,7 @@ export default function createRouter({
   return [
     {
       path: "/login",
-      element: token ? <Navigate to="/" replace /> : <Login />,
+      element: token ? <AuthRedirect /> : <Login />,
     },
     {
       path: "/forgot-password",
@@ -44,8 +46,12 @@ export default function createRouter({
       element: <ActivateAccount />,
     },
     {
+      path: ONBOARD_PATH,
+      element: token ? <OnboardingPage /> : <Navigate to={`/login?redirect=${encodeURIComponent(ONBOARD_PATH)}`} replace />,
+    },
+    {
       path: "/onboarding",
-      element: token ? <OnboardingPage /> : <Navigate to="/login" replace />,
+      element: <Navigate to={ONBOARD_PATH} replace />,
     },
     {
       path: "/",

@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
@@ -21,12 +21,15 @@ import useAuth from "hooks/useAuth";
 import { authSchema } from "validations/schema/auth";
 import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
 import { resolvePostLoginPath } from "services/postLoginNavigation";
+import { getSafeRedirectPath } from "utils/navigation";
 import { loginJwtSubmitButtonSignInSx, loginJwtSx } from "styles/main_style";
 import type { ApiMessageResponse, AuthFormValues } from "models";
 
 const LoginJWT: FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
 
   const formOptions = {
     resolver: yupResolver(authSchema),
@@ -43,7 +46,7 @@ const LoginJWT: FC = () => {
     try {
       await login(username, password);
       sessionStorage.setItem("dmb:account-username", username.trim());
-      const nextPath = await resolvePostLoginPath();
+      const nextPath = redirectPath ?? (await resolvePostLoginPath());
       navigate(nextPath, { replace: true });
     } catch (error: unknown) {
       let errorMessage = "An unexpected error occurred. Please try again later.";

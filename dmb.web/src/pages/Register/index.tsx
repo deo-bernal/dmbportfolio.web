@@ -22,7 +22,8 @@ import axios from "axios";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { registerSchema } from "validations/schema/auth";
 import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
-import { LoginMainContent, LoginTopWrapper, authFlowSx, loginPageSx, loginJwtSx } from "styles/main_style";
+import MarketingLayout from "components/layout/MarketingLayout";
+import { authFlowSx, loginPageSx, loginJwtSx, onboardingPageSx } from "styles/main_style";
 import api from "services/http.service";
 import type { ApiMessageResponse, RegisterFormValues, RegisterRequest } from "models";
 
@@ -80,9 +81,8 @@ export default function Register() {
   };
 
   return (
-    <LoginMainContent>
-      <LoginTopWrapper>
-        <Container maxWidth="sm">
+    <MarketingLayout mainSx={onboardingPageSx.container}>
+      <Container maxWidth="sm">
           <Card elevation={0} sx={loginPageSx.card}>
             <Box>
               <Typography variant="h2" sx={loginPageSx.titleSignIn}>
@@ -195,8 +195,7 @@ export default function Register() {
               </Link>
             </Box>
           </Card>
-        </Container>
-      </LoginTopWrapper>
+      </Container>
 
       <Dialog
         open={dialogOpen}
@@ -219,6 +218,6 @@ export default function Register() {
           </Button>
         </Box>
       </Dialog>
-    </LoginMainContent>
+    </MarketingLayout>
   );
 }

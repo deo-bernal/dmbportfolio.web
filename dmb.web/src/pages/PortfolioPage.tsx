@@ -11,6 +11,7 @@ import { getProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
 import { accentRedContainedButtonSx, agenticPageSx } from "styles/main_style";
 import type { PortfolioPageProps, Profile, UpdateProfileRequest } from "models";
+import { ONBOARD_PATH } from "utils/navigation";
 
 const EMPTY_PROFILE: Profile = {
   username: "",
@@ -111,7 +112,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
                   {isCreateMode ? (
                     <Button
                       component={RouterLink}
-                      to="/onboarding"
+                      to={ONBOARD_PATH}
                       variant="contained"
                       sx={[agenticPageSx.headerOutlinedButton, accentRedContainedButtonSx]}
                     >

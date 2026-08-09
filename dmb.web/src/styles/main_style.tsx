@@ -997,6 +997,24 @@ export const landingPageSx = {
     lineHeight: 1.6,
     color: "#64748b",
   } satisfies SxProps<Theme>,
+  featureCardLink: {
+    display: "block",
+    textDecoration: "none",
+    color: "inherit",
+    transition: "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+    "&:hover": {
+      transform: "translateY(-2px)",
+      boxShadow: `0 16px 40px ${alpha("#0f172a", 0.08)}`,
+      borderColor: alpha("#64748b", 0.28),
+    },
+  } satisfies SxProps<Theme>,
+  featureLink: {
+    mt: 1.5,
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: "0.875rem",
+    color: "#334155",
+  } satisfies SxProps<Theme>,
   bottomCta: {
     ...agenticSurfaceSx.panel,
     textAlign: "center",
