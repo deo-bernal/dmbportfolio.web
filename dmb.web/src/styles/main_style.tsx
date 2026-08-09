@@ -397,7 +397,11 @@ export const agenticPageSx = {
 
   panelBody: {
     ...agenticSurfaceSx.panel,
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
     maxWidth: "100%",
+    alignItems: "center",
     p: { xs: 2.5, sm: 3 },
   } satisfies SxProps<Theme>,
 
