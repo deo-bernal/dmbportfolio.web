@@ -47,14 +47,14 @@ export default function AccentSidebarLayout() {
       <Box component="aside" sx={layoutShellSx.sidebar}>
         <Box sx={layoutShellSx.sidebarBrand}>Online Profile</Box>
         <Box sx={layoutShellSx.navStack}>
-          <ShellNavItem to={aiProfileBuilderPath} label="AI Profile Builder" end />
-          <ShellNavItem to={portfolioPath} label="Portfolio" end />
           {auth.isAuthenticated ? (
-            <ShellNavItem to={resumePath} label="Resume" end />    
-          ) : null}      
+            <ShellNavItem to={aiProfileBuilderPath} label="AI Profile Builder" end />
+          ) : null}
+          <ShellNavItem to={portfolioPath} label="Portfolio" end />
+          <ShellNavItem to={resumePath} label="Resume" end />          
         </Box>
 
-        {!auth.isAuthenticated ? (
+        {!auth.isAuthenticated ? (  
           <Box sx={layoutShellSx.sidebarCtaWrap}>
             <Button fullWidth variant="contained" disableElevation onClick={() => navigate("/login")} sx={layoutShellSidebarCtaButtonSx}>
               Log in
