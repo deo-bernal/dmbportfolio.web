@@ -2,6 +2,8 @@
 
 declare module "*.css";
 
+declare module "mammoth";
+
 interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
 }

@@ -1,7 +1,6 @@
-const DEFAULT_MODEL = process.env.OPENAI_MODEL || "llama-3.3-70b-versatile";
-const OPENAI_BASE_URL = (
-  process.env.OPENAI_BASE_URL || "https://api.groq.com/openai/v1"
-).replace(/\/$/, "");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 const SYSTEM_PROMPT = `You are a professional profile builder assistant.
 Given a user's resume text and optional answers, produce a JSON object for an online portfolio and resume.
@@ -172,57 +171,44 @@ function normalizeGeneratedProfile(raw) {
   };
 }
 
-async function callOpenAi(userPrompt) {
-  const apiKey = process.env.OPENAI_API_KEY;
+function extractJsonObject(text) {
+  const trimmed = String(text || "").trim();
+  if (!trimmed) {
+    throw new Error("AI returned an empty response.");
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(trimmed.slice(start, end + 1));
+    }
+    throw new Error("AI returned invalid JSON.");
+  }
+}
+
+async function callGemini(userPrompt) {
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    const error = new Error("OPENAI_API_KEY is not configured on the server.");
+    const error = new Error("GEMINI_API_KEY is not configured on the server.");
     error.statusCode = 503;
     throw error;
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55000);
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: DEFAULT_MODEL,
+    generationConfig: {
+      temperature: 0.4,
+      responseMimeType: "application/json",
+    },
+  });
 
-  try {
-    const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        temperature: 0.4,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-
-    const payload = await response.json();
-
-    if (!response.ok) {
-      const message =
-        payload?.error?.message || `OpenAI request failed with status ${response.status}.`;
-      const error = new Error(message);
-      error.statusCode = response.status >= 500 ? 502 : 400;
-      throw error;
-    }
-
-    const content = payload?.choices?.[0]?.message?.content;
-    if (!content) {
-      const error = new Error("AI returned an empty response.");
-      error.statusCode = 502;
-      throw error;
-    }
-
-    return JSON.parse(content);
-  } finally {
-    clearTimeout(timeout);
-  }
+  const result = await model.generateContent(`${SYSTEM_PROMPT}\n\n${userPrompt}`);
+  const content = result?.response?.text?.() ?? "";
+  return extractJsonObject(content);
 }
 
 module.exports = async (req, res) => {
@@ -242,7 +228,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const rawProfile = await callOpenAi(userPrompt);
+    const rawProfile = await callGemini(userPrompt);
     const profile = normalizeGeneratedProfile(rawProfile);
 
     if (!profile.summary && profile.skills.length === 0 && profile.projectCategories.length === 0) {
