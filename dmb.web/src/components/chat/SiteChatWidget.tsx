@@ -14,7 +14,7 @@ import Typography from "@mui/material/Typography";
 import { streamSiteChat, type SiteChatMessage } from "services/siteChat.service";
 import { pageFonts } from "styles/main_style";
 
-const ASSISTANT_ICON = "/images/icons/dmb-assistant.svg";
+const ASSISTANT_ICON = "/images/icons/dmb-assistant.png";
 
 const ATTENTION_MESSAGES = [
   "Need a free online profile? ✨",
