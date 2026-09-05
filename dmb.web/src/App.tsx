@@ -8,6 +8,7 @@ import { useTheme } from "@mui/material/styles";
 import useAuth from "./hooks/useAuth";
 import createRouter from "./router";
 import ThemeProvider from "./theme/ThemeProvider";
+import SiteChatWidget from "./components/chat/SiteChatWidget";
 
 function App() {
   const auth = useAuth();
@@ -36,6 +37,7 @@ function App() {
         >
           <CssBaseline />
           {auth.isInitialized ? content : null}
+          {auth.isInitialized ? <SiteChatWidget /> : null}
         </SnackbarProvider>
       </LocalizationProvider>
     </ThemeProvider>
