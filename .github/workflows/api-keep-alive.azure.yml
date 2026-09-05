@@ -1,8 +1,8 @@
 name: Keep API warm (Azure)
 
+# Disabled: dmbportfolio-api.azurewebsites.net is not live yet.
+# Re-enable the cron below after the Azure App Service is deployed.
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
