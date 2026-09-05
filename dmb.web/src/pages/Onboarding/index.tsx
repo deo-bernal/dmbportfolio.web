@@ -16,6 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import { generateProfileWithAi } from "services/aiProfile.service";
+import { friendlyAiErrorMessage } from "utils/friendlyAiError";
 import api from "services/http.service";
 import MarketingLayout from "components/layout/MarketingLayout";
 import {
@@ -166,7 +167,12 @@ export default function OnboardingPage() {
     } catch (err: unknown) {
       setStep("input");
       if (axiosIsError(err)) {
-        setError(err.response?.data?.message ?? "Unable to generate profile with AI.");
+        setError(
+          friendlyAiErrorMessage(
+            err.response?.data?.message,
+            "Unable to generate profile with AI."
+          )
+        );
       } else {
         setError("Unable to generate profile with AI.");
       }

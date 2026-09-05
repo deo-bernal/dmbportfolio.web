@@ -1,6 +1,4 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+const { generateAiText, friendlyAiError } = require("../_aiProvider");
 
 const SYSTEM_PROMPT = `You are a professional profile builder assistant.
 Given a user's resume text and optional answers, produce a JSON object for an online portfolio and resume.
@@ -189,25 +187,12 @@ function extractJsonObject(text) {
   }
 }
 
-async function callGemini(userPrompt) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    const error = new Error("GEMINI_API_KEY is not configured on the server.");
-    error.statusCode = 503;
-    throw error;
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: DEFAULT_MODEL,
-    generationConfig: {
-      temperature: 0.4,
-      responseMimeType: "application/json",
-    },
+async function callProfileModel(userPrompt) {
+  const content = await generateAiText({
+    system: SYSTEM_PROMPT,
+    user: userPrompt,
+    json: true,
   });
-
-  const result = await model.generateContent(`${SYSTEM_PROMPT}\n\n${userPrompt}`);
-  const content = result?.response?.text?.() ?? "";
   return extractJsonObject(content);
 }
 
@@ -228,7 +213,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const rawProfile = await callGemini(userPrompt);
+    const rawProfile = await callProfileModel(userPrompt);
     const profile = normalizeGeneratedProfile(rawProfile);
 
     if (!profile.summary && profile.skills.length === 0 && profile.projectCategories.length === 0) {
@@ -240,12 +225,9 @@ module.exports = async (req, res) => {
 
     res.status(200).json({ profile });
   } catch (error) {
-    const statusCode = error.statusCode || (error.name === "AbortError" ? 504 : 500);
-    res.status(statusCode).json({
-      message:
-        error.name === "AbortError"
-          ? "AI request timed out. Try again with shorter input."
-          : error.message || "Unable to generate profile.",
+    const friendly = friendlyAiError(error);
+    res.status(friendly.statusCode || 500).json({
+      message: friendly.message,
     });
   }
 };

@@ -7,6 +7,7 @@ import {
   landingPageSx
 } from "styles/main_style";
 import useAuth from "hooks/useAuth";
+import useAccountGreeting from "hooks/useAccountGreeting";
 
 type MarketingLayoutProps = {
   children: ReactNode;
@@ -15,6 +16,7 @@ type MarketingLayoutProps = {
 
 export default function MarketingLayout({ children, mainSx }: MarketingLayoutProps) {
   const auth = useAuth();
+  const firstName = useAccountGreeting();
   return (
     <LoginMainContent sx={landingPageSx.root}>
       <Box component="header" sx={landingPageSx.header}>
@@ -31,10 +33,25 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
               to="/"
               sx={[landingPageSx.logo, { textDecoration: "none", color: "inherit" }]}
             >
-              DMB Profiles
+              DMB Web Solutions
             </Typography>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            {!auth.isAuthenticated ? (
+            {auth.isAuthenticated ? (
+              <>
+                {firstName ? (
+                  <Typography sx={landingPageSx.headerGreeting}>Hi {firstName}</Typography>
+                ) : null}
+                <Button
+                  component={RouterLink}
+                  to="/accent-sidebar/portfolio"
+                  variant="outlined"
+                  size="small"
+                  sx={landingPageSx.headerButtonOutline}
+                >
+                  Dashboard
+                </Button>
+              </>
+            ) : (
               <>
                 <Button
                   component={RouterLink}
@@ -55,8 +72,7 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
                   Create free profile
                 </Button>
               </>
-            ) : null}
-
+            )}
             </Stack>
           </Stack>
         </Container>

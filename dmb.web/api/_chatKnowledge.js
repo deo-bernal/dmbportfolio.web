@@ -1,6 +1,12 @@
 const KNOWLEDGE_CHUNKS = [
+  `DMB Web Solutions (dmbwebsolutions.com) is Deo Bernal's platform. It has two businesses: DMB Profiles (free online portfolio and resume pages) and DMB Real Estate (lots and land for sale in Pampanga).`,
+
   `DMB Profiles (dmbwebsolutions.com) is a free online portfolio and resume platform by DMB Web Solutions.
 Create a professional public profile you can share anywhere. It is designed for job seekers, freelancers, students, and career changers who need a web presence without building a site from scratch.`,
+
+  `DMB Real Estate is Deo Bernal's property business in Porac and Mexico, Pampanga. PRC license 0017233.
+Current listings include a 192 sqm residential lot in Pandacaqui-Telapayong, Mexico (~₱1.50 million) and a 180 sqm semi-commercial lot in Pandacaqui, Mexico (~₱2.50 million).
+See listings at https://onepropertee.com/deo-bernal. He also owns properties in Sinura, Porac.`,
 
   `Getting started is free. Register at /register, confirm your email, then sign in at /login.
 After login you can use the AI Profile Builder at /onboard: paste a resume or answer a few questions and the site generates a portfolio plus resume for you.

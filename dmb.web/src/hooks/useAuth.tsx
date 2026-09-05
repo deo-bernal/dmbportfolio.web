@@ -8,6 +8,7 @@ import {
 } from "react";
 import api from "../services/http.service";
 import type { LoginRequest, LoginResponse } from "models";
+import { clearAccountFirstName } from "../utils/accountGreeting";
 
 type UseAuthResult = {
   token: string | null;
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const onLogout = useCallback(() => {
     localStorage.removeItem("token");
+    clearAccountFirstName();
     setToken(null);
   }, []);
 

@@ -7,16 +7,23 @@ import {
   readPublicProfileCache,
   writePublicProfileCache,
 } from "../services/publicContentCache";
+import {
+  firstNameFromFullName,
+  persistAccountFirstName,
+  readAccountFirstName,
+} from "../utils/accountGreeting";
 import type { ApiUser, Profile, ProjectCategory, ProjectItem } from "models";
 
 type UserState = {
   profile: Profile | null;
+  accountFirstName: string;
   isLoading: boolean;
   error: string | null;
 };
 
 const initialState: UserState = {
   profile: null,
+  accountFirstName: readAccountFirstName(),
   isLoading: false,
   error: null,
 };
@@ -76,8 +83,11 @@ const slice = createSlice({
       state.isLoading = true;
       state.error = null;
     },
-    getProfileSuccess(state, action: PayloadAction<{ profile: Profile }>) {
+    getProfileSuccess(state, action: PayloadAction<{ profile: Profile; accountFirstName?: string }>) {
       state.profile = action.payload.profile;
+      if (action.payload.accountFirstName) {
+        state.accountFirstName = action.payload.accountFirstName;
+      }
       state.isLoading = false;
       state.error = null;
     },
@@ -87,6 +97,7 @@ const slice = createSlice({
     },
     clearProfile(state) {
       state.profile = null;
+      state.accountFirstName = "";
       state.isLoading = false;
       state.error = null;
     },
@@ -101,7 +112,10 @@ export const getProfile =
     dispatch(slice.actions.getProfileStart());
     try {
       const res = await api.get<ApiUser>("/profiledetails");
-      dispatch(slice.actions.getProfileSuccess({ profile: mapProfileDetailsToProfile(res.data) }));
+      const profile = mapProfileDetailsToProfile(res.data);
+      const firstName = res.data.firstName || firstNameFromFullName(profile.name);
+      persistAccountFirstName(firstName);
+      dispatch(slice.actions.getProfileSuccess({ profile, accountFirstName: firstName }));
     } catch (error: any) {
       if (error?.response?.status === 401) {
         if (onUnauthorized) onUnauthorized();

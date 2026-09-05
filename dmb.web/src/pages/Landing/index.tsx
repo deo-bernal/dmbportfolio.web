@@ -11,13 +11,15 @@ import {
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import LanguageIcon from "@mui/icons-material/Language";
 import DescriptionIcon from "@mui/icons-material/Description";
-import SpeedIcon from "@mui/icons-material/Speed";
+import HomeWorkOutlinedIcon from "@mui/icons-material/HomeWorkOutlined";
 import MarketingLayout from "components/layout/MarketingLayout";
 import {
   accentRedContainedButtonSx,
   landingPageSx,
 } from "styles/main_style";
 import { getOnboardLoginPath } from "utils/navigation";
+
+const REAL_ESTATE_LISTINGS_URL = "https://onepropertee.com/deo-bernal";
 
 const features = [
   {
@@ -41,10 +43,24 @@ const features = [
       "Professional summary, skills, projects, work history, and education in one place.",
   },
   {
-    icon: SpeedIcon,
-    title: "Free to start",
+    icon: HomeWorkOutlinedIcon,
+    title: "Pampanga lots",
     description:
-      "Create and publish your online profile at no cost. Upgrade later when you need more.",
+      "DMB Real Estate — residential and semi-commercial lots in Mexico and Porac, Pampanga.",
+    href: REAL_ESTATE_LISTINGS_URL,
+    cta: "View listings",
+    external: true,
+  },
+];
+
+const listings = [
+  {
+    title: "Residential lot — Mexico, Pampanga",
+    details: "192 sqm in Pandacaqui-Telapayong. About ₱1.50 million (₱7,812/sqm).",
+  },
+  {
+    title: "Semi-commercial lot — Mexico, Pampanga",
+    details: "180 sqm in Pandacaqui. About ₱2.50 million (₱13,888/sqm).",
   },
 ];
 
@@ -57,18 +73,17 @@ export default function LandingPage() {
             <Box sx={landingPageSx.heroBadge}>
               <AutoAwesomeIcon sx={{ fontSize: 16 }} />
               <Typography component="span" variant="caption">
-                Free online profiles with AI builder
+                DMB Profiles · DMB Real Estate
               </Typography>
             </Box>
 
             <Typography component="h1" sx={landingPageSx.heroTitle}>
-              Your professional story, online in minutes.
+              Software profiles. Pampanga property. One DMB home.
             </Typography>
 
             <Typography sx={landingPageSx.heroSubtitle}>
-              Create a free portfolio and resume page you can share anywhere.
-              Perfect for job seekers, freelancers, and students who need a
-              professional web presence without building a site from scratch.
+              Build a free online portfolio with AI, or talk to Deo Bernal about lots
+              in Mexico and Porac, Pampanga. PRC license 0017233.
             </Typography>
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -91,13 +106,14 @@ export default function LandingPage() {
                 Build with AI
               </Button>
               <Button
-                component={RouterLink}
-                to="/login"
+                href={REAL_ESTATE_LISTINGS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 variant="outlined"
                 size="large"
                 sx={landingPageSx.ctaSecondary}
               >
-                Sign in
+                View lots for sale
               </Button>
             </Stack>
 
@@ -109,14 +125,24 @@ export default function LandingPage() {
                 underline="hover"
                 sx={landingPageSx.inlineLink}
               >
-                View an example profile
+                View Deo&apos;s profile
+              </Link>
+              {" · "}
+              <Link
+                href={REAL_ESTATE_LISTINGS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                underline="hover"
+                sx={landingPageSx.inlineLink}
+              >
+                OnePropertee listings
               </Link>
             </Typography>
           </Stack>
         </Box>
 
         <Grid container spacing={2.5} sx={landingPageSx.featureGrid}>
-          {features.map(({ icon: Icon, title, description, href, cta }) => {
+          {features.map(({ icon: Icon, title, description, href, cta, external }) => {
             const card = (
               <>
                 <Box sx={landingPageSx.featureIconWrap}>
@@ -134,7 +160,17 @@ export default function LandingPage() {
 
             return (
               <Grid key={title} size={{ xs: 12, sm: 6, md: 3 }}>
-                {href ? (
+                {href && external ? (
+                  <Box
+                    component="a"
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={[landingPageSx.featureCard, landingPageSx.featureCardLink]}
+                  >
+                    {card}
+                  </Box>
+                ) : href ? (
                   <Box
                     component={RouterLink}
                     to={href}
@@ -150,12 +186,43 @@ export default function LandingPage() {
           })}
         </Grid>
 
+        <Box sx={[landingPageSx.heroPanel, { mb: 3 }]}>
+          <Stack spacing={1} sx={{ mb: 2.5 }}>
+            <Typography component="h2" sx={landingPageSx.sectionTitle}>
+              DMB Real Estate
+            </Typography>
+            <Typography sx={landingPageSx.heroSubtitle}>
+              Lots for sale in Mexico and Porac, Pampanga. Direct from the owner —
+              Deo Bernal, PRC 0017233.
+            </Typography>
+          </Stack>
+          <Grid container spacing={2.5}>
+            {listings.map((listing) => (
+              <Grid key={listing.title} size={{ xs: 12, md: 6 }}>
+                <Box sx={landingPageSx.featureCard}>
+                  <Typography sx={landingPageSx.listingPrice}>{listing.title}</Typography>
+                  <Typography sx={landingPageSx.featureBody}>{listing.details}</Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+          <Button
+            href={REAL_ESTATE_LISTINGS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="contained"
+            sx={[landingPageSx.ctaPrimary, accentRedContainedButtonSx, { mt: 2.5 }]}
+          >
+            See all listings
+          </Button>
+        </Box>
+
         <Box sx={landingPageSx.bottomCta}>
           <Typography component="h2" sx={landingPageSx.bottomCtaTitle}>
             Ready to go live?
           </Typography>
           <Typography sx={landingPageSx.bottomCtaBody}>
-            Register free, build your profile, and share your link today.
+            Register free, build your profile, or message about Pampanga lots.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ justifyContent: "center" }}>
             <Button
@@ -168,13 +235,14 @@ export default function LandingPage() {
               Get started — it&apos;s free
             </Button>
             <Button
-              component={RouterLink}
-              to={getOnboardLoginPath()}
+              href={REAL_ESTATE_LISTINGS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               variant="outlined"
               size="large"
               sx={landingPageSx.ctaSecondary}
             >
-              Build with AI
+              Contact for property
             </Button>
           </Stack>
         </Box>

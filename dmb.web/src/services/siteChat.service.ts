@@ -1,3 +1,5 @@
+import { friendlyAiErrorMessage } from "../utils/friendlyAiError";
+
 export type SiteChatRole = "user" | "assistant";
 
 export type SiteChatMessage = {
@@ -23,7 +25,7 @@ export async function streamSiteChat(
     } catch {
       // keep default
     }
-    throw new Error(message);
+    throw new Error(friendlyAiErrorMessage(message, "Failed to get a chat response."));
   }
 
   const reader = response.body?.getReader();

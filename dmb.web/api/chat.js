@@ -1,9 +1,11 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { generateAiText, streamGeminiText, friendlyAiError } = require("./_aiProvider");
 const { retrieveContext } = require("./_chatKnowledge");
 
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+const SYSTEM_PROMPT = `You are DMB Assistant, the friendly AI helper for DMB Web Solutions on dmbwebsolutions.com.
 
-const SYSTEM_PROMPT = `You are DMB Assistant, the friendly AI helper for DMB Profiles on dmbwebsolutions.com — a free online portfolio and resume platform.
+DMB has two sides:
+1) DMB Profiles — a free online portfolio and resume platform.
+2) DMB Real Estate — Deo Bernal's property listings in Pampanga (Porac / Mexico), PRC license 0017233. Listings: https://onepropertee.com/deo-bernal
 
 Use retrieved context below when it answers the visitor. If it does not cover the question, use general knowledge and say it is not from the site docs.
 
@@ -13,6 +15,7 @@ Use retrieved context below when it answers the visitor. If it does not cover th
 - [[AI Profile Builder|/onboard]]
 - [[Forgot password|/forgot-password]]
 - [[Home|/]]
+- [[Real estate listings|https://onepropertee.com/deo-bernal]]
 
 Example: "You can [[Create free profile|/register]] in about a minute, then use the [[AI Profile Builder|/onboard]]."
 
@@ -23,7 +26,8 @@ Example: "You can [[Create free profile|/register]] in about a minute, then use 
 4. Never invent that a feature exists if it is not in the context.
 5. Do not ask for passwords, payment cards, or government IDs.
 6. If they want a live profile, guide them to register or sign in, then the AI builder.
-7. If they are already signed in, point them to Portfolio, Resume, and AI Profile Builder in the dashboard.
+7. If they ask about lots, land, or buying property in Pampanga, mention DMB Real Estate and [[Real estate listings|https://onepropertee.com/deo-bernal]].
+8. If they are already signed in, greet them by first name when you know it, and point them to Portfolio, Resume, and AI Profile Builder.
 
 ## FORMATTING
 - Use **bold** for important terms.
@@ -67,33 +71,32 @@ ${history}
 Respond as the Assistant. Keep it SHORT (2-3 sentences) unless they ask for detailed information.`;
 }
 
-async function streamGemini(res, conversation, context) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    const error = new Error("GEMINI_API_KEY is not configured on the server.");
-    error.statusCode = 503;
-    throw error;
+async function streamReply(res, conversation, context) {
+  const prompt = toPrompt(conversation, context);
+
+  try {
+    const streamed = await streamGeminiText(res, prompt);
+    if (streamed) {
+      res.write("data: [DONE]\n\n");
+      res.end();
+      return;
+    }
+  } catch (error) {
+    if (res.headersSent) {
+      throw error;
+    }
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: DEFAULT_MODEL,
-    generationConfig: { temperature: 0.3 },
+  const text = await generateAiText({
+    system: SYSTEM_PROMPT.replace("{context}", context),
+    user: toPrompt(conversation, context),
+    json: false,
   });
-
-  const result = await model.generateContentStream(toPrompt(conversation, context));
 
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache, no-transform");
   res.setHeader("Connection", "keep-alive");
-
-  for await (const chunk of result.stream) {
-    const text = chunk.text();
-    if (text) {
-      res.write(`data: ${JSON.stringify({ text })}\n\n`);
-    }
-  }
-
+  res.write(`data: ${JSON.stringify({ text })}\n\n`);
   res.write("data: [DONE]\n\n");
   res.end();
 }
@@ -114,17 +117,17 @@ module.exports = async (req, res) => {
     }
 
     const context = retrieveContext(latestUserText(conversation));
-    await streamGemini(res, conversation, context);
+    await streamReply(res, conversation, context);
   } catch (error) {
     if (res.headersSent) {
       res.end();
       return;
     }
 
-    const statusCode = error.statusCode || 500;
+    const friendly = friendlyAiError(error);
     res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.status(statusCode).json({
-      message: error.message || "Unable to complete chat.",
+    res.status(friendly.statusCode || 500).json({
+      message: friendly.message,
     });
   }
 };

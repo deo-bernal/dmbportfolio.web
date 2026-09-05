@@ -13,21 +13,25 @@ import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { streamSiteChat, type SiteChatMessage } from "services/siteChat.service";
 import { pageFonts } from "styles/main_style";
+import useAccountGreeting from "hooks/useAccountGreeting";
+import { friendlyAiErrorMessage } from "utils/friendlyAiError";
 
 const ASSISTANT_ICON = "/images/icons/dmb-assistant.png";
 
 const ATTENTION_MESSAGES = [
   "Need a free online profile? ✨",
   "Build your resume with AI",
-  "Share one live public URL",
+  "Lots for sale in Pampanga",
   "Ask me how DMB Profiles works",
 ];
 
-const WELCOME_MESSAGE: SiteChatMessage = {
-  role: "assistant",
-  content:
-    "Hi — I'm **DMB Assistant**. I can help you create a free portfolio and resume page. Ask anything, or [[Create free profile|/register]] to get started.",
-};
+function welcomeMessage(firstName: string): SiteChatMessage {
+  const greeting = firstName ? `Hi ${firstName}` : "Hi";
+  return {
+    role: "assistant",
+    content: `${greeting} — I'm **DMB Assistant**. I can help with free portfolio pages or DMB Real Estate lots in Pampanga. Ask anything, or [[Create free profile|/register]] to get started.`,
+  };
+}
 
 function FormatInlineText({ text }: { text: string }) {
   const parts: ReactNode[] = [];
@@ -112,7 +116,13 @@ function renderLineWithLinks(line: string, onNavigate: (path: string) => void): 
       <button
         key={key++}
         type="button"
-        onClick={() => onNavigate(linkPath)}
+        onClick={() => {
+          if (/^https?:\/\//i.test(linkPath)) {
+            window.open(linkPath, "_blank", "noopener,noreferrer");
+            return;
+          }
+          onNavigate(linkPath);
+        }}
         style={{
           display: "inline",
           padding: 0,
@@ -148,11 +158,12 @@ function stripForSpeech(content: string): string {
 
 export default function SiteChatWidget() {
   const navigate = useNavigate();
+  const firstName = useAccountGreeting();
   const [isOpen, setIsOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(false);
-  const [messages, setMessages] = useState<SiteChatMessage[]>([WELCOME_MESSAGE]);
+  const [messages, setMessages] = useState<SiteChatMessage[]>(() => [welcomeMessage("")]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [streamingText, setStreamingText] = useState("");
@@ -173,6 +184,15 @@ export default function SiteChatWidget() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingText, isLoading]);
+
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length !== 1 || prev[0].role !== "assistant") {
+        return prev;
+      }
+      return [welcomeMessage(firstName)];
+    });
+  }, [firstName]);
 
   useEffect(() => {
     if (isOpen || bubbleDismissed) return;
@@ -233,10 +253,10 @@ export default function SiteChatWidget() {
         setStreamingText("");
         speak(stripForSpeech(assistantMessage.content));
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Something went wrong. Please try again in a moment.";
+        const message = friendlyAiErrorMessage(
+          error instanceof Error ? error.message : "",
+          "Something went wrong. Please try again in a moment."
+        );
         setMessages((prev) => [...prev, { role: "assistant", content: message }]);
         setStreamingText("");
       } finally {

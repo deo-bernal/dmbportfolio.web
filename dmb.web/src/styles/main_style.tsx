@@ -312,6 +312,14 @@ export const layoutShellSx = {
     letterSpacing: "0.14em",
     textTransform: "uppercase",
     color: alpha("#e2e8f0", 0.92),
+    mb: { xs: 0.5, sm: 1 },
+  } satisfies SxProps<Theme>,
+
+  sidebarGreeting: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: "1.05rem",
+    color: "#f8fafc",
     mb: { xs: 1, sm: 2.5 },
     pb: { xs: 1, sm: 1.75 },
     borderBottom: `1px solid ${alpha("#94a3b8", 0.22)}`,
@@ -373,7 +381,22 @@ export const layoutShellSidebarCtaButtonSx = {
   ...layoutShellSx.navItemActive,
   textTransform: "uppercase",
   letterSpacing: "0.08em",
-  ...accentRedContainedButtonSx,
+} satisfies SxProps<Theme>;
+
+export const layoutShellLogoutButtonSx = {
+  ...layoutShellSx.navItem,
+  width: "100%",
+  textTransform: "none",
+  letterSpacing: "0.02em",
+  fontWeight: 600,
+  color: "#e2e8f0",
+  border: `1px solid ${alpha("#94a3b8", 0.35)}`,
+  bgcolor: "transparent",
+  "&:hover": {
+    bgcolor: alpha("#64748b", 0.22),
+    borderColor: alpha("#cbd5e1", 0.45),
+    color: "#f8fafc",
+  },
 } satisfies SxProps<Theme>;
 
 export function shellNavItemSx(isActive: boolean): SxProps<Theme> {
@@ -1014,6 +1037,26 @@ export const landingPageSx = {
     fontWeight: 700,
     fontSize: "0.875rem",
     color: "#334155",
+  } satisfies SxProps<Theme>,
+  sectionTitle: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: { xs: "1.35rem", md: "1.6rem" },
+    color: "#0f172a",
+    mb: 1,
+  } satisfies SxProps<Theme>,
+  listingPrice: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    color: "#0f172a",
+    mb: 0.5,
+  } satisfies SxProps<Theme>,
+  headerGreeting: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 600,
+    fontSize: "0.9375rem",
+    color: "#334155",
+    mr: 0.5,
   } satisfies SxProps<Theme>,
   bottomCta: {
     ...agenticSurfaceSx.panel,
