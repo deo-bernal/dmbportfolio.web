@@ -1,4 +1,11 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+function loadGeminiClient(apiKey) {
+  try {
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    return new GoogleGenerativeAI(apiKey);
+  } catch {
+    return null;
+  }
+}
 
 const GROQ_BASE_URL = (
   process.env.OPENAI_BASE_URL || "https://api.groq.com/openai/v1"
@@ -71,7 +78,8 @@ async function callGemini({ system, user, json }) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const genAI = loadGeminiClient(apiKey);
+  if (!genAI) return null;
   let lastError;
 
   for (const modelName of GEMINI_MODELS) {
@@ -136,7 +144,8 @@ async function streamGeminiText(res, prompt) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return false;
 
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const genAI = loadGeminiClient(apiKey);
+  if (!genAI) return false;
   let lastError;
 
   for (const modelName of GEMINI_MODELS) {
