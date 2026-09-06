@@ -49,7 +49,9 @@ const features = [
     icon: LanguageIcon,
     title: "Live public URL",
     description:
-      "Share one link: yourname.dmbwebsolutions.com. Portfolio and resume, always online.",
+      "Share one link: dmbwebsolutions.com/your-email — portfolio and resume, always online.",
+    href: "/deobernal@gmail.com",
+    cta: "See a live example",
   },
   {
     icon: DescriptionIcon,

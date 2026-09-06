@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
 import { submitLead, type LeadSource } from "services/leads.service";
-import { CAL_BOOKING_URL } from "content/showcase";
+import { HAS_BOOKING_PAGE, getBookingHref } from "content/showcase";
 import { accentRedContainedButtonSx, showcaseSx } from "styles/main_style";
 
 const NEEDS = [
@@ -81,17 +81,17 @@ export default function LeadForm({ source = "funnel-form" }: LeadFormProps) {
         </Stack>
         <Typography sx={showcaseSx.cardBody}>
           A confirmation email is on its way. If you would rather skip the email
-          thread, pick a time directly.
+          thread, {HAS_BOOKING_PAGE ? "pick a time directly." : "email me and we will pick a time."}
         </Typography>
         <Button
-          href={CAL_BOOKING_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={getBookingHref()}
+          target={HAS_BOOKING_PAGE ? "_blank" : undefined}
+          rel={HAS_BOOKING_PAGE ? "noopener noreferrer" : undefined}
           variant="contained"
           size="large"
           sx={[{ textTransform: "none", fontWeight: 700 }, accentRedContainedButtonSx]}
         >
-          Book a 30-minute call
+          {HAS_BOOKING_PAGE ? "Book a 30-minute call" : "Email to book a time"}
         </Button>
       </Stack>
     );

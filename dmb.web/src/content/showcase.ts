@@ -3,11 +3,19 @@
  * Kept as data so the funnel, case studies, and stack page stay in sync.
  */
 
-export const CAL_BOOKING_URL =
-  process.env.REACT_APP_CAL_BOOKING_URL || "https://cal.com/deo-bernal/30min";
-
 export const CONTACT_EMAIL =
   process.env.REACT_APP_CONTACT_EMAIL || "deobernal@gmail.com";
+
+/** Only set this after the Cal.com (or other) page actually exists. An empty
+ * default used to iframe a 404. */
+export const CAL_BOOKING_URL = process.env.REACT_APP_CAL_BOOKING_URL || "";
+
+export const HAS_BOOKING_PAGE = Boolean(CAL_BOOKING_URL);
+
+export function getBookingHref(): string {
+  if (CAL_BOOKING_URL) return CAL_BOOKING_URL;
+  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Book a 30-minute call")}`;
+}
 
 /** Set once the walkthrough is recorded; the button hides until then. */
 export const WALKTHROUGH_URL = process.env.REACT_APP_WALKTHROUGH_URL || "";

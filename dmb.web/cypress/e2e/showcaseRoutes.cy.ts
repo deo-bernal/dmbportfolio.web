@@ -57,6 +57,6 @@ describe("AI automation showcase routes", () => {
     });
 
     cy.contains("Thanks — your request is in.");
-    cy.contains("a", "Book a 30-minute call");
+    cy.contains("a", "Email to book a time");
   });
 });

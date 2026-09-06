@@ -23,7 +23,9 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
 const FROM_EMAIL = process.env.LEADS_FROM_EMAIL || "";
 const NOTIFY_EMAIL = process.env.LEADS_NOTIFY_EMAIL || "";
 
-const BOOKING_URL = process.env.CAL_BOOKING_URL || "https://cal.com/deo-bernal/30min";
+const BOOKING_URL =
+  process.env.CAL_BOOKING_URL ||
+  "mailto:deobernal@gmail.com?subject=Book%20a%2030-minute%20call";
 
 const MAX_FIELD = 2000;
 const RATE_LIMIT_MAX = 5;
