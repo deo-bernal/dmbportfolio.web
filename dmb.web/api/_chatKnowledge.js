@@ -28,6 +28,17 @@ There is no charge required to register, generate a first profile, or share your
   `Need an account? Use Create free profile / register. Already have an account? Sign in.
 Forgot password is available from the login page. New accounts require email activation before you can sign in.`,
 
+  `DMB AI Automation is Deo Bernal's services side, at /ai-automation. Deo builds AI systems that capture, qualify, and book leads for businesses:
+AI chat assistants grounded in your own content, lead capture funnels, CRM and database integration (Supabase, Airtable, Sheets, HubSpot, GoHighLevel), automated email follow-up, appointment booking, workflow automation with n8n, Make and Zapier, and voice AI agents with Vapi or Retell.
+Deo has twenty years of software delivery experience and is available for AI implementation work.`,
+
+  `Proof of the automation work is on this site. /case-studies has two written case studies: DMB Assistant (this chatbot — multi-provider failover across Groq and Gemini, keyword retrieval, streaming replies, and two production incidents that were diagnosed and fixed) and the AI Profile Builder (PDF and DOCX parsing, structured JSON generation, a human review step, and a data-overwrite bug that was found and guarded).
+/stack lists the platforms split into what is shipped in production versus working knowledge.`,
+
+  `The lead pipeline on /ai-automation is live, not a mockup. A submitted form is validated by a serverless function, stored in Supabase, pushed to a self-hosted n8n workflow that notifies Slack and starts a nurture sequence, and answered by an automated confirmation email through Resend. Every message includes the booking link so a qualified lead can book a 30-minute call unattended.`,
+
+  `To hire Deo or discuss an automation project: book a 30-minute call, or leave a name, email, what needs automating, and a timeline in this chat and it goes straight into the same pipeline. There is no charge for the first call. Deo is based in Pampanga, Philippines and works with clients remotely.`,
+
   `This assistant helps visitors understand DMB Profiles, how to register, how AI builder works, and where to go on the site.
 It cannot log in for the user, reset passwords, or change account data. Direct people to the matching page with a [[link|/path]] when that helps.`,
 ];

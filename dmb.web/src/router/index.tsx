@@ -11,6 +11,11 @@ import PublicResumePage from "../pages/PublicResumePage";
 import ResumePage from "../pages/ResumePage";
 import LandingPage from "../pages/Landing";
 import OnboardingPage from "../pages/Onboarding";
+import AiAutomationPage from "../pages/AiAutomation";
+import CaseStudiesPage from "../pages/CaseStudies";
+import CaseStudyView from "../pages/CaseStudies/CaseStudyView";
+import StackPage from "../pages/Stack";
+import LeadsPage from "../pages/Leads";
 import AuthRedirect from "../components/auth/AuthRedirect";
 import RequireAuth from "../components/auth/RequireAuth";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
@@ -62,6 +67,23 @@ export default function createRouter({
       path: "/portfolio",
       element: token ? <Navigate to="/accent-sidebar/portfolio" replace /> : <Navigate to="/login" replace />,
     },
+    // Registered ahead of the "/:username" public profile catch-all below.
+    {
+      path: "/ai-automation",
+      element: <AiAutomationPage />,
+    },
+    {
+      path: "/case-studies",
+      element: <CaseStudiesPage />,
+    },
+    {
+      path: "/case-studies/:slug",
+      element: <CaseStudyView />,
+    },
+    {
+      path: "/stack",
+      element: <StackPage />,
+    },
     {
       path: "/accent-sidebar",
       element: (
@@ -85,6 +107,10 @@ export default function createRouter({
         {
           path: "onboarding",
           element: <OnboardingPage />,
+        },
+        {
+          path: "leads",
+          element: <LeadsPage />,
         },
       ],
     },

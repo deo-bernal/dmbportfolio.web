@@ -36,6 +36,17 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
               DMB Web Solutions
             </Typography>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+            <Button
+              component={RouterLink}
+              to="/ai-automation"
+              size="small"
+              sx={[
+                landingPageSx.headerButtonOutline,
+                { border: "none", display: { xs: "none", sm: "inline-flex" } },
+              ]}
+            >
+              AI automation
+            </Button>
             {auth.isAuthenticated ? (
               <>
                 {firstName ? (

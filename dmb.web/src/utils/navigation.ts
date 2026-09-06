@@ -11,6 +11,9 @@ const APP_PATH_PREFIXES = [
   "/portfolio",
   "/onboard",
   "/onboarding",
+  "/ai-automation",
+  "/case-studies",
+  "/stack",
 ];
 
 export function getSafeRedirectPath(value: string | null | undefined): string | null {

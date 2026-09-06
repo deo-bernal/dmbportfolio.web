@@ -69,7 +69,10 @@ export default function AccentSidebarLayout() {
             <ShellNavItem to={aiProfileBuilderPath} label="AI Profile Builder" end />
           ) : null}
           <ShellNavItem to={portfolioPath} label="Portfolio" end />
-          <ShellNavItem to={resumePath} label="Resume" end />          
+          <ShellNavItem to={resumePath} label="Resume" end />
+          {auth.isAuthenticated && !isPublicRoute ? (
+            <ShellNavItem to="/accent-sidebar/leads" label="Leads" end />
+          ) : null}
         </Box>
 
         {!auth.isAuthenticated ? (  

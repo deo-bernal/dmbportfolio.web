@@ -225,7 +225,11 @@ async function generateAiText({ system, user, json = false }) {
   throw friendlyAiError(lastError);
 }
 
-async function streamGeminiText(res, prompt) {
+/**
+ * `filter`, when supplied, sees every chunk before it is written to the client
+ * and may hold text back (see _leadMarker.js).
+ */
+async function streamGeminiText(res, prompt, filter = null) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return false;
 
@@ -245,10 +249,17 @@ async function streamGeminiText(res, prompt) {
       res.setHeader("Connection", "keep-alive");
 
       for await (const chunk of result.stream) {
-        const text = chunk.text();
+        const raw = chunk.text();
+        if (!raw) continue;
+        const text = filter ? filter.feed(raw) : raw;
         if (text) {
           res.write(`data: ${JSON.stringify({ text })}\n\n`);
         }
+      }
+
+      const tail = filter ? filter.end() : "";
+      if (tail) {
+        res.write(`data: ${JSON.stringify({ text: tail })}\n\n`);
       }
       return true;
     } catch (error) {

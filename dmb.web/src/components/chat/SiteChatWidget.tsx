@@ -20,16 +20,16 @@ const ASSISTANT_ICON = "/images/icons/dmb-assistant.png";
 
 const ATTENTION_MESSAGES = [
   "Need a free online profile? ✨",
+  "Want AI automation for your business?",
   "Build your resume with AI",
   "Lots for sale in Pampanga",
-  "Ask me how DMB Profiles works",
 ];
 
 function welcomeMessage(firstName: string): SiteChatMessage {
   const greeting = firstName ? `Hi ${firstName}` : "Hi";
   return {
     role: "assistant",
-    content: `${greeting} — I'm **DMB Assistant**. I can help with free portfolio pages or DMB Real Estate lots in Pampanga. Ask anything, or [[Create free profile|/register]] to get started.`,
+    content: `${greeting} — I'm **DMB Assistant**. Ask me about free portfolio pages, [[AI automation services|/ai-automation]] for your business, or DMB Real Estate lots in Pampanga.`,
   };
 }
 
@@ -193,6 +193,16 @@ export default function SiteChatWidget() {
       return [welcomeMessage(firstName)];
     });
   }, [firstName]);
+
+  useEffect(() => {
+    const openFromPage = () => {
+      setIsOpen(true);
+      setShowBubble(false);
+      setBubbleDismissed(true);
+    };
+    window.addEventListener("dmb:open-chat", openFromPage);
+    return () => window.removeEventListener("dmb:open-chat", openFromPage);
+  }, []);
 
   useEffect(() => {
     if (isOpen || bubbleDismissed) return;

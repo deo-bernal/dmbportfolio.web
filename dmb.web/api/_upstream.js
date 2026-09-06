@@ -66,4 +66,41 @@ async function proxyGet(req, res, path) {
   });
 }
 
-module.exports = { proxyGet };
+/**
+ * Authenticated GET against the .NET API, walking the same upstream candidates
+ * as the proxy. Returns null when every candidate refuses or fails.
+ */
+async function getUpstreamJson(path, { token, timeoutMs = 10000 } = {}) {
+  for (const base of getUpstreamCandidates()) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(`${base}${path}`, {
+        signal: controller.signal,
+        headers: {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        return null;
+      }
+
+      if (!response.ok) {
+        continue;
+      }
+
+      return await response.json();
+    } catch {
+      // Try the next upstream.
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  return null;
+}
+
+module.exports = { proxyGet, getUpstreamJson };

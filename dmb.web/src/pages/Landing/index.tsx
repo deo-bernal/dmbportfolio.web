@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
 import LanguageIcon from "@mui/icons-material/Language";
 import DescriptionIcon from "@mui/icons-material/Description";
 import SpeedIcon from "@mui/icons-material/Speed";
@@ -165,6 +166,49 @@ export default function LandingPage() {
             );
           })}
         </Grid>
+
+        <Box sx={landingPageSx.businessSection}>
+          <Stack spacing={2.5}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <SmartToyIcon sx={{ color: "#475569" }} />
+              <Typography component="span" variant="caption" sx={{ color: "#475569", fontWeight: 600 }}>
+                AI implementation · Automation · Funnels
+              </Typography>
+            </Stack>
+            <Typography component="h2" sx={landingPageSx.bottomCtaTitle}>
+              AI automation for businesses
+            </Typography>
+            <Typography sx={landingPageSx.heroSubtitle}>
+              Chat assistants, lead capture funnels, CRM integration, automated
+              follow-up, and appointment booking — built and running on this domain,
+              not just described. See the case studies and the live lead pipeline.
+            </Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <Button
+                component={RouterLink}
+                to="/ai-automation"
+                variant="contained"
+                size="large"
+                sx={[
+                  landingPageSx.ctaPrimary,
+                  accentRedContainedButtonSx,
+                  { alignSelf: { xs: "stretch", sm: "flex-start" } },
+                ]}
+              >
+                See AI automation services
+              </Button>
+              <Button
+                component={RouterLink}
+                to="/case-studies"
+                variant="outlined"
+                size="large"
+                sx={[landingPageSx.ctaSecondary, { alignSelf: { xs: "stretch", sm: "flex-start" } }]}
+              >
+                Read the case studies
+              </Button>
+            </Stack>
+          </Stack>
+        </Box>
 
         <Box sx={landingPageSx.businessSection}>
           <Stack spacing={2.5}>

@@ -1,0 +1,58 @@
+# Self-hosted n8n on Render. Deploy with Render Blueprints:
+#   New > Blueprint > point at this repository > select automation/n8n/render.yaml
+#
+# The free instance sleeps after inactivity, which delays (but does not lose)
+# Wait-node resumes. Set N8N_ENCRYPTION_KEY and the secrets below in the Render
+# dashboard, never in this file.
+services:
+  - type: web
+    name: dmb-n8n
+    runtime: image
+    plan: free
+    region: singapore
+    image:
+      url: docker.io/n8nio/n8n:latest
+    healthCheckPath: /healthz
+    disk:
+      name: n8n-data
+      mountPath: /home/node/.n8n
+      sizeGB: 1
+    envVars:
+      - key: N8N_PORT
+        value: "10000"
+      - key: N8N_PROTOCOL
+        value: https
+      - key: N8N_HOST
+        fromService:
+          type: web
+          name: dmb-n8n
+          property: host
+      - key: WEBHOOK_URL
+        value: https://dmb-n8n.onrender.com/
+      - key: GENERIC_TIMEZONE
+        value: Asia/Manila
+      - key: N8N_DIAGNOSTICS_ENABLED
+        value: "false"
+      - key: N8N_RUNNERS_ENABLED
+        value: "true"
+      # Set these in the Render dashboard, marked as secret.
+      - key: N8N_ENCRYPTION_KEY
+        sync: false
+      - key: N8N_BASIC_AUTH_ACTIVE
+        value: "true"
+      - key: N8N_BASIC_AUTH_USER
+        sync: false
+      - key: N8N_BASIC_AUTH_PASSWORD
+        sync: false
+      - key: N8N_WEBHOOK_TOKEN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: LEADS_FROM_EMAIL
+        sync: false
+      - key: SLACK_WEBHOOK_URL
+        sync: false
