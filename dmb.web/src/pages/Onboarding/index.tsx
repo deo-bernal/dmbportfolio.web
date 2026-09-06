@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
@@ -24,13 +24,30 @@ import {
   agenticPageSx,
   onboardingPageSx,
 } from "styles/main_style";
-import type { GeneratedProfile, UpdateProfileRequest } from "models";
+import type { GeneratedProfile, ResumeProfile, UpdateProfileRequest } from "models";
 import {
   parseResumeFile,
   resumeAcceptAttribute,
 } from "utils/parseResumeFile";
 
 type WizardStep = "input" | "generating" | "review" | "success";
+
+/** Name, phone, and address already saved on the account, used when AI leaves them blank. */
+type AccountInfo = {
+  firstName: string;
+  lastName: string;
+  contactNo: string;
+  email: string;
+  address: string;
+};
+
+const EMPTY_ACCOUNT_INFO: AccountInfo = {
+  firstName: "",
+  lastName: "",
+  contactNo: "",
+  email: "",
+  address: "",
+};
 
 const ACCOUNT_USERNAME_KEY = "dmb:account-username";
 
@@ -47,15 +64,58 @@ function toNullableDate(value: string): string | null {
   return trimmed ? trimmed : null;
 }
 
-function buildProfilePayload(profile: GeneratedProfile, accountEmail: string): UpdateProfileRequest {
+function firstFilled(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    const trimmed = String(value ?? "").trim();
+    if (trimmed) return trimmed;
+  }
+  return "";
+}
+
+/**
+ * Saving a blank name or phone overwrites what the account already has, so every
+ * publish falls back to the AI draft, then the saved account details.
+ */
+function mergeAccountDefaults(profile: GeneratedProfile, account: AccountInfo): GeneratedProfile {
+  const personalInfo = profile.resume.personalInfo;
+  return {
+    ...profile,
+    contact: {
+      ...profile.contact,
+      phone: firstFilled(profile.contact.phone, personalInfo.contactNo, account.contactNo),
+      address: firstFilled(profile.contact.address, personalInfo.address, account.address),
+    },
+    resume: {
+      ...profile.resume,
+      personalInfo: {
+        ...personalInfo,
+        firstName: firstFilled(personalInfo.firstName, account.firstName),
+        lastName: firstFilled(personalInfo.lastName, account.lastName),
+        contactNo: firstFilled(personalInfo.contactNo, profile.contact.phone, account.contactNo),
+        email: firstFilled(personalInfo.email, account.email),
+        address: firstFilled(personalInfo.address, profile.contact.address, account.address),
+      },
+    },
+  };
+}
+
+function buildProfilePayload(
+  profile: GeneratedProfile,
+  accountEmail: string,
+  account: AccountInfo
+): UpdateProfileRequest {
   return {
     summary: profile.summary,
     video: "",
     isViewable: true,
     skills: profile.skills,
     contact: {
-      email: profile.resume.personalInfo.email || accountEmail,
-      phone: profile.contact.phone || profile.resume.personalInfo.contactNo,
+      email: firstFilled(profile.resume.personalInfo.email, account.email, accountEmail),
+      phone: firstFilled(
+        profile.contact.phone,
+        profile.resume.personalInfo.contactNo,
+        account.contactNo
+      ),
     },
     projectCategories:
       profile.projectCategories.length > 0
@@ -64,15 +124,21 @@ function buildProfilePayload(profile: GeneratedProfile, accountEmail: string): U
   };
 }
 
-function buildResumePayload(profile: GeneratedProfile, accountEmail: string) {
+function buildResumePayload(
+  profile: GeneratedProfile,
+  accountEmail: string,
+  account: AccountInfo
+) {
   const personalInfo = profile.resume.personalInfo;
   return {
     personalInfo: {
-      firstName: personalInfo.firstName,
-      lastName: personalInfo.lastName,
-      contactNo: personalInfo.contactNo || profile.contact.phone || null,
-      email: personalInfo.email || accountEmail,
-      address: personalInfo.address || profile.contact.address || null,
+      firstName: firstFilled(personalInfo.firstName, account.firstName),
+      lastName: firstFilled(personalInfo.lastName, account.lastName),
+      contactNo:
+        firstFilled(personalInfo.contactNo, profile.contact.phone, account.contactNo) || null,
+      email: firstFilled(personalInfo.email, account.email, accountEmail),
+      address:
+        firstFilled(personalInfo.address, profile.contact.address, account.address) || null,
       summary: personalInfo.summary || profile.summary || null,
     },
     workHistory: profile.resume.workHistory.map((item) => ({
@@ -116,6 +182,33 @@ export default function OnboardingPage() {
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [publicUrl, setPublicUrl] = useState("");
+  const accountInfoRef = useRef<AccountInfo>(EMPTY_ACCOUNT_INFO);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAccountInfo = async () => {
+      try {
+        const res = await api.get<ResumeProfile>("/resume");
+        if (cancelled) return;
+        const info = res.data?.personalInfo;
+        accountInfoRef.current = {
+          firstName: firstFilled(info?.firstName),
+          lastName: firstFilled(info?.lastName),
+          contactNo: firstFilled(info?.contactNo),
+          email: firstFilled(info?.email, accountEmail),
+          address: firstFilled(info?.address),
+        };
+      } catch {
+        // No saved resume yet — the AI draft fields stay as-is.
+      }
+    };
+
+    void loadAccountInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, [accountEmail]);
 
   const canGenerate =
     resumeText.trim().length > 0 ||
@@ -162,7 +255,7 @@ export default function OnboardingPage() {
         achievement,
         accountEmail,
       });
-      setGeneratedProfile(response.profile);
+      setGeneratedProfile(mergeAccountDefaults(response.profile, accountInfoRef.current));
       setStep("review");
     } catch (err: unknown) {
       setStep("input");
@@ -188,8 +281,9 @@ export default function OnboardingPage() {
     setError(null);
 
     try {
-      const profilePayload = buildProfilePayload(generatedProfile, accountEmail);
-      const resumePayload = buildResumePayload(generatedProfile, accountEmail);
+      const account = accountInfoRef.current;
+      const profilePayload = buildProfilePayload(generatedProfile, accountEmail, account);
+      const resumePayload = buildResumePayload(generatedProfile, accountEmail, account);
 
       try {
         await api.post("/profiledetails", profilePayload);
@@ -391,6 +485,61 @@ export default function OnboardingPage() {
 
             {step === "review" && generatedProfile ? (
               <Stack spacing={2}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                  <TextField
+                    label="First name"
+                    value={generatedProfile.resume.personalInfo.firstName}
+                    onChange={(event) =>
+                      setGeneratedProfile({
+                        ...generatedProfile,
+                        resume: {
+                          ...generatedProfile.resume,
+                          personalInfo: {
+                            ...generatedProfile.resume.personalInfo,
+                            firstName: event.target.value,
+                          },
+                        },
+                      })
+                    }
+                    fullWidth
+                  />
+                  <TextField
+                    label="Last name"
+                    value={generatedProfile.resume.personalInfo.lastName}
+                    onChange={(event) =>
+                      setGeneratedProfile({
+                        ...generatedProfile,
+                        resume: {
+                          ...generatedProfile.resume,
+                          personalInfo: {
+                            ...generatedProfile.resume.personalInfo,
+                            lastName: event.target.value,
+                          },
+                        },
+                      })
+                    }
+                    fullWidth
+                  />
+                </Stack>
+                <TextField
+                  label="Phone"
+                  value={generatedProfile.contact.phone}
+                  onChange={(event) =>
+                    setGeneratedProfile({
+                      ...generatedProfile,
+                      contact: { ...generatedProfile.contact, phone: event.target.value },
+                      resume: {
+                        ...generatedProfile.resume,
+                        personalInfo: {
+                          ...generatedProfile.resume.personalInfo,
+                          contactNo: event.target.value,
+                        },
+                      },
+                    })
+                  }
+                  helperText="Shown at the bottom of your public profile."
+                  fullWidth
+                />
                 <TextField
                   label="Portfolio summary"
                   multiline
