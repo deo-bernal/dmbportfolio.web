@@ -1,7 +1,7 @@
 import axios from "axios";
 import api from "./http.service";
 import type { ApiUser } from "models";
-import { ONBOARD_PATH } from "utils/navigation";
+import { DASHBOARD_PATH, ONBOARD_PATH } from "utils/navigation";
 
 function profileHasContent(user: ApiUser): boolean {
   const details = user.userDetails;
@@ -14,11 +14,11 @@ function profileHasContent(user: ApiUser): boolean {
 export async function resolvePostLoginPath(): Promise<string> {
   try {
     const { data } = await api.get<ApiUser>("/profiledetails");
-    return profileHasContent(data) ? "/accent-sidebar/portfolio" : ONBOARD_PATH;
+    return profileHasContent(data) ? DASHBOARD_PATH : ONBOARD_PATH;
   } catch (error: unknown) {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
       return ONBOARD_PATH;
     }
-    return "/accent-sidebar/portfolio";
+    return DASHBOARD_PATH;
   }
 }

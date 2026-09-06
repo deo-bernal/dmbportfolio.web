@@ -16,4 +16,20 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const requestUrl = String(error?.config?.url ?? "");
+    const isAuthEndpoint = /\/auth\/(login|logout)/i.test(requestUrl);
+
+    if (status === 401 && !isAuthEndpoint && localStorage.getItem("token")) {
+      localStorage.removeItem("token");
+      window.dispatchEvent(new Event("dmb:unauthorized"));
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default http;

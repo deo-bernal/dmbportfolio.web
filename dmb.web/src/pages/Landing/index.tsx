@@ -9,6 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import HomeWorkIcon from "@mui/icons-material/HomeWork";
 import LanguageIcon from "@mui/icons-material/Language";
 import DescriptionIcon from "@mui/icons-material/Description";
 import SpeedIcon from "@mui/icons-material/Speed";
@@ -18,6 +19,21 @@ import {
   landingPageSx,
 } from "styles/main_style";
 import { getOnboardLoginPath } from "utils/navigation";
+
+const REAL_ESTATE_LISTINGS_URL = "https://onepropertee.com/deo-bernal";
+
+const listings = [
+  {
+    title: "Two adjacent residential lots in Pandacaqui-Telapayong",
+    price: "₱1.50 million",
+    meta: "192 sqm · Mexico, Pampanga · For sale",
+  },
+  {
+    title: "Semi-commercial lot in Pandacaqui",
+    price: "₱2.50 million",
+    meta: "180 sqm · Mexico, Pampanga · For sale",
+  },
+];
 
 const features = [
   {
@@ -50,7 +66,7 @@ const features = [
 
 export default function LandingPage() {
   return (
-    <MarketingLayout>
+    <MarketingLayout mainSx={landingPageSx.main}>
       <Container maxWidth="lg">
         <Box sx={landingPageSx.heroPanel}>
           <Stack spacing={3} sx={{ alignItems: { xs: "stretch", md: "flex-start" } }}>
@@ -66,9 +82,9 @@ export default function LandingPage() {
             </Typography>
 
             <Typography sx={landingPageSx.heroSubtitle}>
-              Create a free portfolio and resume page you can share anywhere.
-              Perfect for job seekers, freelancers, and students who need a
-              professional web presence without building a site from scratch.
+              DMB Web Solutions builds free online profiles with AI — and also
+              lists real estate in Pampanga. Create a professional web presence,
+              or browse lots for sale in Mexico and Porac.
             </Typography>
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -149,6 +165,45 @@ export default function LandingPage() {
             );
           })}
         </Grid>
+
+        <Box sx={landingPageSx.businessSection}>
+          <Stack spacing={2.5}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <HomeWorkIcon sx={{ color: "#475569" }} />
+              <Typography component="span" variant="caption" sx={{ color: "#475569", fontWeight: 600 }}>
+                Real estate · Porac and Mexico, Pampanga
+              </Typography>
+            </Stack>
+            <Typography component="h2" sx={landingPageSx.bottomCtaTitle}>
+              Properties for sale
+            </Typography>
+            <Typography sx={landingPageSx.heroSubtitle}>
+              Independent property listings by Deo Bernal (PRC 0017233). Residential
+              and commercial lots in NHA Pandacaqui, Mexico, and Sinura, Porac.
+            </Typography>
+            <Grid container spacing={2.5}>
+              {listings.map((listing) => (
+                <Grid key={listing.title} size={{ xs: 12, md: 6 }}>
+                  <Box sx={landingPageSx.listingCard}>
+                    <Typography sx={landingPageSx.listingMeta}>{listing.meta}</Typography>
+                    <Typography sx={landingPageSx.listingPrice}>{listing.price}</Typography>
+                    <Typography sx={landingPageSx.featureTitle}>{listing.title}</Typography>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+            <Button
+              href={REAL_ESTATE_LISTINGS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant="contained"
+              size="large"
+              sx={[landingPageSx.ctaPrimary, accentRedContainedButtonSx, { alignSelf: { xs: "stretch", sm: "flex-start" } }]}
+            >
+              View listings on OnePropertee
+            </Button>
+          </Stack>
+        </Box>
 
         <Box sx={landingPageSx.bottomCta}>
           <Typography component="h2" sx={landingPageSx.bottomCtaTitle}>

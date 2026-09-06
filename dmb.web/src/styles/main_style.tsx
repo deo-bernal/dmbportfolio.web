@@ -1015,6 +1015,31 @@ export const landingPageSx = {
     fontSize: "0.875rem",
     color: "#334155",
   } satisfies SxProps<Theme>,
+  businessSection: {
+    ...agenticSurfaceSx.panel,
+    p: { xs: 3, md: 4 },
+    mb: 3,
+  } satisfies SxProps<Theme>,
+  listingCard: {
+    ...agenticSurfaceSx.panel,
+    height: "100%",
+    p: 2.5,
+  } satisfies SxProps<Theme>,
+  listingPrice: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: "1.25rem",
+    color: "#0f172a",
+    mb: 0.5,
+  } satisfies SxProps<Theme>,
+  listingMeta: {
+    fontFamily: pageFonts.mono,
+    fontSize: "0.75rem",
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+    color: "#64748b",
+    mb: 1,
+  } satisfies SxProps<Theme>,
   bottomCta: {
     ...agenticSurfaceSx.panel,
     textAlign: "center",

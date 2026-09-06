@@ -28,7 +28,7 @@ export default function AccentSidebarLayout() {
   const isPublicRoute = Boolean(username) && !location.pathname.startsWith("/accent-sidebar");
   const portfolioPath = isPublicRoute ? `/${username}` : "/accent-sidebar/portfolio";
   const resumePath = isPublicRoute ? `/${username}/resume` : "/accent-sidebar/resume";
-  const aiProfileBuilderPath = isPublicRoute ? `/${username}/onboarding` : "/accent-sidebar/onboarding";
+  const aiProfileBuilderPath = "/accent-sidebar/onboarding";
 
   const handleLogout = async () => {
     setLogoutBusy(true);

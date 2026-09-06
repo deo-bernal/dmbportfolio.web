@@ -12,6 +12,7 @@ import ResumePage from "../pages/ResumePage";
 import LandingPage from "../pages/Landing";
 import OnboardingPage from "../pages/Onboarding";
 import AuthRedirect from "../components/auth/AuthRedirect";
+import RequireAuth from "../components/auth/RequireAuth";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
 import { ONBOARD_PATH } from "../utils/navigation";
 
@@ -46,13 +47,13 @@ export default function createRouter({
       element: <ActivateAccount />,
     },
     {
-      path: ONBOARD_PATH,
-      element: token ? <OnboardingPage /> : <Navigate to={`/login?redirect=${encodeURIComponent(ONBOARD_PATH)}`} replace />,
+      path: "/onboard",
+      element: <Navigate to={ONBOARD_PATH} replace />,
     },
-    // {
-    //   path: "/onboarding",
-    //   element: <Navigate to={ONBOARD_PATH} replace />,
-    // },
+    {
+      path: "/onboarding",
+      element: <Navigate to={ONBOARD_PATH} replace />,
+    },
     {
       path: "/",
       element: token ? <Navigate to="/accent-sidebar" replace /> : <LandingPage />,
@@ -63,7 +64,11 @@ export default function createRouter({
     },
     {
       path: "/accent-sidebar",
-      element: token ? <AccentSidebarLayout /> : <Navigate to="/login" replace />,
+      element: (
+        <RequireAuth>
+          <AccentSidebarLayout />
+        </RequireAuth>
+      ),
       children: [
         {
           path: "",
@@ -77,6 +82,10 @@ export default function createRouter({
           path: "resume",
           element: <ResumePage />,
         },
+        {
+          path: "onboarding",
+          element: <OnboardingPage />,
+        },
       ],
     },
     {
@@ -86,10 +95,6 @@ export default function createRouter({
         {
           path: "",
           element: <PublicPortfolioPage />,
-        },
-        {
-          path: "onboarding",
-          element: <OnboardingPage />,
         },
         {
           path: "resume",

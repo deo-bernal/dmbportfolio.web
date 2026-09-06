@@ -2,11 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/http.service";
+import { isAppReservedPath } from "../utils/navigation";
 import type { LoginRequest, LoginResponse } from "models";
 
 type UseAuthResult = {
@@ -22,6 +25,8 @@ const AuthContext = createContext<UseAuthResult | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const onLoginSuccess = useCallback((newToken: string) => {
     localStorage.setItem("token", newToken);
@@ -42,6 +47,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("token");
     setToken(null);
   }, []);
+
+  useEffect(() => {
+    const redirectToLogin = () => {
+      onLogout();
+      const current = `${location.pathname}${location.search}`;
+      const shouldPreserve =
+        isAppReservedPath(location.pathname) && !location.pathname.startsWith("/login");
+      navigate(
+        shouldPreserve
+          ? `/login?redirect=${encodeURIComponent(current)}`
+          : "/login",
+        { replace: true }
+      );
+    };
+
+    window.addEventListener("dmb:unauthorized", redirectToLogin);
+    return () => window.removeEventListener("dmb:unauthorized", redirectToLogin);
+  }, [location.pathname, location.search, navigate, onLogout]);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    const IDLE_MS = 20 * 60 * 1000;
+    let timer = 0;
+    const resetIdleTimer = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        window.dispatchEvent(new Event("dmb:unauthorized"));
+      }, IDLE_MS);
+    };
+    const events: Array<keyof WindowEventMap> = [
+      "mousemove",
+      "keydown",
+      "click",
+      "scroll",
+      "touchstart",
+    ];
+    events.forEach((eventName) =>
+      window.addEventListener(eventName, resetIdleTimer, { passive: true })
+    );
+    resetIdleTimer();
+    return () => {
+      window.clearTimeout(timer);
+      events.forEach((eventName) => window.removeEventListener(eventName, resetIdleTimer));
+    };
+  }, [token]);
 
   const value = useMemo(
     () => ({

@@ -31,10 +31,20 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
               to="/"
               sx={[landingPageSx.logo, { textDecoration: "none", color: "inherit" }]}
             >
-              DMB Profiles
+              DMB Web Solutions
             </Typography>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-            {!auth.isAuthenticated ? (
+            {auth.isAuthenticated ? (
+              <Button
+                component={RouterLink}
+                to="/accent-sidebar/portfolio"
+                variant="outlined"
+                size="small"
+                sx={landingPageSx.headerButtonOutline}
+              >
+                Dashboard
+              </Button>
+            ) : (
               <>
                 <Button
                   component={RouterLink}
@@ -55,14 +65,14 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
                   Create free profile
                 </Button>
               </>
-            ) : null}
+            )}
 
             </Stack>
           </Stack>
         </Container>
       </Box>
 
-      <Box component="main">
+      <Box component="main" sx={mainSx}>
         {children}
       </Box>
 
