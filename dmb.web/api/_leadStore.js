@@ -11,7 +11,20 @@
  *                         CAL_BOOKING_URL, LEADS_OWNER_EMAILS
  */
 
-const SUPABASE_URL = (process.env.SUPABASE_URL || "").replace(/\/$/, "");
+function normalizeSupabaseUrl(raw) {
+  let url = String(raw || "")
+    .trim()
+    .replace(/^["']|["']$/g, "")
+    .replace(/\/+$/, "");
+
+  // Dashboard "Data API" copies often already include /rest/v1. Using that as
+  // SUPABASE_URL makes PostgREST return PGRST125 (invalid path).
+  url = url.replace(/\/rest\/v1(?:\/.*)?$/i, "");
+  url = url.replace(/\/+$/, "");
+  return url;
+}
+
+const SUPABASE_URL = normalizeSupabaseUrl(process.env.SUPABASE_URL);
 const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "";
 const SUPABASE_TABLE = process.env.SUPABASE_LEADS_TABLE || "leads";

@@ -17,7 +17,7 @@ So: **no key, token, or secret may ever be named `REACT_APP_*`.** If a secret ne
 | `OPENAI_MODEL` | `api/_aiProvider.js` | Optional preferred model. |
 | `GEMINI_API_KEY` | `api/_aiProvider.js` | Google AI Studio key. |
 | `GEMINI_MODEL` | `api/_aiProvider.js` | Optional preferred model. |
-| `SUPABASE_URL` | `api/_leadStore.js` | Project URL, no trailing slash. |
+| `SUPABASE_URL` | `api/_leadStore.js` | Project URL only, e.g. `https://ljtcgveobqdplczcxtif.supabase.co`. Not the Database host and not a URL that already ends in `/rest/v1`. |
 | `SUPABASE_SERVICE_ROLE_KEY` | `api/_leadStore.js` | Full table access. Treat as a password. |
 | `SUPABASE_LEADS_TABLE` | `api/_leadStore.js` | Defaults to `leads`. |
 | `N8N_LEAD_WEBHOOK_URL` | `api/_leadStore.js` | Production webhook from n8n. |
