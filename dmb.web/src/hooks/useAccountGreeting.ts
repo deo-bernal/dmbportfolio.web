@@ -1,7 +1,10 @@
 import { useSelector } from "store";
-import { readAccountFirstName } from "utils/accountGreeting";
+import {
+  firstNameFromFullName,
+  readAccountFirstName,
+} from "utils/accountGreeting";
 
 export default function useAccountGreeting(): string {
-  const accountFirstName = useSelector((state) => state.user.accountFirstName);
-  return accountFirstName || readAccountFirstName();
+  const profileName = useSelector((state) => state.user.profile?.name);
+  return firstNameFromFullName(profileName || "") || readAccountFirstName();
 }
