@@ -1,4 +1,7 @@
-const DEFAULT_MODEL = process.env.OPENAI_MODEL || "llama-3.3-70b-versatile";
+const DEFAULT_MODEL =
+  process.env.OPENAI_MODEL && !/llama-3\.3-70b-versatile/i.test(process.env.OPENAI_MODEL)
+    ? process.env.OPENAI_MODEL
+    : "openai/gpt-oss-20b";
 const OPENAI_BASE_URL = (
   process.env.OPENAI_BASE_URL || "https://api.groq.com/openai/v1"
 ).replace(/\/$/, "");

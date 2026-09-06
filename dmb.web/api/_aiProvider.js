@@ -10,11 +10,16 @@ function loadGeminiClient(apiKey) {
 const GROQ_BASE_URL = (
   process.env.OPENAI_BASE_URL || "https://api.groq.com/openai/v1"
 ).replace(/\/$/, "");
-const GROQ_MODEL = process.env.OPENAI_MODEL || "llama-3.3-70b-versatile";
+const GROQ_MODELS = unique([
+  process.env.OPENAI_MODEL,
+  "openai/gpt-oss-20b",
+  "openai/gpt-oss-120b",
+  "qwen/qwen3.6-27b",
+]);
 const GEMINI_MODELS = unique([
   process.env.GEMINI_MODEL,
+  "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-1.5-flash",
   "gemini-flash-latest",
 ]);
 
@@ -33,48 +38,70 @@ function isQuotaError(error) {
   return /429|quota|Too Many Requests|rate.?limit|RESOURCE_EXHAUSTED/i.test(errorText(error));
 }
 
+function isMissingModelError(error) {
+  return /404|not found|does not exist|not supported|decommissioned/i.test(errorText(error));
+}
+
 function friendlyAiError(error) {
   const next = new Error(isQuotaError(error) ? QUOTA_MESSAGE : "Unable to complete the AI request right now.");
   next.statusCode = isQuotaError(error) ? 429 : error?.statusCode || 502;
   return next;
 }
 
+function logProviderError(provider, error) {
+  console.error(`${provider}: ${errorText(error)}`);
+}
+
 async function callGroq({ system, user, json }) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
-  const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      temperature: json ? 0.4 : 0.3,
-      ...(json ? { response_format: { type: "json_object" } } : {}),
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
-  });
+  let lastError;
+  for (const model of GROQ_MODELS) {
+    try {
+      const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          temperature: json ? 0.4 : 0.3,
+          ...(json ? { response_format: { type: "json_object" } } : {}),
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
+        }),
+      });
 
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = new Error(payload?.error?.message || `Groq request failed (${response.status}).`);
-    error.statusCode = response.status;
-    throw error;
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = new Error(payload?.error?.message || `Groq request failed (${response.status}).`);
+        error.statusCode = response.status;
+        throw error;
+      }
+
+      const content = payload?.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error("AI returned an empty response.");
+      }
+      return content;
+    } catch (error) {
+      lastError = error;
+      logProviderError(`Groq ${model}`, error);
+      if (!isQuotaError(error) && !isMissingModelError(error)) {
+        throw error;
+      }
+    }
   }
 
-  const content = payload?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("AI returned an empty response.");
-  }
-  return content;
+  if (lastError) throw lastError;
+  return null;
 }
 
-async function callGemini({ system, user, json }) {
+async function callGeminiSdk({ system, user, json }) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
@@ -98,16 +125,73 @@ async function callGemini({ system, user, json }) {
       }
     } catch (error) {
       lastError = error;
-      if (!isQuotaError(error) && !/404|not found|not supported/i.test(errorText(error))) {
+      logProviderError(`Gemini SDK ${modelName}`, error);
+      if (!isQuotaError(error) && !isMissingModelError(error)) {
         throw error;
       }
     }
   }
 
-  if (lastError) {
-    throw lastError;
+  if (lastError) throw lastError;
+  return null;
+}
+
+async function callGeminiRest({ system, user, json }) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  let lastError;
+  for (const modelName of GEMINI_MODELS) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+        modelName
+      )}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: system }] },
+          contents: [{ role: "user", parts: [{ text: user }] }],
+          generationConfig: {
+            temperature: json ? 0.4 : 0.3,
+            ...(json ? { responseMimeType: "application/json" } : {}),
+          },
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = new Error(payload?.error?.message || `Gemini request failed (${response.status}).`);
+        error.statusCode = response.status;
+        throw error;
+      }
+
+      const content = (payload?.candidates?.[0]?.content?.parts || [])
+        .map((part) => part.text || "")
+        .join("");
+      if (content) {
+        return content;
+      }
+    } catch (error) {
+      lastError = error;
+      logProviderError(`Gemini REST ${modelName}`, error);
+      if (!isQuotaError(error) && !isMissingModelError(error)) {
+        throw error;
+      }
+    }
   }
-  throw new Error("Gemini is not configured.");
+
+  if (lastError) throw lastError;
+  return null;
+}
+
+async function callGemini(options) {
+  try {
+    const content = await callGeminiSdk(options);
+    if (content) return content;
+  } catch (error) {
+    logProviderError("Gemini SDK", error);
+  }
+  return callGeminiRest(options);
 }
 
 async function generateAiText({ system, user, json = false }) {
@@ -134,6 +218,7 @@ async function generateAiText({ system, user, json = false }) {
       }
     } catch (error) {
       lastError = error;
+      logProviderError("AI provider", error);
     }
   }
 
@@ -168,17 +253,18 @@ async function streamGeminiText(res, prompt) {
       return true;
     } catch (error) {
       lastError = error;
+      logProviderError(`Gemini stream ${modelName}`, error);
       if (res.headersSent) {
         throw error;
       }
-      if (!isQuotaError(error) && !/404|not found|not supported/i.test(errorText(error))) {
-        throw error;
+      if (!isQuotaError(error) && !isMissingModelError(error)) {
+        continue;
       }
     }
   }
 
-  if (lastError) {
-    throw lastError;
+  if (lastError && !res.headersSent) {
+    return false;
   }
   return false;
 }
