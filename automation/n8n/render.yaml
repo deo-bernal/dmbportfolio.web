@@ -1,9 +1,12 @@
-# Self-hosted n8n on Render. Deploy with Render Blueprints:
-#   New > Blueprint > point at this repository > select automation/n8n/render.yaml
+# Self-hosted n8n on Render's free web plan.
+# Free services cannot attach a disk, so n8n stores workflows in Supabase
+# Postgres instead of /home/node/.n8n.
 #
-# The free instance sleeps after inactivity, which delays (but does not lose)
-# Wait-node resumes. Set N8N_ENCRYPTION_KEY and the secrets below in the Render
-# dashboard, never in this file.
+# New > Blueprint > repo deo-bernal/dmbportfolio.web
+# Branch: AiAutomationShowCase
+# Path: automation/n8n/render.yaml
+#
+# Fill every sync:false value in the Render dashboard. Never put secrets here.
 services:
   - type: web
     name: dmb-n8n
@@ -13,10 +16,6 @@ services:
     image:
       url: docker.io/n8nio/n8n:latest
     healthCheckPath: /healthz
-    disk:
-      name: n8n-data
-      mountPath: /home/node/.n8n
-      sizeGB: 1
     envVars:
       - key: N8N_PORT
         value: "10000"
@@ -35,7 +34,24 @@ services:
         value: "false"
       - key: N8N_RUNNERS_ENABLED
         value: "true"
-      # Set these in the Render dashboard, marked as secret.
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_PORT
+        value: "5432"
+      - key: DB_POSTGRESDB_SCHEMA
+        value: n8n
+      - key: DB_POSTGRESDB_SSL_ENABLED
+        value: "true"
+      - key: DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED
+        value: "false"
+      - key: DB_POSTGRESDB_HOST
+        sync: false
+      - key: DB_POSTGRESDB_DATABASE
+        sync: false
+      - key: DB_POSTGRESDB_USER
+        sync: false
+      - key: DB_POSTGRESDB_PASSWORD
+        sync: false
       - key: N8N_ENCRYPTION_KEY
         sync: false
       - key: N8N_BASIC_AUTH_ACTIVE

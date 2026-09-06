@@ -26,3 +26,6 @@ create index if not exists leads_status_idx on public.leads (status);
 alter table public.leads enable row level security;
 
 revoke all on public.leads from anon, authenticated;
+
+-- n8n on Render's free plan has no disk, so it stores workflows in this schema.
+create schema if not exists n8n;

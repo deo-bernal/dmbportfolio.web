@@ -6,7 +6,7 @@ Exported so the automation can be read without logging into anything.
 | --- | --- | --- |
 | `dmb-lead-pipeline.json` | Webhook `POST /webhook/dmb-lead` | Verifies the shared token, posts the lead to Slack, then runs a two-step nurture sequence that stops as soon as the lead leaves the `new` stage. |
 | `dmb-lead-digest.json` | Schedule, Mondays 08:00 | Reads the last seven days from Supabase and posts a pipeline summary to Slack. |
-| `render.yaml` | — | Render Blueprint for self-hosting n8n on the free plan. |
+| `render.yaml` | — | Render Blueprint for n8n on the free web plan (no disk; Postgres-backed). |
 
 ## Importing
 
@@ -40,6 +40,28 @@ POST /api/leads  ->  Supabase insert
 
 Marking a lead as `qualified`, `booked`, `won`, or `lost` in the dashboard at `/accent-sidebar/leads` stops the sequence at the next checkpoint. That check is why the nurture emails do not chase someone who has already booked.
 
+## Deploy on Render (free plan)
+
+Render's free web plan cannot attach a disk. The Blueprint therefore does **not** mount `/home/node/.n8n`. n8n writes workflows, credentials, and wait-node state to a dedicated `n8n` schema in the same Supabase Postgres used by `public.leads`.
+
+1. Run `automation/supabase/leads.sql` in the Supabase SQL editor (creates `public.leads` and `schema n8n`).
+2. In Render: **New > Blueprint**, repo `deo-bernal/dmbportfolio.web`, branch `AiAutomationShowCase`, path `automation/n8n/render.yaml`.
+3. Fill the `sync: false` secrets in the Render dashboard:
+
+| Name | Where to get it |
+| --- | --- |
+| `DB_POSTGRESDB_HOST` | Supabase → Project Settings → Database → Host (use the pooler host if the direct host times out) |
+| `DB_POSTGRESDB_DATABASE` | Usually `postgres` |
+| `DB_POSTGRESDB_USER` | Database user, often `postgres` |
+| `DB_POSTGRESDB_PASSWORD` | Database password |
+| `N8N_ENCRYPTION_KEY` | Any long random string. Keep it forever; changing it locks existing credentials. |
+| `N8N_BASIC_AUTH_USER` / `N8N_BASIC_AUTH_PASSWORD` | Login for the n8n UI |
+| `N8N_WEBHOOK_TOKEN` | Shared secret; same value later goes on Vercel as the token `api/leads.js` sends |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Used by the imported workflows, not by n8n startup |
+| `RESEND_API_KEY` / `LEADS_FROM_EMAIL` / `SLACK_WEBHOOK_URL` | Used by the imported workflows |
+
+4. After the service is live, import `dmb-lead-pipeline.json`, activate it, and put the production webhook URL on Vercel as `N8N_LEAD_WEBHOOK_URL`.
+
 ## Free-plan caveat
 
-Render's free web service sleeps after fifteen minutes of inactivity. Wait-node resumes fire when the instance next wakes, so a two-day wait can run a little late. Incoming webhooks wake the instance, so lead capture and the Slack ping are not affected.
+The instance still sleeps after fifteen minutes of inactivity. Workflows themselves survive sleep because they live in Postgres. Wait-node resumes fire when the instance next wakes, so a two-day wait can run a little late. Incoming webhooks wake the instance, so lead capture and the Slack ping are not affected.
