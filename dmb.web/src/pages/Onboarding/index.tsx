@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import {
   Alert,
   Box,
@@ -14,6 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import { generateProfileWithAi } from "services/aiProfile.service";
+import { friendlyAiErrorMessage } from "utils/friendlyAiError";
 import api from "services/http.service";
 import MarketingLayout from "components/layout/MarketingLayout";
 import {
@@ -22,6 +25,10 @@ import {
   onboardingPageSx,
 } from "styles/main_style";
 import type { GeneratedProfile, UpdateProfileRequest } from "models";
+import {
+  parseResumeFile,
+  resumeAcceptAttribute,
+} from "utils/parseResumeFile";
 
 type WizardStep = "input" | "generating" | "review" | "success";
 
@@ -94,6 +101,7 @@ function buildResumePayload(profile: GeneratedProfile, accountEmail: string) {
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const accountEmail = useMemo(() => getAccountUsername(), []);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [step, setStep] = useState<WizardStep>("input");
   const [resumeText, setResumeText] = useState("");
@@ -104,6 +112,9 @@ export default function OnboardingPage() {
   const [generatedProfile, setGeneratedProfile] = useState<GeneratedProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isParsingFile, setIsParsingFile] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [publicUrl, setPublicUrl] = useState("");
 
   const canGenerate =
@@ -112,9 +123,30 @@ export default function OnboardingPage() {
     topSkills.trim().length > 0 ||
     achievement.trim().length > 0;
 
+  const handleResumeFile = async (file: File | undefined | null) => {
+    if (!file) return;
+
+    setError(null);
+    setIsParsingFile(true);
+
+    try {
+      const parsed = await parseResumeFile(file);
+      setResumeText(parsed.text);
+      setUploadedFileName(parsed.fileName);
+    } catch (err: unknown) {
+      setUploadedFileName(null);
+      setError(err instanceof Error ? err.message : "Unable to read that resume file.");
+    } finally {
+      setIsParsingFile(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   const handleGenerate = async () => {
     if (!canGenerate) {
-      setError("Paste your resume or answer at least one question.");
+      setError("Upload a resume, paste text, or answer at least one question.");
       return;
     }
 
@@ -135,7 +167,12 @@ export default function OnboardingPage() {
     } catch (err: unknown) {
       setStep("input");
       if (axiosIsError(err)) {
-        setError(err.response?.data?.message ?? "Unable to generate profile with AI.");
+        setError(
+          friendlyAiErrorMessage(
+            err.response?.data?.message,
+            "Unable to generate profile with AI."
+          )
+        );
       } else {
         setError("Unable to generate profile with AI.");
       }
@@ -196,7 +233,7 @@ export default function OnboardingPage() {
               </Typography>
               <Typography sx={onboardingPageSx.subtitle}>
                 {step === "input" &&
-                  "Paste your resume or answer a few questions. AI will draft your portfolio and resume."}
+                  "Upload a PDF or Word resume, paste text, or answer a few questions. AI will draft your portfolio and resume."}
                 {step === "generating" && "Generating your profile. This usually takes 10–30 seconds."}
                 {step === "review" && "Review the AI draft below. You can edit before publishing."}
                 {step === "success" && "Share your link anywhere. You can keep editing from your dashboard."}
@@ -207,13 +244,92 @@ export default function OnboardingPage() {
 
             {step === "input" ? (
               <Stack spacing={2}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={resumeAcceptAttribute()}
+                  hidden
+                  onChange={(event) => void handleResumeFile(event.target.files?.[0])}
+                />
+
+                <Box
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Upload resume PDF or Word file"
+                  onClick={() => !isParsingFile && fileInputRef.current?.click()}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      if (!isParsingFile) fileInputRef.current?.click();
+                    }
+                  }}
+                  onDragEnter={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setIsDragActive(true);
+                  }}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setIsDragActive(true);
+                  }}
+                  onDragLeave={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setIsDragActive(false);
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setIsDragActive(false);
+                    void handleResumeFile(event.dataTransfer.files?.[0]);
+                  }}
+                  sx={[
+                    onboardingPageSx.uploadZone,
+                    isDragActive ? onboardingPageSx.uploadZoneActive : null,
+                    isParsingFile ? { opacity: 0.75, pointerEvents: "none" } : null,
+                  ]}
+                >
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                    {isParsingFile ? (
+                      <CircularProgress size={28} />
+                    ) : uploadedFileName ? (
+                      <DescriptionOutlinedIcon sx={{ color: "#b91c1c", fontSize: 28 }} />
+                    ) : (
+                      <CloudUploadOutlinedIcon sx={{ color: "#64748b", fontSize: 28 }} />
+                    )}
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={onboardingPageSx.uploadTitle}>
+                        {isParsingFile
+                          ? "Reading your resume..."
+                          : uploadedFileName
+                            ? uploadedFileName
+                            : "Upload PDF or Word resume"}
+                      </Typography>
+                      <Typography sx={onboardingPageSx.uploadHint}>
+                        {uploadedFileName
+                          ? "Text extracted below — edit if needed, then generate."
+                          : "Drag and drop, or click to browse (.pdf, .docx · max 8 MB)"}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+
                 <TextField
-                  label="Paste resume or background"
+                  label="Resume or background"
                   placeholder="Paste your resume, LinkedIn About section, or describe your experience..."
                   multiline
                   minRows={8}
                   value={resumeText}
-                  onChange={(event) => setResumeText(event.target.value)}
+                  onChange={(event) => {
+                    setResumeText(event.target.value);
+                    if (uploadedFileName) setUploadedFileName(null);
+                  }}
+                  helperText={
+                    uploadedFileName
+                      ? "Extracted from your upload. You can edit this before generating."
+                      : "Optional if you upload a file or fill the fields below."
+                  }
                   fullWidth
                 />
                 <TextField

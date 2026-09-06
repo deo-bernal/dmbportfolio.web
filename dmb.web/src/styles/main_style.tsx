@@ -1124,4 +1124,33 @@ export const onboardingPageSx = {
     fontWeight: 600,
     color: "#15803d",
   } satisfies SxProps<Theme>,
+  uploadZone: {
+    fontFamily: pageFonts.sans,
+    border: `1.5px dashed ${alpha("#64748b", 0.45)}`,
+    borderRadius: 2,
+    bgcolor: alpha("#f8fafc", 0.9),
+    px: 2,
+    py: 2.25,
+    cursor: "pointer",
+    transition: "border-color 0.15s ease, background-color 0.15s ease",
+    "&:hover": {
+      borderColor: alpha("#b91c1c", 0.55),
+      bgcolor: alpha("#fff1f2", 0.55),
+    },
+  } satisfies SxProps<Theme>,
+  uploadZoneActive: {
+    borderColor: alpha("#b91c1c", 0.7),
+    bgcolor: alpha("#fff1f2", 0.7),
+  } satisfies SxProps<Theme>,
+  uploadTitle: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 600,
+    fontSize: "0.95rem",
+    color: "#0f172a",
+  } satisfies SxProps<Theme>,
+  uploadHint: {
+    fontFamily: pageFonts.sans,
+    fontSize: "0.85rem",
+    color: "#64748b",
+  } satisfies SxProps<Theme>,
 } as const;
