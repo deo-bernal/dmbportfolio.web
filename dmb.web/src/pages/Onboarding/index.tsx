@@ -362,7 +362,7 @@ export default function OnboardingPage() {
                   <Button
                     variant="contained"
                     size="large"
-                    disabled={!canGenerate}
+                    disabled={!canGenerate || isParsingFile}
                     onClick={() => void handleGenerate()}
                     sx={[onboardingPageSx.primaryButton, accentRedContainedButtonSx]}
                   >

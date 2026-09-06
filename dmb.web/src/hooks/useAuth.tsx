@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/http.service";
+import { clearAccountFirstName } from "../utils/accountGreeting";
 import { isAppReservedPath } from "../utils/navigation";
 import type { LoginRequest, LoginResponse } from "models";
 
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const onLogout = useCallback(() => {
     localStorage.removeItem("token");
+    clearAccountFirstName();
     setToken(null);
   }, []);
 

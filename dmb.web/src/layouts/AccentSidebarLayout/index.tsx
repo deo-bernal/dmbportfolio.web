@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import api from "services/http.service";
 import useAuth from "hooks/useAuth";
+import useAccountGreeting from "hooks/useAccountGreeting";
 import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
+import { clearProfile, getProfile } from "slices/user";
+import { useDispatch } from "store";
 import { layoutShellSidebarCtaButtonSx, layoutShellSx, shellNavItemSx } from "styles/main_style";
 
 function ShellNavItem({ to, label, end }: { to: string; label: string; end?: boolean }) {
@@ -21,14 +24,25 @@ function ShellNavItem({ to, label, end }: { to: string; label: string; end?: boo
 
 export default function AccentSidebarLayout() {
   const auth = useAuth();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const firstName = useAccountGreeting();
   const [logoutBusy, setLogoutBusy] = useState(false);
   const { username } = useParams<{ username?: string }>();
   const isPublicRoute = Boolean(username) && !location.pathname.startsWith("/accent-sidebar");
   const portfolioPath = isPublicRoute ? `/${username}` : "/accent-sidebar/portfolio";
   const resumePath = isPublicRoute ? `/${username}/resume` : "/accent-sidebar/resume";
   const aiProfileBuilderPath = "/accent-sidebar/onboarding";
+  const hasFetchedGreeting = useRef(false);
+
+  useEffect(() => {
+    if (!auth.isAuthenticated || isPublicRoute || hasFetchedGreeting.current) {
+      return;
+    }
+    hasFetchedGreeting.current = true;
+    dispatch(getProfile(auth.onLogout) as any);
+  }, [auth.isAuthenticated, auth.onLogout, dispatch, isPublicRoute]);
 
   const handleLogout = async () => {
     setLogoutBusy(true);
@@ -38,6 +52,7 @@ export default function AccentSidebarLayout() {
       // Still clear session locally if request fails.
     } finally {
       auth.onLogout();
+      dispatch(clearProfile());
       navigate("/login");
     }
   };
@@ -46,6 +61,9 @@ export default function AccentSidebarLayout() {
     <Box sx={layoutShellSx.root}>
       <Box component="aside" sx={layoutShellSx.sidebar}>
         <Box sx={layoutShellSx.sidebarBrand}>Online Profile</Box>
+        {auth.isAuthenticated && !isPublicRoute ? (
+          <Box sx={layoutShellSx.sidebarGreeting}>Hi {firstName || "there"}</Box>
+        ) : null}
         <Box sx={layoutShellSx.navStack}>
           {auth.isAuthenticated ? (
             <ShellNavItem to={aiProfileBuilderPath} label="AI Profile Builder" end />

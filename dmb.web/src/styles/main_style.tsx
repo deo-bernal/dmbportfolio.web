@@ -317,6 +317,14 @@ export const layoutShellSx = {
     borderBottom: `1px solid ${alpha("#94a3b8", 0.22)}`,
   } satisfies SxProps<Theme>,
 
+  sidebarGreeting: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: "1.05rem",
+    color: "#f8fafc",
+    mb: { xs: 1, sm: 2 },
+  } satisfies SxProps<Theme>,
+
   navStack: {
     display: "flex",
     flexDirection: { xs: "row", sm: "column" },
@@ -1039,6 +1047,13 @@ export const landingPageSx = {
     textTransform: "uppercase",
     color: "#64748b",
     mb: 1,
+  } satisfies SxProps<Theme>,
+  headerGreeting: {
+    fontFamily: pageFonts.sans,
+    fontWeight: 600,
+    fontSize: "0.9375rem",
+    color: "#334155",
+    mr: 0.5,
   } satisfies SxProps<Theme>,
   bottomCta: {
     ...agenticSurfaceSx.panel,
