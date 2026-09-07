@@ -48,7 +48,8 @@
             { "id": "f5", "name": "timeline", "value": "={{ $json.body.timeline || 'not stated' }}", "type": "string" },
             { "id": "f6", "name": "message", "value": "={{ $json.body.message || '' }}", "type": "string" },
             { "id": "f7", "name": "source", "value": "={{ $json.body.source || 'funnel-form' }}", "type": "string" },
-            { "id": "f8", "name": "bookingUrl", "value": "={{ $json.body.bookingUrl }}", "type": "string" }
+            { "id": "f8", "name": "bookingUrl", "value": "={{ $json.body.bookingUrl }}", "type": "string" },
+            { "id": "f9", "name": "webhookToken", "value": "={{ $json.headers['x-dmb-token'] }}", "type": "string" }
           ]
         },
         "options": {}
@@ -88,12 +89,11 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?select=status&order=created_at.desc&limit=1&email=eq.{{ encodeURIComponent($('Lead fields').item.json.email) }}",
+        "url": "=https://www.dmbwebsolutions.com/api/leads/status?email={{ encodeURIComponent($('Lead fields').item.json.email) }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+            { "name": "X-DMB-Token", "value": "={{ $('Lead fields').item.json.webhookToken || $('Lead webhook').item.json.headers['x-dmb-token'] }}" }
           ]
         },
         "options": {}
@@ -129,16 +129,16 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.resend.com/emails",
+        "url": "https://www.dmbwebsolutions.com/api/leads/nurture",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" }
+            { "name": "X-DMB-Token", "value": "={{ $('Lead fields').item.json.webhookToken || $('Lead webhook').item.json.headers['x-dmb-token'] }}" }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ from: $env.LEADS_FROM_EMAIL, to: [$('Lead fields').item.json.email], subject: 'A quick example of what I would build for you', html: `<p>Hi ${$('Lead fields').item.json.name.split(' ')[0]},</p><p>Following up on your note about <strong>${$('Lead fields').item.json.need}</strong>. The write-up at <a href=\"https://www.dmbwebsolutions.com/case-studies/dmb-assistant\">dmbwebsolutions.com/case-studies</a> shows the same pieces working end to end, including the incidents I had to fix after launch.</p><p>If it looks close to what you need, grab a slot: <a href=\"${$('Lead fields').item.json.bookingUrl}\">${$('Lead fields').item.json.bookingUrl}</a></p><p>— Deo</p>` }) }}",
+        "jsonBody": "={{ JSON.stringify({ step: 1, email: $('Lead fields').item.json.email, name: $('Lead fields').item.json.name, need: $('Lead fields').item.json.need, bookingUrl: $('Lead fields').item.json.bookingUrl }) }}",
         "options": {}
       },
       "id": "b1a1b0e0-0001-4000-8000-000000000008",
@@ -161,12 +161,11 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.SUPABASE_URL }}/rest/v1/leads?select=status&order=created_at.desc&limit=1&email=eq.{{ encodeURIComponent($('Lead fields').item.json.email) }}",
+        "url": "=https://www.dmbwebsolutions.com/api/leads/status?email={{ encodeURIComponent($('Lead fields').item.json.email) }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
-            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+            { "name": "X-DMB-Token", "value": "={{ $('Lead fields').item.json.webhookToken || $('Lead webhook').item.json.headers['x-dmb-token'] }}" }
           ]
         },
         "options": {}
@@ -202,16 +201,16 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://api.resend.com/emails",
+        "url": "https://www.dmbwebsolutions.com/api/leads/nurture",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer {{ $env.RESEND_API_KEY }}" }
+            { "name": "X-DMB-Token", "value": "={{ $('Lead fields').item.json.webhookToken || $('Lead webhook').item.json.headers['x-dmb-token'] }}" }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ from: $env.LEADS_FROM_EMAIL, to: [$('Lead fields').item.json.email], subject: 'Closing the loop', html: `<p>Hi ${$('Lead fields').item.json.name.split(' ')[0]},</p><p>Last note from me so your inbox gets a rest. If the timing is wrong, no problem — reply whenever it changes and I will pick it straight up.</p><p>The calendar stays open here: <a href=\"${$('Lead fields').item.json.bookingUrl}\">${$('Lead fields').item.json.bookingUrl}</a></p><p>— Deo</p>` }) }}",
+        "jsonBody": "={{ JSON.stringify({ step: 2, email: $('Lead fields').item.json.email, name: $('Lead fields').item.json.name, need: $('Lead fields').item.json.need, bookingUrl: $('Lead fields').item.json.bookingUrl }) }}",
         "options": {}
       },
       "id": "b1a1b0e0-0001-4000-8000-000000000012",

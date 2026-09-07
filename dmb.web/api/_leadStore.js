@@ -205,6 +205,68 @@ async function updateLeadStatus(id, status) {
   return rows?.[0] || null;
 }
 
+async function getLeadStatusByEmail(email) {
+  const cleaned = clean(email, 240).toLowerCase();
+  if (!isEmail(cleaned)) {
+    throw new Error("Provide a valid email.");
+  }
+  if (!supabaseConfigured()) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const query = `select=status,created_at&email=eq.${encodeURIComponent(cleaned)}&order=created_at.desc&limit=1`;
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/${encodeURIComponent(SUPABASE_TABLE)}?${query}`,
+    { headers: supabaseHeaders() }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Supabase status read failed (${response.status}): ${detail.slice(0, 300)}`);
+  }
+
+  const rows = await response.json().catch(() => []);
+  return rows?.[0]?.status || "missing";
+}
+
+function pipelineTokenOk(req) {
+  const expected = String(N8N_WEBHOOK_TOKEN || "");
+  const got = String(req.headers["x-dmb-token"] || "").trim();
+  if (!expected || !got) return false;
+  const left = Buffer.from(expected);
+  const right = Buffer.from(got);
+  if (left.length !== right.length) return false;
+  return require("crypto").timingSafeEqual(left, right);
+}
+
+function nurtureHtml(step, lead) {
+  const first = String(lead.name || "there").split(" ")[0];
+  const booking = lead.bookingUrl || BOOKING_URL;
+  const need = lead.need || "AI automation";
+
+  if (Number(step) === 2) {
+    return `<p>Hi ${first},</p>
+<p>Last note from me so your inbox gets a rest. If the timing is wrong, no problem — reply whenever it changes and I will pick it straight up.</p>
+<p>The calendar stays open here: <a href="${booking}">${booking}</a></p>
+<p>— Deo</p>`;
+  }
+
+  return `<p>Hi ${first},</p>
+<p>Following up on your note about <strong>${need}</strong>. The write-up at <a href="https://www.dmbwebsolutions.com/case-studies/dmb-assistant">dmbwebsolutions.com/case-studies</a> shows the same pieces working end to end, including the incidents I had to fix after launch.</p>
+<p>If it looks close to what you need, grab a slot: <a href="${booking}">${booking}</a></p>
+<p>— Deo</p>`;
+}
+
+async function sendNurtureEmail(step, lead) {
+  const subject =
+    Number(step) === 2 ? "Closing the loop" : "A quick example of what I would build for you";
+  return sendEmail({
+    to: lead.email,
+    subject,
+    html: nurtureHtml(step, lead),
+  });
+}
+
 /** n8n owns Slack notification and the nurture sequence. */
 async function notifyWorkflow(lead) {
   if (!N8N_WEBHOOK_URL) return false;
@@ -305,9 +367,12 @@ module.exports = {
   BOOKING_URL,
   LEAD_STATUSES,
   captureLead,
+  getLeadStatusByEmail,
   isRateLimited,
   listLeads,
   normalizeLead,
+  pipelineTokenOk,
+  sendNurtureEmail,
   supabaseConfigured,
   updateLeadStatus,
 };

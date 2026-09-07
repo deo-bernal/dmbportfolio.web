@@ -19,6 +19,7 @@ Exported so the automation can be read without logging into anything.
 | Name | Used by | Purpose |
 | --- | --- | --- |
 | `N8N_WEBHOOK_TOKEN` | pipeline | Must match the `X-DMB-Token` header sent by `api/leads.js`. Requests without it are dropped. |
+| `N8N_BLOCK_ENV_ACCESS_IN_NODE` | n8n itself | Set to `false` on Render. n8n 2.x otherwise throws `access to env vars denied` on `$env.N8N_WEBHOOK_TOKEN`. |
 | `SUPABASE_URL` | pipeline, digest | Supabase project URL. |
 | `SUPABASE_SERVICE_ROLE_KEY` | pipeline, digest | Service role key. Never leaves the server. |
 | `RESEND_API_KEY` | pipeline | Sends the nurture emails. |
@@ -27,16 +28,32 @@ Exported so the automation can be read without logging into anything.
 
 ## Sequence
 
-The instant confirmation email is sent by `api/leads.js` through Resend, not by n8n, so a visitor still gets a reply even if the n8n instance is asleep. n8n owns everything from the Slack ping onwards.
+The instant confirmation email is sent by `api/leads.js` through Resend, not by n8n, so a visitor still gets a reply even if the n8n instance is asleep. n8n owns everything from the Slack ping onwards. Status checks and nurture emails call back to Vercel (`/api/leads/status` and `/api/leads/nurture`) so the workflow does not need `$env` — n8n 1.x/2.x on Render blocks environment access in expressions.
 
 ```
 POST /api/leads  ->  Supabase insert
                  ->  Resend confirmation (immediate)
                  ->  n8n webhook
                        -> Slack notification
-                       -> wait 2 days -> still "new"? -> nurture email 1
-                       -> wait 3 days -> still "new"? -> nurture email 2
+                       -> wait 2 days -> GET /api/leads/status -> still "new"? -> POST /api/leads/nurture (step 1)
+                       -> wait 3 days -> GET /api/leads/status -> still "new"? -> POST /api/leads/nurture (step 2)
 ```
+
+## Live service `n8n-dmbwebsolutions` (use this one)
+
+Do **not** point this service at `n8nio/n8n:1.28.0`. That image update failed because `DB_TYPE=postgresdb` made n8n use Supabase as **its own** database, then crash with `self-signed certificate in certificate chain`. The instance that is still live is the May `docker.n8n.io/n8nio/n8n:latest` deploy.
+
+On this service:
+
+1. Leave the Docker image as `docker.n8n.io/n8nio/n8n:latest` (not `1.28.0`).
+2. Delete `DB_TYPE` and every `DB_POSTGRESDB_*` variable if they are present. Those belong only to a new Blueprint, not this existing instance.
+3. Re-import `dmb-lead-pipeline.json` (or paste the new Check stage URL below) so nurture no longer reads `$env`.
+
+Check stage URL:
+
+`https://www.dmbwebsolutions.com/api/leads/status?email={{ encodeURIComponent($['Lead fields'].item.json.email) }}`
+
+Header: `X-DMB-Token` = `{{ $('Lead webhook').item.json.headers['x-dmb-token'] }}`
 
 Marking a lead as `qualified`, `booked`, `won`, or `lost` in the dashboard at `/accent-sidebar/leads` stops the sequence at the next checkpoint. That check is why the nurture emails do not chase someone who has already booked.
 
