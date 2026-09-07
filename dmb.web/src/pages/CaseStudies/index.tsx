@@ -1,6 +1,7 @@
 import { Link as RouterLink } from "react-router-dom";
 import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
 import MarketingLayout from "components/layout/MarketingLayout";
+import FreeTierNotice from "components/showcase/FreeTierNotice";
 import { CASE_STUDIES } from "content/showcase";
 import {
   accentRedContainedButtonSx,
@@ -53,6 +54,10 @@ export default function CaseStudiesPage() {
             </Grid>
           ))}
         </Grid>
+
+        <Box sx={{ mt: 3 }}>
+          <FreeTierNotice />
+        </Box>
 
         <Box sx={[landingPageSx.bottomCta, { mt: 3 }]}>
           <Typography component="h2" sx={landingPageSx.bottomCtaTitle}>

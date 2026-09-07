@@ -1,6 +1,7 @@
 import { Link as RouterLink } from "react-router-dom";
 import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
 import MarketingLayout from "components/layout/MarketingLayout";
+import FreeTierNotice from "components/showcase/FreeTierNotice";
 import { PLATFORMS_SHIPPED, PLATFORMS_WORKING, type PlatformGroup } from "content/showcase";
 import {
   accentRedContainedButtonSx,
@@ -46,7 +47,8 @@ export default function StackPage() {
               Tool lists are cheap, so this one is divided. The first half is running
               in production on this domain and documented in the repository behind it.
               The second half is genuine working knowledge, transferable from the same
-              patterns, but not something I am going to claim years on.
+              patterns, but not something I am going to claim years on. Every AI model
+              used on this site is free tier.
             </Typography>
           </Stack>
         </Box>
@@ -62,6 +64,8 @@ export default function StackPage() {
           </Typography>
           <GroupGrid groups={PLATFORMS_SHIPPED} />
         </Box>
+
+        <FreeTierNotice />
 
         <Box sx={showcaseSx.section}>
           <Typography sx={showcaseSx.kicker}>Working knowledge</Typography>

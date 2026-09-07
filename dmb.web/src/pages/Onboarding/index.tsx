@@ -16,7 +16,11 @@ import {
   Typography,
 } from "@mui/material";
 import { generateProfileWithAi } from "services/aiProfile.service";
-import { friendlyAiErrorMessage } from "utils/friendlyAiError";
+import { resumeParserErrorMessage } from "utils/friendlyAiError";
+import {
+  AI_FREE_TIER_PERFORMANCE,
+  AI_FREE_TIER_TRADEOFFS,
+} from "content/aiFreeTier";
 import api from "services/http.service";
 import MarketingLayout from "components/layout/MarketingLayout";
 import {
@@ -259,16 +263,8 @@ export default function OnboardingPage() {
       setStep("review");
     } catch (err: unknown) {
       setStep("input");
-      if (axiosIsError(err)) {
-        setError(
-          friendlyAiErrorMessage(
-            err.response?.data?.message,
-            "Unable to generate profile with AI."
-          )
-        );
-      } else {
-        setError("Unable to generate profile with AI.");
-      }
+      const raw = axiosIsError(err) ? err.response?.data?.message : undefined;
+      setError(resumeParserErrorMessage(typeof raw === "string" ? raw : undefined));
     }
   };
 
@@ -327,7 +323,7 @@ export default function OnboardingPage() {
               </Typography>
               <Typography sx={onboardingPageSx.subtitle}>
                 {step === "input" &&
-                  "Upload a PDF or Word resume, paste text, or answer a few questions. AI will draft your portfolio and resume."}
+                  "Upload a PDF or Word resume, paste text, or answer a few questions. AI will draft your portfolio and resume using free-tier Groq and Gemini APIs, so generation can be slower or unavailable when usage limits are hit."}
                 {step === "generating" && "Generating your profile. This usually takes 10–30 seconds."}
                 {step === "review" && "Review the AI draft below. You can edit before publishing."}
                 {step === "success" && "Share your link anywhere. You can keep editing from your dashboard."}
@@ -335,6 +331,11 @@ export default function OnboardingPage() {
             </Box>
 
             {error ? <Alert severity="error">{error}</Alert> : null}
+            {step === "input" && !error ? (
+              <Alert severity="info">
+                {AI_FREE_TIER_PERFORMANCE} {AI_FREE_TIER_TRADEOFFS}
+              </Alert>
+            ) : null}
 
             {step === "input" ? (
               <Stack spacing={2}>

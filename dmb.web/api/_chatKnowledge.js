@@ -22,6 +22,8 @@ The resume side includes personal info, work history, education, and affiliation
 It should not invent employers, degrees, or credentials. If something is missing, add it in the Portfolio or Resume editors after generation.
 There is a review step before content is saved to your account.`,
 
+  `The AI on this site is entirely free tier. Chat streams Google Gemini Flash (gemini-2.5-flash, then gemini-2.0-flash and gemini-flash-latest). Profile generation and chat fallback use Groq OpenAI-compatible models: openai/gpt-oss-20b, openai/gpt-oss-120b, and qwen/qwen3.6-27b. The optional voice agent is a Vapi trial. Performance is limited because these are free-tier APIs: strict rate limits, data privacy trade-offs, and no uptime guarantees. If a visitor hits a usage limit, tell them to wait about a minute and try again, and point them to /ai-automation#ai-models for the model list.`,
+
   `Pricing: creating and publishing an online profile is free to start. Upgrade later when you need more (premium themes, custom domain, extra AI generations, and similar extras are planned).
 There is no charge required to register, generate a first profile, or share your public URL.`,
 

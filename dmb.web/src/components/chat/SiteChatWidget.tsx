@@ -29,7 +29,7 @@ function welcomeMessage(firstName: string): SiteChatMessage {
   const greeting = firstName ? `Hi ${firstName}` : "Hi";
   return {
     role: "assistant",
-    content: `${greeting} — I'm **DMB Assistant**. Ask me about free portfolio pages, [[AI automation services|/ai-automation]] for your business, or DMB Real Estate lots in Pampanga.`,
+    content: `${greeting} — I'm **DMB Assistant**. Ask me about free portfolio pages, [[AI automation services|/ai-automation]] for your business, or DMB Real Estate lots in Pampanga. I run on free-tier Groq and Gemini APIs, so replies can be limited when usage caps are hit.`,
   };
 }
 
@@ -480,7 +480,7 @@ export default function SiteChatWidget() {
                   DMB Assistant
                 </Typography>
                 <Typography sx={{ fontSize: 12, color: "#38bdf8" }}>
-                  {isLoading ? "Typing..." : isSpeaking ? "Speaking..." : "Online"}
+                  {isLoading ? "Typing..." : isSpeaking ? "Speaking..." : "Free-tier Groq + Gemini"}
                 </Typography>
               </Box>
             </Box>
@@ -655,7 +655,7 @@ export default function SiteChatWidget() {
               </IconButton>
             </Box>
             <Typography sx={{ fontSize: 10, textAlign: "center", color: "#94a3b8", mt: 1 }}>
-              Press the mic button to speak or type your message
+              Free-tier AI — rate limits apply. Press the mic to speak or type a message.
             </Typography>
           </Box>
         </Paper>

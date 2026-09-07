@@ -23,8 +23,12 @@ const GEMINI_MODELS = unique([
   "gemini-flash-latest",
 ]);
 
-const QUOTA_MESSAGE =
-  "AI is temporarily at its free-tier limit. Please wait about a minute and try again.";
+const QUOTA_MESSAGE = [
+  "Usage limit exceeded.",
+  "All AI on this site runs on free-tier Groq and Google Gemini APIs, so performance is limited.",
+  "Please wait about a minute and try again.",
+  "Free tiers for AI tools and APIs offer zero-cost experimentation, but come with strict rate limits, data privacy trade-offs, and no uptime guarantees.",
+].join(" ");
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];

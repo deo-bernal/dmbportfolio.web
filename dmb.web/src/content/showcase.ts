@@ -107,9 +107,9 @@ export const PLATFORMS_SHIPPED: PlatformGroup[] = [
     title: "AI platforms",
     note: "Running in production on this site",
     items: [
-      "OpenAI-compatible APIs (Groq)",
-      "Google Gemini (SDK + REST)",
-      "Claude (Anthropic) for build tooling",
+      "Groq free tier (gpt-oss-20b / 120b, Qwen 3.6)",
+      "Google Gemini free tier (2.5 / 2.0 Flash)",
+      "Claude (Anthropic) for build tooling only",
       "Streaming over SSE",
       "Prompt design and grounding",
       "Retrieval over curated knowledge",
@@ -188,8 +188,8 @@ export const CASE_STUDIES: CaseStudy[] = [
     timeframe: "2026",
     stack: [
       "Vercel Functions",
-      "Groq (OpenAI-compatible)",
-      "Google Gemini",
+      "Groq free tier",
+      "Gemini free tier",
       "Server-sent events",
       "React + TypeScript",
       "Web Speech API",
@@ -198,7 +198,7 @@ export const CASE_STUDIES: CaseStudy[] = [
       "Open the assistant in the bottom-right corner of any page on this site and ask it anything.",
     metrics: [
       { label: "Live on", value: "dmbwebsolutions.com" },
-      { label: "Providers", value: "2 vendors, 6 models" },
+      { label: "Providers", value: "Groq + Gemini, free tier" },
       { label: "Outages absorbed", value: "2 without a rebuild" },
     ],
     sections: [
@@ -255,6 +255,13 @@ export const CASE_STUDIES: CaseStudy[] = [
         ],
       },
       {
+        heading: "Free-tier models, and why replies can stall",
+        body: [
+          "Every model behind this assistant is on a free-tier API: Google Gemini Flash for streaming chat, with Groq OpenAI-compatible models as fallback. That is a deliberate cost choice for a public demo, not a production SLA.",
+          "Free tiers for AI tools and APIs offer zero-cost experimentation, but come with strict rate limits, data privacy trade-offs, and no uptime guarantees. When a visitor hits a usage limit, the widget says so instead of failing silently.",
+        ],
+      },
+      {
         heading: "Result",
         bullets: [
           "The assistant is live and answering on every page of this domain.",
@@ -273,7 +280,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     timeframe: "2026",
     stack: [
       "Vercel Functions",
-      "Groq / Gemini structured output",
+      "Groq / Gemini free tier",
       "pdfjs-dist",
       "mammoth",
       ".NET 10 Web API",
@@ -329,9 +336,10 @@ export const CASE_STUDIES: CaseStudy[] = [
       {
         heading: "Result",
         bullets: [
-          "A resume file becomes a shareable public URL in about thirty seconds.",
+          "A resume file becomes a shareable public URL in about thirty seconds, when the free-tier APIs are within quota.",
           "Publishing is non-destructive: missing AI output can no longer erase saved account details.",
           "The same provider failover as the chat assistant, so a retired model does not break onboarding.",
+          "Quota and provider errors tell the visitor that this builder runs on free-tier Groq and Gemini, with the rate-limit and uptime trade-offs that come with that.",
         ],
       },
     ],

@@ -1,10 +1,4 @@
-const DEFAULT_MODEL =
-  process.env.OPENAI_MODEL && !/llama-3\.3-70b-versatile/i.test(process.env.OPENAI_MODEL)
-    ? process.env.OPENAI_MODEL
-    : "openai/gpt-oss-20b";
-const OPENAI_BASE_URL = (
-  process.env.OPENAI_BASE_URL || "https://api.groq.com/openai/v1"
-).replace(/\/$/, "");
+const { generateAiText, friendlyAiError, QUOTA_MESSAGE } = require("../_aiProvider");
 
 const SYSTEM_PROMPT = `You are a professional profile builder assistant.
 Given a user's resume text and optional answers, produce a JSON object for an online portfolio and resume.
@@ -175,56 +169,27 @@ function normalizeGeneratedProfile(raw) {
   };
 }
 
-async function callOpenAi(userPrompt) {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    const error = new Error("OPENAI_API_KEY is not configured on the server.");
-    error.statusCode = 503;
-    throw error;
-  }
+function parseJsonContent(content) {
+  const trimmed = String(content || "").trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const raw = fenced ? fenced[1].trim() : trimmed;
+  return JSON.parse(raw);
+}
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 55000);
-
+async function generateProfileJson(userPrompt) {
+  const content = await generateAiText({
+    system: SYSTEM_PROMPT,
+    user: userPrompt,
+    json: true,
+  });
   try {
-    const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
-      method: "POST",
-      signal: controller.signal,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        temperature: 0.4,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-      }),
-    });
-
-    const payload = await response.json();
-
-    if (!response.ok) {
-      const message =
-        payload?.error?.message || `OpenAI request failed with status ${response.status}.`;
-      const error = new Error(message);
-      error.statusCode = response.status >= 500 ? 502 : 400;
-      throw error;
-    }
-
-    const content = payload?.choices?.[0]?.message?.content;
-    if (!content) {
-      const error = new Error("AI returned an empty response.");
-      error.statusCode = 502;
-      throw error;
-    }
-
-    return JSON.parse(content);
-  } finally {
-    clearTimeout(timeout);
+    return parseJsonContent(content);
+  } catch {
+    const error = new Error(
+      "AI returned invalid profile JSON. All AI on this site runs on free-tier Groq and Google Gemini APIs, so performance is limited."
+    );
+    error.statusCode = 502;
+    throw error;
   }
 }
 
@@ -245,24 +210,37 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const rawProfile = await callOpenAi(userPrompt);
+    const rawProfile = await generateProfileJson(userPrompt);
     const profile = normalizeGeneratedProfile(rawProfile);
 
     if (!profile.summary && profile.skills.length === 0 && profile.projectCategories.length === 0) {
       res.status(422).json({
-        message: "AI could not extract enough profile content. Add more detail and try again.",
+        message:
+          "AI could not extract enough profile content. Add more detail and try again. All AI on this site runs on free-tier Groq and Google Gemini APIs, so performance is limited.",
       });
       return;
     }
 
     res.status(200).json({ profile });
   } catch (error) {
-    const statusCode = error.statusCode || (error.name === "AbortError" ? 504 : 500);
-    res.status(statusCode).json({
+    if (error.name === "AbortError") {
+      res.status(504).json({
+        message:
+          "AI request timed out. Try again with shorter input. All AI on this site runs on free-tier Groq and Google Gemini APIs, so performance is limited.",
+      });
+      return;
+    }
+
+    const quota = friendlyAiError(error);
+    if (quota.statusCode === 429) {
+      res.status(429).json({ message: QUOTA_MESSAGE });
+      return;
+    }
+
+    res.status(error.statusCode || 500).json({
       message:
-        error.name === "AbortError"
-          ? "AI request timed out. Try again with shorter input."
-          : error.message || "Unable to generate profile.",
+        error.message ||
+        "Unable to generate profile. All AI on this site runs on free-tier Groq and Google Gemini APIs, so performance is limited.",
     });
   }
 };

@@ -6,6 +6,7 @@ import MarketingLayout from "components/layout/MarketingLayout";
 import LeadForm from "components/leads/LeadForm";
 import BookingEmbed from "components/booking/BookingEmbed";
 import VoiceAgentButton from "components/voice/VoiceAgentButton";
+import FreeTierNotice from "components/showcase/FreeTierNotice";
 import {
   CASE_STUDIES,
   PIPELINE_STEPS,
@@ -41,7 +42,8 @@ export default function AiAutomationPage() {
               in your own content, funnels that push every lead into your CRM,
               follow-up that runs itself, and booking that closes the loop. Everything
               on this page is live on this domain — including the assistant in the
-              corner and the pipeline below.
+              corner and the pipeline below. All of it runs on free-tier Groq and
+              Gemini APIs, so performance is limited.
             </Typography>
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -211,6 +213,8 @@ export default function AiAutomationPage() {
           </Typography>
           <BookingEmbed />
         </Box>
+
+        <FreeTierNotice />
 
         <Box sx={showcaseSx.section}>
           <Typography sx={showcaseSx.kicker}>Stack</Typography>

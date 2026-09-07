@@ -1,6 +1,7 @@
 import { Link as RouterLink, Navigate, useParams } from "react-router-dom";
 import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
 import MarketingLayout from "components/layout/MarketingLayout";
+import FreeTierNotice from "components/showcase/FreeTierNotice";
 import { findCaseStudy, type CaseStudySection } from "content/showcase";
 import {
   accentRedContainedButtonSx,
@@ -92,6 +93,8 @@ export default function CaseStudyView() {
         {study.sections.map((section) => (
           <Section key={section.heading} section={section} />
         ))}
+
+        <FreeTierNotice />
 
         <Box sx={landingPageSx.bottomCta}>
           <Typography component="h2" sx={landingPageSx.bottomCtaTitle}>
