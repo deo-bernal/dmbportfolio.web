@@ -5,8 +5,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Container,
-  Grid,
   MenuItem,
   Stack,
   TextField,
@@ -141,11 +139,19 @@ export default function LeadsPage() {
   const lostCount = leads.filter((lead) => lead.status === "lost").length;
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 4 } }}>
+    <Box
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
-        sx={{ justifyContent: "space-between", alignItems: { sm: "center" }, mb: 3 }}
+        sx={{ justifyContent: "space-between", alignItems: { sm: "center" }, mb: 2, flexShrink: 0 }}
       >
         <Box>
           <Typography sx={showcaseSx.kicker}>Lead pipeline</Typography>
@@ -169,48 +175,69 @@ export default function LeadsPage() {
       </Stack>
 
       {error ? (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 2, flexShrink: 0 }}>
           {error}
         </Alert>
       ) : null}
 
       {storage === "log" && !error ? (
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: 2, flexShrink: 0 }}>
           Leads are being written to the function log because SUPABASE_URL and
           SUPABASE_SERVICE_ROLE_KEY are not set. See docs/runbooks/lead-pipeline.md.
         </Alert>
       ) : null}
 
       {isLoading ? (
-        <Stack sx={{ alignItems: "center", py: 6 }}>
+        <Stack sx={{ alignItems: "center", py: 6, flex: 1 }}>
           <CircularProgress />
         </Stack>
       ) : (
-        <Grid container spacing={2.5}>
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, minmax(0, 1fr))" },
+            gridAutoRows: { xs: "auto", sm: "minmax(0, 1fr)" },
+            gap: 2.5,
+            overflow: { xs: "auto", sm: "hidden" },
+          }}
+        >
           {columns.map((column) => (
-            <Grid key={column.status} size={{ xs: 12, sm: 6, lg: 3 }}>
-              <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", mb: 1.5 }}>
+            <Box
+              key={column.status}
+              sx={{
+                minHeight: 0,
+                minWidth: 0,
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+              }}
+            >
+              <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", mb: 1, flexShrink: 0 }}>
                 <Typography sx={showcaseSx.stepLabel}>{column.title}</Typography>
                 <Typography sx={showcaseSx.metricLabel}>{column.items.length}</Typography>
               </Stack>
-              <Typography sx={[showcaseSx.codeCaption, { mb: 1.5 }]}>{column.hint}</Typography>
+              <Typography sx={[showcaseSx.codeCaption, { mb: 1.5, flexShrink: 0 }]}>{column.hint}</Typography>
 
-              {column.items.length === 0 ? (
-                <Typography sx={showcaseSx.cardBody}>Nothing here yet.</Typography>
-              ) : (
-                column.items.map((lead) => (
-                  <LeadCard
-                    key={String(lead.id ?? lead.email)}
-                    lead={lead}
-                    disabled={isSaving}
-                    onStatusChange={(target, status) => void handleStatusChange(target, status)}
-                  />
-                ))
-              )}
-            </Grid>
+              <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 0.5 }}>
+                {column.items.length === 0 ? (
+                  <Typography sx={showcaseSx.cardBody}>Nothing here yet.</Typography>
+                ) : (
+                  column.items.map((lead) => (
+                    <LeadCard
+                      key={String(lead.id ?? lead.email)}
+                      lead={lead}
+                      disabled={isSaving}
+                      onStatusChange={(target, status) => void handleStatusChange(target, status)}
+                    />
+                  ))
+                )}
+              </Box>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
-    </Container>
+    </Box>
   );
 }

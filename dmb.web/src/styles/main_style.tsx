@@ -287,9 +287,9 @@ export const layoutShellSx = {
   root: {
     display: "flex",
     flexDirection: { xs: "column", sm: "row" },
-    minHeight: "100dvh",
-    height: { sm: "100dvh" },
-    overflow: { sm: "hidden" },
+    height: "100dvh",
+    maxHeight: "100dvh",
+    overflow: "hidden",
     fontFamily: pageFonts.sans,
   } satisfies SxProps<Theme>,
 
@@ -299,6 +299,8 @@ export const layoutShellSx = {
     width: { xs: "100%", sm: 260 },
     flexShrink: 0,
     height: { sm: "100%" },
+    maxHeight: { sm: "100%" },
+    minHeight: 0,
     overflowY: { sm: "auto" },
     py: { xs: 1.5, sm: 3 },
     px: { xs: 1.5, sm: 2.25 },
@@ -378,10 +380,12 @@ export const layoutShellSx = {
   } satisfies SxProps<Theme>,
 
   main: {
-    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    flex: "1 1 0",
     minWidth: 0,
-    minHeight: { sm: 0 },
-    overflow: { sm: "auto" },
+    minHeight: 0,
+    overflow: "auto",
     py: { xs: 2, sm: 3 },
     px: { xs: 2, sm: 3 },
     background: `linear-gradient(180deg, ${alpha("#f1f5f9", 1)} 0%, ${alpha("#e2e8f0", 0.55)} 48%, ${alpha("#cbd5e1", 0.35)} 100%)`,
