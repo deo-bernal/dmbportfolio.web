@@ -90,9 +90,6 @@ export default function AdminUsersPanel() {
                     checked={user.isAdmin || user.isSuperAdmin}
                     disabled={user.isSuperAdmin || busyUserId === user.userId}
                     onChange={(event) => void handleToggle(user, event.target.checked)}
-                    inputProps={{
-                      "aria-label": `Admin access for ${user.email}`,
-                    }}
                   />
                 }
                 label="Admin"
