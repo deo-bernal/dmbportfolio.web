@@ -15,8 +15,9 @@ import { streamSiteChat, type SiteChatMessage } from "services/siteChat.service"
 import { pageFonts } from "styles/main_style";
 import useAccountGreeting from "hooks/useAccountGreeting";
 import { friendlyAiErrorMessage } from "utils/friendlyAiError";
+import { formatForWellerVoice, pickWellerVoice, playCommChirp } from "utils/roboCopVoice";
 
-const ASSISTANT_ICON = "/images/icons/dmb-assistant.png";
+const ASSISTANT_ICON = "/images/icons/dmb-assistant.png?v=1987";
 
 const ATTENTION_MESSAGES = [
   "Need a free online profile? ✨",
@@ -29,7 +30,7 @@ function welcomeMessage(firstName: string): SiteChatMessage {
   const greeting = firstName ? `Hi ${firstName}` : "Hi";
   return {
     role: "assistant",
-    content: `${greeting} — I'm **DMB Assistant**. Ask me about free portfolio pages, [[AI automation services|/ai-automation]] for your business, or DMB Real Estate lots in Pampanga. I run on free-tier Groq and Gemini APIs, so replies can be limited when usage caps are hit.`,
+    content: `${greeting}. I am DMB Assistant. Ask about free portfolio pages, [[AI automation services|/ai-automation]], or DMB Real Estate lots in Pampanga. I run on free-tier Groq and Gemini APIs. Replies can be limited when usage caps are hit.`,
   };
 }
 
@@ -174,6 +175,7 @@ export default function SiteChatWidget() {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sendRef = useRef<(text: string) => Promise<void>>(async () => {});
 
@@ -228,18 +230,35 @@ export default function SiteChatWidget() {
     return () => window.clearTimeout(fadeTimeout);
   }, [isOpen, bubbleDismissed, showBubble, bubbleFading, bubbleMessageIndex]);
 
+  const speakNow = useCallback((text: string) => {
+    if (!synthRef.current) return;
+    const spoken = formatForWellerVoice(text);
+    if (!spoken) return;
+    synthRef.current.cancel();
+    playCommChirp();
+    const utterance = new SpeechSynthesisUtterance(spoken);
+    utterance.rate = 0.76;
+    utterance.pitch = 0.78;
+    utterance.volume = 1;
+    const voice = pickWellerVoice(voicesRef.current.length ? voicesRef.current : synthRef.current.getVoices());
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else {
+      utterance.lang = "en-US";
+    }
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.setTimeout(() => synthRef.current?.speak(utterance), 160);
+  }, []);
+
   const speak = useCallback(
     (text: string) => {
-      if (!ttsEnabled || !synthRef.current) return;
-      synthRef.current.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      synthRef.current.speak(utterance);
+      if (!ttsEnabled) return;
+      speakNow(text);
     },
-    [ttsEnabled]
+    [speakNow, ttsEnabled]
   );
 
   const handleSendMessage = useCallback(
@@ -280,8 +299,18 @@ export default function SiteChatWidget() {
 
   useEffect(() => {
     synthRef.current = window.speechSynthesis;
+    const loadVoices = () => {
+      voicesRef.current = window.speechSynthesis.getVoices();
+    };
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+
     const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognitionCtor) return;
+    if (!SpeechRecognitionCtor) {
+      return () => {
+        window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
+      };
+    }
 
     const recognition = new SpeechRecognitionCtor();
     recognition.continuous = false;
@@ -297,6 +326,7 @@ export default function SiteChatWidget() {
 
     return () => {
       recognition.stop();
+      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
     };
   }, []);
 
@@ -480,7 +510,7 @@ export default function SiteChatWidget() {
                   DMB Assistant
                 </Typography>
                 <Typography sx={{ fontSize: 12, color: "#38bdf8" }}>
-                  {isLoading ? "Typing..." : isSpeaking ? "Speaking..." : "Free-tier Groq + Gemini"}
+                  {isLoading ? "Typing..." : isSpeaking ? "Broadcasting..." : "Free-tier Groq + Gemini"}
                 </Typography>
               </Box>
             </Box>
@@ -488,8 +518,16 @@ export default function SiteChatWidget() {
               <IconButton
                 aria-label={ttsEnabled ? "Mute voice" : "Enable voice"}
                 onClick={() => {
-                  setTtsEnabled((prev) => !prev);
-                  if (ttsEnabled && synthRef.current) synthRef.current.cancel();
+                  setTtsEnabled((prev) => {
+                    const next = !prev;
+                    if (!next) {
+                      synthRef.current?.cancel();
+                      setIsSpeaking(false);
+                    } else {
+                      speakNow("Systems online.");
+                    }
+                    return next;
+                  });
                 }}
                 sx={{ color: "rgba(255,255,255,0.85)" }}
               >
