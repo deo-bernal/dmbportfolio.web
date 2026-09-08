@@ -29,7 +29,7 @@ export default function AccentSidebarLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const firstName = useAccountGreeting();
-  const { isAdmin, isSuperAdmin } = useAccountRoles();
+  const { isAdmin, isSuperAdmin, canAccessUserAccess } = useAccountRoles();
   const [logoutBusy, setLogoutBusy] = useState(false);
   const { username } = useParams<{ username?: string }>();
   const isPublicRoute = Boolean(username) && !location.pathname.startsWith("/accent-sidebar");
@@ -76,6 +76,12 @@ export default function AccentSidebarLayout() {
             <ShellNavItem to="/accent-sidebar/leads" label="Leads" end />
           ) : null}
         </Box>
+
+        {auth.isAuthenticated && !isPublicRoute && canAccessUserAccess ? (
+          <Box sx={layoutShellSx.sidebarAccountNav}>
+            <ShellNavItem to="/accent-sidebar/access" label="User access" end />
+          </Box>
+        ) : null}
 
         {!auth.isAuthenticated ? (  
           <Box sx={layoutShellSx.sidebarCtaWrap}>

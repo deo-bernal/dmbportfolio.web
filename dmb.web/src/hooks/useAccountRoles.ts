@@ -12,6 +12,7 @@ export default function useAccountRoles() {
     isAdmin,
     isSuperAdmin,
     canAccessLeads: isAdmin || isSuperAdmin,
+    canAccessUserAccess: isSuperAdmin,
     isLoading,
     accountResolved,
   };

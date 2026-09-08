@@ -16,9 +16,11 @@ import CaseStudiesPage from "../pages/CaseStudies";
 import CaseStudyView from "../pages/CaseStudies/CaseStudyView";
 import StackPage from "../pages/Stack";
 import LeadsPage from "../pages/Leads";
+import UserAccessPage from "../pages/UserAccess";
 import AuthRedirect from "../components/auth/AuthRedirect";
 import RequireAuth from "../components/auth/RequireAuth";
 import RequireLeadAccess from "../components/auth/RequireLeadAccess";
+import RequireSuperAdmin from "../components/auth/RequireSuperAdmin";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
 import { ONBOARD_PATH } from "../utils/navigation";
 
@@ -115,6 +117,14 @@ export default function createRouter({
             <RequireLeadAccess>
               <LeadsPage />
             </RequireLeadAccess>
+          ),
+        },
+        {
+          path: "access",
+          element: (
+            <RequireSuperAdmin>
+              <UserAccessPage />
+            </RequireSuperAdmin>
           ),
         },
       ],

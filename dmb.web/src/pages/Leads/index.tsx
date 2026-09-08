@@ -20,8 +20,6 @@ import {
   type LeadStatus,
 } from "services/leads.service";
 import { showcaseSx } from "styles/main_style";
-import useAccountRoles from "hooks/useAccountRoles";
-import AdminUsersPanel from "components/leads/AdminUsersPanel";
 
 const PIPELINE: Array<{ status: LeadStatus; title: string; hint: string }> = [
   { status: "new", title: "New", hint: "Captured, not yet worked" },
@@ -88,7 +86,6 @@ function LeadCard({
 }
 
 export default function LeadsPage() {
-  const { isSuperAdmin } = useAccountRoles();
   const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [storage, setStorage] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -170,8 +167,6 @@ export default function LeadsPage() {
           Refresh
         </Button>
       </Stack>
-
-      {isSuperAdmin ? <AdminUsersPanel /> : null}
 
       {error ? (
         <Alert severity="error" sx={{ mb: 3 }}>

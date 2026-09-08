@@ -292,8 +292,11 @@ export const layoutShellSx = {
   } satisfies SxProps<Theme>,
 
   sidebar: {
+    display: "flex",
+    flexDirection: "column",
     width: { xs: "100%", sm: 260 },
     flexShrink: 0,
+    minHeight: { sm: "100vh" },
     py: { xs: 1.5, sm: 3 },
     px: { xs: 1.5, sm: 2.25 },
     background: `linear-gradient(180deg, #334155 0%, #1e293b 72%, #0f172a 100%)`,
@@ -330,6 +333,13 @@ export const layoutShellSx = {
     flexDirection: { xs: "row", sm: "column" },
     flexWrap: "wrap",
     gap: 0.75,
+    flex: { sm: 1 },
+  } satisfies SxProps<Theme>,
+
+  sidebarAccountNav: {
+    mt: { xs: 1.5, sm: 0 },
+    pt: 1.5,
+    borderTop: `1px solid ${alpha("#94a3b8", 0.22)}`,
   } satisfies SxProps<Theme>,
 
   navItem: {

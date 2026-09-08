@@ -55,13 +55,7 @@ export default function AdminUsersPanel() {
   };
 
   return (
-    <Box sx={[showcaseSx.card, { mb: 3 }]}>
-      <Typography sx={showcaseSx.kicker}>Super admin</Typography>
-      <Typography sx={showcaseSx.cardTitle}>Admin access</Typography>
-      <Typography sx={[showcaseSx.cardBody, { mb: 2 }]}>
-        Only users with Admin on can open Leads. Super admin cannot be granted from this list.
-      </Typography>
-
+    <Box sx={showcaseSx.card}>
       {error ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -96,6 +90,9 @@ export default function AdminUsersPanel() {
                     checked={user.isAdmin || user.isSuperAdmin}
                     disabled={user.isSuperAdmin || busyUserId === user.userId}
                     onChange={(event) => void handleToggle(user, event.target.checked)}
+                    inputProps={{
+                      "aria-label": `Admin access for ${user.email}`,
+                    }}
                   />
                 }
                 label="Admin"
