@@ -15,7 +15,7 @@ import { streamSiteChat, type SiteChatMessage } from "services/siteChat.service"
 import { pageFonts } from "styles/main_style";
 import useAccountGreeting from "hooks/useAccountGreeting";
 import { friendlyAiErrorMessage } from "utils/friendlyAiError";
-import { formatForWellerVoice, pickWellerVoice, playCommChirp } from "utils/roboCopVoice";
+import { cancelRoboCopSpeech, speakRoboCop } from "utils/roboCopVoice";
 
 const ASSISTANT_ICON = "/images/icons/dmb-assistant.png?v=1987";
 
@@ -231,26 +231,10 @@ export default function SiteChatWidget() {
   }, [isOpen, bubbleDismissed, showBubble, bubbleFading, bubbleMessageIndex]);
 
   const speakNow = useCallback((text: string) => {
-    if (!synthRef.current) return;
-    const spoken = formatForWellerVoice(text);
-    if (!spoken) return;
-    synthRef.current.cancel();
-    playCommChirp();
-    const utterance = new SpeechSynthesisUtterance(spoken);
-    utterance.rate = 0.76;
-    utterance.pitch = 0.78;
-    utterance.volume = 1;
-    const voice = pickWellerVoice(voicesRef.current.length ? voicesRef.current : synthRef.current.getVoices());
-    if (voice) {
-      utterance.voice = voice;
-      utterance.lang = voice.lang;
-    } else {
-      utterance.lang = "en-US";
-    }
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    window.setTimeout(() => synthRef.current?.speak(utterance), 160);
+    void speakRoboCop(text, {
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+    });
   }, []);
 
   const speak = useCallback(
@@ -349,6 +333,7 @@ export default function SiteChatWidget() {
   const closeChat = () => {
     setIsOpen(false);
     if (synthRef.current) synthRef.current.cancel();
+    cancelRoboCopSpeech();
     setIsSpeaking(false);
   };
 
@@ -521,6 +506,7 @@ export default function SiteChatWidget() {
                   setTtsEnabled((prev) => {
                     const next = !prev;
                     if (!next) {
+                      cancelRoboCopSpeech();
                       synthRef.current?.cancel();
                       setIsSpeaking(false);
                     } else {
