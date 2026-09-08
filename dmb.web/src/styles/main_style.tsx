@@ -287,7 +287,9 @@ export const layoutShellSx = {
   root: {
     display: "flex",
     flexDirection: { xs: "column", sm: "row" },
-    minHeight: "100vh",
+    minHeight: "100dvh",
+    height: { sm: "100dvh" },
+    overflow: { sm: "hidden" },
     fontFamily: pageFonts.sans,
   } satisfies SxProps<Theme>,
 
@@ -296,7 +298,8 @@ export const layoutShellSx = {
     flexDirection: "column",
     width: { xs: "100%", sm: 260 },
     flexShrink: 0,
-    minHeight: { sm: "100vh" },
+    height: { sm: "100%" },
+    overflowY: { sm: "auto" },
     py: { xs: 1.5, sm: 3 },
     px: { xs: 1.5, sm: 2.25 },
     background: `linear-gradient(180deg, #334155 0%, #1e293b 72%, #0f172a 100%)`,
@@ -377,13 +380,16 @@ export const layoutShellSx = {
   main: {
     flex: 1,
     minWidth: 0,
+    minHeight: { sm: 0 },
+    overflow: { sm: "auto" },
     py: { xs: 2, sm: 3 },
     px: { xs: 2, sm: 3 },
     background: `linear-gradient(180deg, ${alpha("#f1f5f9", 1)} 0%, ${alpha("#e2e8f0", 0.55)} 48%, ${alpha("#cbd5e1", 0.35)} 100%)`,
   } satisfies SxProps<Theme>,
 
   sidebarCtaWrap: {
-    mt: 3,
+    mt: { xs: 1.5, sm: "auto" },
+    pt: { sm: 1.5 },
   } satisfies SxProps<Theme>,
 } as const;
 
