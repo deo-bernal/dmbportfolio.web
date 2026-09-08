@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import { ResumeProfileTabs, ResumeProfileView } from "components/resumeProfile";
 import type { ResumeProfile } from "models";
 import api from "services/http.service";
-import { agenticPageSx, onboardingPageSx } from "styles/main_style";
+import { agenticPageSx } from "styles/main_style";
 import { EMPTY_RESUME_PROFILE } from "models";
 import MarketingLayout from "components/layout/MarketingLayout";
 
@@ -132,7 +132,7 @@ export default function ResumePage() {
   }
 
   return (
-    <MarketingLayout mainSx={onboardingPageSx.container}>
+    <MarketingLayout mainSx={agenticPageSx.embeddedMain}>
       <Stack sx={agenticPageSx.stackSections}>
         <Box sx={agenticPageSx.panelBody}>
           <Box component="header" sx={agenticPageSx.headerRow}>

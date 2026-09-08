@@ -416,7 +416,18 @@ export const agenticPageSx = {
   } satisfies SxProps<Theme>,
 
   stackSections: {
+    width: "100%",
     gap: 3,
+  } satisfies SxProps<Theme>,
+
+  embeddedMain: {
+    py: { xs: 1, sm: 2 },
+    flex: 1,
+    width: "100%",
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
   } satisfies SxProps<Theme>,
 
   panelBody: {
@@ -895,6 +906,7 @@ export const landingPageSx = {
   root: {
     bgcolor: "#f1f5f9",
     minHeight: "100vh",
+    width: "100%",
   } satisfies SxProps<Theme>,
   header: {
     position: "sticky",

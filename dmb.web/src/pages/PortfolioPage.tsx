@@ -9,7 +9,7 @@ import { PortfolioProfileTabs, PortfolioProfileView } from "components/portfolio
 import api from "services/http.service";
 import { getProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
-import { accentRedContainedButtonSx, agenticPageSx, onboardingPageSx } from "styles/main_style";
+import { accentRedContainedButtonSx, agenticPageSx } from "styles/main_style";
 import type { PortfolioPageProps, Profile, UpdateProfileRequest } from "models";
 import { ONBOARD_PATH } from "utils/navigation";
 import MarketingLayout from "components/layout/MarketingLayout";
@@ -91,7 +91,7 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
   const isCreateMode = !profile;
 
   return (
-    <MarketingLayout mainSx={onboardingPageSx.container}>
+    <MarketingLayout mainSx={agenticPageSx.embeddedMain}>
       <Stack sx={agenticPageSx.stackSections}>
         <Box sx={agenticPageSx.panelBody}>
           <Box component="header" sx={agenticPageSx.headerRow}>
