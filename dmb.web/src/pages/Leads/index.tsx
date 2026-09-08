@@ -42,7 +42,7 @@ function LeadCard({
   disabled: boolean;
 }) {
   return (
-    <Box sx={[showcaseSx.card, { mb: 2 }]}>
+    <Box sx={[showcaseSx.card, { height: "auto", mb: 2 }]}>
       <Typography sx={showcaseSx.cardTitle}>{lead.name || "Unnamed"}</Typography>
       <Typography sx={showcaseSx.cardBody}>{lead.email}</Typography>
 
@@ -59,7 +59,9 @@ function LeadCard({
       </Stack>
 
       {lead.message ? (
-        <Typography sx={[showcaseSx.cardBody, { mt: 1.5 }]}>{lead.message}</Typography>
+        <Typography sx={[showcaseSx.cardBody, { mt: 1.5, overflowWrap: "anywhere" }]}>
+          {lead.message}
+        </Typography>
       ) : null}
 
       <Typography sx={showcaseSx.codeCaption}>{formatDate(lead.created_at)}</Typography>
