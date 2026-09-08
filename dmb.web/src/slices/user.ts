@@ -14,16 +14,27 @@ import {
 } from "../utils/accountGreeting";
 import type { ApiUser, Profile, ProjectCategory, ProjectItem } from "models";
 
+type AccountRoles = {
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
+};
+
 type UserState = {
   profile: Profile | null;
   accountFirstName: string;
+  accountRoles: AccountRoles;
+  accountResolved: boolean;
   isLoading: boolean;
   error: string | null;
 };
 
+const emptyRoles: AccountRoles = { isAdmin: false, isSuperAdmin: false };
+
 const initialState: UserState = {
   profile: null,
   accountFirstName: readAccountFirstName(),
+  accountRoles: emptyRoles,
+  accountResolved: false,
   isLoading: false,
   error: null,
 };
@@ -83,21 +94,32 @@ const slice = createSlice({
       state.isLoading = true;
       state.error = null;
     },
-    getProfileSuccess(state, action: PayloadAction<{ profile: Profile; accountFirstName?: string }>) {
+    getProfileSuccess(state, action: PayloadAction<{ profile: Profile; accountFirstName?: string; roles?: AccountRoles }>) {
       state.profile = action.payload.profile;
       if (action.payload.accountFirstName) {
         state.accountFirstName = action.payload.accountFirstName;
+      }
+      if (action.payload.roles) {
+        state.accountRoles = action.payload.roles;
+        state.accountResolved = true;
       }
       state.isLoading = false;
       state.error = null;
     },
     getProfileFailure(state, action: PayloadAction<{ error: string }>) {
       state.isLoading = false;
+      state.accountResolved = true;
       state.error = action.payload.error;
+    },
+    resolveAccount(state) {
+      state.isLoading = false;
+      state.accountResolved = true;
     },
     clearProfile(state) {
       state.profile = null;
       state.accountFirstName = "";
+      state.accountRoles = emptyRoles;
+      state.accountResolved = false;
       state.isLoading = false;
       state.error = null;
     },
@@ -115,7 +137,18 @@ export const getProfile =
       const profile = mapProfileDetailsToProfile(res.data);
       const firstName = res.data.firstName || firstNameFromFullName(profile.name);
       persistAccountFirstName(firstName);
-      dispatch(slice.actions.getProfileSuccess({ profile, accountFirstName: firstName }));
+      dispatch(
+        slice.actions.getProfileSuccess({
+          profile,
+          accountFirstName: firstName,
+          roles: {
+            isAdmin: Boolean(res.data.isAdmin || (res.data as { IsAdmin?: boolean }).IsAdmin),
+            isSuperAdmin: Boolean(
+              res.data.isSuperAdmin || (res.data as { IsSuperAdmin?: boolean }).IsSuperAdmin
+            ),
+          },
+        })
+      );
     } catch (error: any) {
       if (error?.response?.status === 401) {
         if (onUnauthorized) onUnauthorized();
@@ -123,7 +156,7 @@ export const getProfile =
         return;
       }
       if (error?.response?.status === 404) {
-        dispatch(slice.actions.clearProfile());
+        dispatch(slice.actions.resolveAccount());
         return;
       }
       dispatch(slice.actions.getProfileFailure({ error: "Unable to load profile details." }));

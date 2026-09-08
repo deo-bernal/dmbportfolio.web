@@ -32,6 +32,8 @@ export type ApiUser = {
   contactNo?: string | null;
   activated: boolean;
   isViewable: boolean;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
   createdAt: string;
   userDetails?: ApiUserDetails | null;
   projects: ApiProject[];

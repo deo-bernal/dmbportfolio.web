@@ -5,6 +5,7 @@ import Button from "@mui/material/Button";
 import api from "services/http.service";
 import useAuth from "hooks/useAuth";
 import useAccountGreeting from "hooks/useAccountGreeting";
+import useAccountRoles from "hooks/useAccountRoles";
 import ButtonLoadingIcon from "components/common/ButtonLoadingIcon";
 import { clearProfile, getProfile } from "slices/user";
 import { useDispatch } from "store";
@@ -28,6 +29,7 @@ export default function AccentSidebarLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const firstName = useAccountGreeting();
+  const { isAdmin, isSuperAdmin } = useAccountRoles();
   const [logoutBusy, setLogoutBusy] = useState(false);
   const { username } = useParams<{ username?: string }>();
   const isPublicRoute = Boolean(username) && !location.pathname.startsWith("/accent-sidebar");
@@ -70,7 +72,7 @@ export default function AccentSidebarLayout() {
           ) : null}
           <ShellNavItem to={portfolioPath} label="Portfolio" end />
           <ShellNavItem to={resumePath} label="Resume" end />
-          {auth.isAuthenticated && !isPublicRoute ? (
+          {auth.isAuthenticated && !isPublicRoute && (isAdmin || isSuperAdmin) ? (
             <ShellNavItem to="/accent-sidebar/leads" label="Leads" end />
           ) : null}
         </Box>

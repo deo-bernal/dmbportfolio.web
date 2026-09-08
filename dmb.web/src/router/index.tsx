@@ -18,6 +18,7 @@ import StackPage from "../pages/Stack";
 import LeadsPage from "../pages/Leads";
 import AuthRedirect from "../components/auth/AuthRedirect";
 import RequireAuth from "../components/auth/RequireAuth";
+import RequireLeadAccess from "../components/auth/RequireLeadAccess";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
 import { ONBOARD_PATH } from "../utils/navigation";
 
@@ -110,7 +111,11 @@ export default function createRouter({
         },
         {
           path: "leads",
-          element: <LeadsPage />,
+          element: (
+            <RequireLeadAccess>
+              <LeadsPage />
+            </RequireLeadAccess>
+          ),
         },
       ],
     },

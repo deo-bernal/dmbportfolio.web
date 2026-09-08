@@ -23,13 +23,13 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const sent = await sendNurtureEmail(step, {
+    const result = await sendNurtureEmail(step, {
       email,
       name: body.name,
       need: body.need,
       bookingUrl: body.bookingUrl,
     });
-    res.status(sent ? 200 : 502).json({ sent });
+    res.status(result.sent ? 200 : 502).json(result);
   } catch (error) {
     console.error(`leads/nurture: ${error?.message || error}`);
     res.status(502).json({ message: error.message || "Could not send nurture email." });

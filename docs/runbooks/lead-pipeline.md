@@ -40,7 +40,7 @@ Storage failure is the only fatal step; the visitor is told to email directly. N
 | `RESEND_API_KEY` | for email | Resend API key. |
 | `LEADS_FROM_EMAIL` | for email | Verified sender address. |
 | `LEADS_NOTIFY_EMAIL` | no | Where the internal "new lead" copy goes. |
-| `LEADS_OWNER_EMAILS` | recommended | Comma-separated allow-list for reading the pipeline. |
+| `LEADS_OWNER_EMAILS` | no | Optional extra allow-list. Lead access is `IsAdmin` / `IsSuperAdmin` on the User table. |
 | `CAL_BOOKING_URL` | no | Booking link used in emails and by the chatbot. |
 
 Set them with `vercel env add NAME production`, then redeploy. Nothing here is readable from the browser: Create React App only exposes variables prefixed `REACT_APP_`.
@@ -70,7 +70,7 @@ Then open `/accent-sidebar/leads` signed in as the owner account and confirm the
 | --- | --- | --- |
 | Form returns "Could not save that right now" | Vercel function logs for `leads: capture failed` | Supabase URL or service key wrong, or the table does not exist. |
 | Leads dashboard shows "Supabase is not configured yet" | `vercel env ls` | `SUPABASE_URL` or `SUPABASE_SERVICE_ROLE_KEY` missing from the production environment. |
-| Dashboard returns 401 for the owner | `LEADS_OWNER_EMAILS` value | Address does not match the account email or username exactly, in lower case. |
+| Dashboard returns 401 for the owner | User `IsAdmin` / `IsSuperAdmin` on the .NET API | `deobernal@gmail.com` is seeded as super admin. Other users need Admin toggled on. |
 | Row lands in Supabase but no Slack ping | n8n executions list | Instance asleep, wrong `N8N_LEAD_WEBHOOK_URL`, or the shared token does not match. |
 | No confirmation email | Resend dashboard | Sender domain not verified, or `LEADS_FROM_EMAIL` is not a verified address. |
 | Chat captures nothing | Function logs for `chat: incomplete lead block ignored` | The model produced a lead block without a valid email; it will try again next turn. |

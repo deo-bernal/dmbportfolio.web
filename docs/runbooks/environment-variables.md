@@ -25,7 +25,7 @@ So: **no key, token, or secret may ever be named `REACT_APP_*`.** If a secret ne
 | `RESEND_API_KEY` | `api/_leadStore.js` | Transactional email. |
 | `LEADS_FROM_EMAIL` | `api/_leadStore.js` | Verified sender. |
 | `LEADS_NOTIFY_EMAIL` | `api/_leadStore.js` | Internal copy of each lead. |
-| `LEADS_OWNER_EMAILS` | `api/leads.js` | Comma-separated allow-list for the pipeline view. |
+| `LEADS_OWNER_EMAILS` | `api/leads.js` | Optional extra allow-list. Primary gate is `IsAdmin` / `IsSuperAdmin` on User. |
 | `CAL_BOOKING_URL` | `api/_leadStore.js`, `api/chat.js` | Booking link in emails and chat replies. |
 | `DMB_API_UPSTREAM_URL` | `api/_upstream.js` | Overrides the .NET API base. |
 

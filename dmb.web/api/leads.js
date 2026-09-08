@@ -19,10 +19,16 @@ function bearerToken(req) {
 }
 
 /**
- * The dashboard is already behind the app's own login, so reuse that session:
- * the token is validated against the .NET API, then checked against the owner
- * allow-list. No second password, and no secret shipped to the browser.
+ * The dashboard is already behind the app's own login. Lead access is
+ * IsAdmin or IsSuperAdmin on the User table. LEADS_OWNER_EMAILS remains an
+ * optional extra allow-list; an empty list no longer opens the pipeline to
+ * every signed-in account.
  */
+function accountHasLeadAccess(account) {
+  if (!account || typeof account !== "object") return false;
+  return Boolean(account.isAdmin || account.IsAdmin || account.isSuperAdmin || account.IsSuperAdmin);
+}
+
 async function isOwner(req) {
   const token = bearerToken(req);
   if (!token) return false;
@@ -30,13 +36,14 @@ async function isOwner(req) {
   const account = await getUpstreamJson("/profiledetails", { token });
   if (!account) return false;
 
+  if (accountHasLeadAccess(account)) return true;
+
   const identifiers = [account.email, account.username]
     .map((value) => String(value || "").toLowerCase())
     .filter(Boolean);
 
   if (OWNER_EMAILS.length === 0) {
-    // Nothing configured: any authenticated account may read its own pipeline.
-    return identifiers.length > 0;
+    return false;
   }
 
   return identifiers.some((value) => OWNER_EMAILS.includes(value));

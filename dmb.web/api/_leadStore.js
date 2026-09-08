@@ -257,14 +257,25 @@ function nurtureHtml(step, lead) {
 <p>— Deo</p>`;
 }
 
+function emailSkipReason(to) {
+  if (!RESEND_API_KEY) return "missing_RESEND_API_KEY";
+  if (!FROM_EMAIL) return "missing_LEADS_FROM_EMAIL";
+  if (!to) return "missing_recipient";
+  return null;
+}
+
 async function sendNurtureEmail(step, lead) {
   const subject =
     Number(step) === 2 ? "Closing the loop" : "A quick example of what I would build for you";
-  return sendEmail({
+  const sent = await sendEmail({
     to: lead.email,
     subject,
     html: nurtureHtml(step, lead),
   });
+  return {
+    sent,
+    reason: sent ? null : emailSkipReason(lead.email) || "resend_rejected",
+  };
 }
 
 /** n8n owns Slack notification and the nurture sequence. */
@@ -300,7 +311,11 @@ function confirmationHtml(lead) {
 }
 
 async function sendEmail({ to, subject, html, replyTo }) {
-  if (!RESEND_API_KEY || !FROM_EMAIL || !to) return false;
+  const skipped = emailSkipReason(to);
+  if (skipped) {
+    console.error(`leads: email skipped — ${skipped}`);
+    return false;
+  }
 
   try {
     const response = await fetch("https://api.resend.com/emails", {
