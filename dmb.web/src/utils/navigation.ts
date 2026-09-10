@@ -1,4 +1,5 @@
 export const ONBOARD_PATH = "/accent-sidebar/onboarding";
+export const AGENT_PATH = "/accent-sidebar/agent";
 export const DASHBOARD_PATH = "/accent-sidebar/portfolio";
 
 const APP_PATH_PREFIXES = [
@@ -29,6 +30,10 @@ export function getSafeRedirectPath(value: string | null | undefined): string | 
 
 export function getOnboardLoginPath(): string {
   return `/login?redirect=${encodeURIComponent(ONBOARD_PATH)}`;
+}
+
+export function getAgentLoginPath(): string {
+  return `/login?redirect=${encodeURIComponent(AGENT_PATH)}`;
 }
 
 export function isAppReservedPath(pathname: string): boolean {

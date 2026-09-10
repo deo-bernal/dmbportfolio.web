@@ -8,9 +8,11 @@ import ActivateAccount from "../pages/ActivateAccount";
 import PortfolioPage from "../pages/PortfolioPage";
 import PublicPortfolioPage from "../pages/PublicPortfolioPage";
 import PublicResumePage from "../pages/PublicResumePage";
+import PublicResumePdfPage from "../pages/PublicResumePdfPage";
 import ResumePage from "../pages/ResumePage";
 import LandingPage from "../pages/Landing";
 import OnboardingPage from "../pages/Onboarding";
+import AgentPage from "../pages/Agent";
 import AiAutomationPage from "../pages/AiAutomation";
 import CaseStudiesPage from "../pages/CaseStudies";
 import CaseStudyView from "../pages/CaseStudies/CaseStudyView";
@@ -88,6 +90,16 @@ export default function createRouter({
       element: <StackPage />,
     },
     {
+      path: "/Deo_Bernal_Resume.pdf",
+      element: <AccentSidebarLayout />,
+      children: [
+        {
+          path: "",
+          element: <PublicResumePdfPage />,
+        },
+      ],
+    },
+    {
       path: "/accent-sidebar",
       element: (
         <RequireAuth>
@@ -110,6 +122,10 @@ export default function createRouter({
         {
           path: "onboarding",
           element: <OnboardingPage />,
+        },
+        {
+          path: "agent",
+          element: <AgentPage />,
         },
         {
           path: "leads",

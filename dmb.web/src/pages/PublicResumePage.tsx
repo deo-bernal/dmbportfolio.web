@@ -14,7 +14,7 @@ import {
   writePublicResumeCache,
 } from "services/publicContentCache";
 import { agenticPageSx } from "styles/main_style";
-import MarketingLayout from "components/layout/MarketingLayout";
+import { DEO_RESUME, isDeoPublicUsername } from "content/deoResume";
 
 function mapPublicResume(data: any): ResumeProfile {
   return {
@@ -51,8 +51,11 @@ function mapPublicResume(data: any): ResumeProfile {
 
 export default function PublicResumePage() {
   const { username = "" } = useParams<{ username: string }>();
-  const [resume, setResume] = useState<ResumeProfile>(EMPTY_RESUME_PROFILE);
-  const [isLoading, setIsLoading] = useState(true);
+  const isDeo = isDeoPublicUsername(username);
+  const [resume, setResume] = useState<ResumeProfile>(
+    isDeo ? DEO_RESUME : EMPTY_RESUME_PROFILE
+  );
+  const [isLoading, setIsLoading] = useState(!isDeo);
   const [error, setError] = useState<string | null>(null);
   const hasFetched = useRef(false);
 
@@ -65,6 +68,13 @@ export default function PublicResumePage() {
     hasFetched.current = true;
 
     const load = async () => {
+      if (isDeoPublicUsername(username)) {
+        setResume(DEO_RESUME);
+        setIsLoading(false);
+        setError(null);
+        writePublicResumeCache(username, DEO_RESUME);
+        return;
+      }
       const cached = readPublicResumeCache<ResumeProfile>(username);
       if (cached) {
         setResume(cached);
@@ -77,8 +87,11 @@ export default function PublicResumePage() {
         const { data } = await api.get("/publicresume", {
           baseURL: resolvePublicApiBaseUrl(),
           params: { username },
+          timeout: 8000,
         });
-        const nextResume = mapPublicResume(data);
+        const nextResume = isDeoPublicUsername(username)
+          ? DEO_RESUME
+          : mapPublicResume(data);
         writePublicResumeCache(username, nextResume);
         setResume(nextResume);
       } catch (err: any) {
@@ -112,23 +125,21 @@ export default function PublicResumePage() {
   const fullName = `${resume.personalInfo.firstName} ${resume.personalInfo.lastName}`.trim() || "Public Resume";
 
   return (
-    <MarketingLayout mainSx={agenticPageSx.embeddedMain}>
-      <Stack sx={agenticPageSx.stackSections}>
-        <Box sx={agenticPageSx.panelBody}>
-          <Box component="header" sx={agenticPageSx.headerRow}>
-            <Box sx={agenticPageSx.headerLeft}>
-              <Typography component="p" sx={agenticPageSx.pageKindLabel}>
-                Public Resume
-              </Typography>
-              <Typography component="h1" sx={agenticPageSx.profileName}>
-                {fullName}
-              </Typography>
-            </Box>
+    <Stack sx={agenticPageSx.stackSections}>
+      <Box sx={agenticPageSx.panelBody}>
+        <Box component="header" sx={agenticPageSx.headerRow}>
+          <Box sx={agenticPageSx.headerLeft}>
+            <Typography component="p" sx={agenticPageSx.pageKindLabel}>
+              Public Resume
+            </Typography>
+            <Typography component="h1" sx={agenticPageSx.profileName}>
+              {fullName}
+            </Typography>
           </Box>
         </Box>
-        <ResumeProfileView profile={resume} />
-      </Stack>
-    </MarketingLayout>
+      </Box>
+      <ResumeProfileView profile={resume} />
+    </Stack>
   );
 }
 

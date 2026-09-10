@@ -1,11 +1,12 @@
 import { Link as RouterLink } from "react-router-dom";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutlineOutlined";
-import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
+import { Box, Button, Container, Grid, Link, Stack, Typography } from "@mui/material";
 import MarketingLayout from "components/layout/MarketingLayout";
 import LeadForm from "components/leads/LeadForm";
 import BookingEmbed from "components/booking/BookingEmbed";
 import VoiceAgentButton from "components/voice/VoiceAgentButton";
+import AgentDemoReplay from "components/agent/AgentDemoReplay";
 import FreeTierNotice from "components/showcase/FreeTierNotice";
 import {
   CASE_STUDIES,
@@ -46,7 +47,7 @@ export default function AiAutomationPage() {
               Gemini APIs, so performance is limited.
             </Typography>
 
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
               <Button
                 href="#work-with-me"
                 variant="contained"
@@ -54,6 +55,15 @@ export default function AiAutomationPage() {
                 sx={[landingPageSx.ctaPrimary, accentRedContainedButtonSx]}
               >
                 Start the pipeline demo
+              </Button>
+              <Button
+                component={RouterLink}
+                to="/deobernal@gmail.com"
+                variant="outlined"
+                size="large"
+                sx={landingPageSx.ctaSecondary}
+              >
+                Sample profile
               </Button>
               <Button
                 component={RouterLink}
@@ -89,6 +99,15 @@ export default function AiAutomationPage() {
             </Stack>
 
             <Typography sx={landingPageSx.heroFootnote}>
+              <Link
+                component={RouterLink}
+                to="/deobernal@gmail.com"
+                underline="hover"
+                sx={landingPageSx.inlineLink}
+              >
+                View a sample profile
+              </Link>
+              {" · "}
               Twenty years building software, now focused on AI implementation and
               automation. Deo Bernal, Pampanga, Philippines.
             </Typography>
@@ -98,7 +117,7 @@ export default function AiAutomationPage() {
         <Box sx={showcaseSx.section}>
           <Typography sx={showcaseSx.kicker}>What I build</Typography>
           <Typography component="h2" sx={showcaseSx.sectionTitle}>
-            Six pieces, one working system
+            Seven pieces, one working system
           </Typography>
           <Typography sx={showcaseSx.sectionBody}>
             Most AI projects stall because the model works but nothing around it does.
@@ -184,6 +203,21 @@ export default function AiAutomationPage() {
               </Stack>
             </Grid>
           </Grid>
+        </Box>
+
+        <Box sx={showcaseSx.section} id="profile-agent">
+          <Typography sx={showcaseSx.kicker}>Watch the agent work</Typography>
+          <Typography component="h2" sx={showcaseSx.sectionTitle}>
+            A tool-using Agentic AI profile builder
+          </Typography>
+          <Typography sx={showcaseSx.sectionBody}>
+            This is not the chat bubble. The agent calls tools in order — read a resume, draft a
+            profile, check missing fields, then pause for Allow before any write. The replay below
+            uses a public sample so the showcase still works when free-tier APIs are busy.
+          </Typography>
+          <Box sx={{ mt: 2.5 }}>
+            <AgentDemoReplay />
+          </Box>
         </Box>
 
         <Box sx={showcaseSx.section}>

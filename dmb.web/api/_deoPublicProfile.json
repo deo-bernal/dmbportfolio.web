@@ -1,0 +1,87 @@
+﻿{
+  "userId": 1,
+  "username": "deobernal@gmail.com",
+  "firstName": "Deo",
+  "lastName": "Bernal",
+  "email": "deobernal@gmail.com",
+  "address": "142 Camia St. Brgy. Siñura, Porac, Pampanga, Philippines",
+  "contactNo": "+63 925 455 6063",
+  "activated": true,
+  "isViewable": true,
+  "createdAt": "2026-05-09T06:57:54.230973+00:00",
+  "userDetails": {
+    "userDetailsId": 1,
+    "userId": 1,
+    "description": "Seasoned full-stack developer with 20 years of experience delivering end-to-end solutions across web, mobile, and cloud platforms. Expert in Angular, React, .NET Core, and AI-assisted development, I drive rapid delivery while maintaining high code quality. I thrive in collaborative, agile environments, shaping requirements, building scalable systems, and mentoring teams.",
+    "skills": "Angular,React,.NET Core,SQL,TypeScript,Next.js,Docker,RabbitMQ,AI-assisted development,Cloud-native",
+    "video": "",
+    "createdAt": "2026-05-09T06:57:54.230973+00:00"
+  },
+  "projects": [
+    {
+      "projectId": 865,
+      "userId": 1,
+      "projectTypeId": 31,
+      "name": "Company Website",
+      "projectDetails": "Public marketing site built with React, Next.js, Convex, Clerk, and Google Gemini, fully planned, developed, and deployed without handoff gaps.",
+      "createdAt": "2026-09-06T07:58:39.041048+00:00",
+      "projectType": {
+        "projectTypeId": 31,
+        "typeName": "Construction & Home Services",
+        "createdAt": "2026-09-06T07:32:08.684132+00:00"
+      }
+    },
+    {
+      "projectId": 866,
+      "userId": 1,
+      "projectTypeId": 31,
+      "name": "Xactimate/Estimate Workflow",
+      "projectDetails": "Insurance estimate workflow that transformed ambiguous requirements into a clear, testable implementation using React, Next.js, Convex, Clerk, and Railway PostgreSQL.",
+      "createdAt": "2026-09-06T07:58:39.041049+00:00",
+      "projectType": {
+        "projectTypeId": 31,
+        "typeName": "Construction & Home Services",
+        "createdAt": "2026-09-06T07:32:08.684132+00:00"
+      }
+    },
+    {
+      "projectId": 867,
+      "userId": 1,
+      "projectTypeId": 31,
+      "name": "Referral Partner Database Builder",
+      "projectDetails": "Internal tool that deduplicates and maintains a contact-ready list, integrating Playwright automation and LLM-powered deduplication logic.",
+      "createdAt": "2026-09-06T07:58:39.04105+00:00",
+      "projectType": {
+        "projectTypeId": 31,
+        "typeName": "Construction & Home Services",
+        "createdAt": "2026-09-06T07:32:08.684132+00:00"
+      }
+    },
+    {
+      "projectId": 868,
+      "userId": 1,
+      "projectTypeId": 32,
+      "name": "Enterprise Management System",
+      "projectDetails": "Travel agent management platform developed with React, .NET Core MVC, and MS SQL, delivering robust business workflows and reporting.",
+      "createdAt": "2026-09-06T07:58:39.041051+00:00",
+      "projectType": {
+        "projectTypeId": 32,
+        "typeName": "Travel & Finance Industry",
+        "createdAt": "2026-09-06T07:58:36.371277+00:00"
+      }
+    },
+    {
+      "projectId": 869,
+      "userId": 1,
+      "projectTypeId": 32,
+      "name": "Content Management System",
+      "projectDetails": "Travel agent CMS built with AngularJS, .NET MVC, and MS SQL, providing content authors with an intuitive editing experience.",
+      "createdAt": "2026-09-06T07:58:39.041051+00:00",
+      "projectType": {
+        "projectTypeId": 32,
+        "typeName": "Travel & Finance Industry",
+        "createdAt": "2026-09-06T07:58:36.371277+00:00"
+      }
+    }
+  ]
+}

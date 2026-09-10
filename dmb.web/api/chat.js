@@ -1,7 +1,9 @@
-const { generateAiText, streamGeminiText, friendlyAiError } = require("./_aiProvider");
+const { generateAiText, streamGeminiText, streamGroqText, beginSse, writeSseText, friendlyAiError } = require("./_aiProvider");
 const { retrieveContext } = require("./_chatKnowledge");
 const { createLeadFilter } = require("./_leadMarker");
 const { BOOKING_URL, captureLead, normalizeLead } = require("./_leadStore");
+const { getUpstreamJson } = require("./_upstream");
+const { appendChatTurn, listChatMessages } = require("./_chatStore");
 
 const SYSTEM_PROMPT = `You are DMB Assistant, the site helper for DMB Web Solutions on dmbwebsolutions.com. Speak in short, flat, clipped sentences.
 
@@ -16,6 +18,7 @@ Use retrieved context below when it answers the visitor. If it does not cover th
 - [[Create free profile|/register]]
 - [[Sign in|/login]]
 - [[AI Profile Builder|/onboard]]
+- [[Agentic AI|/accent-sidebar/agent]]
 - [[Forgot password|/forgot-password]]
 - [[Home|/]]
 - [[AI automation services|/ai-automation]]
@@ -32,9 +35,9 @@ Example: "You can [[Create free profile|/register]] in about a minute, then use 
 3. HELP FIRST. Answer the question before any call to action.
 4. Never invent that a feature exists if it is not in the context.
 5. Do not ask for passwords, payment cards, or government IDs.
-6. If they want a live profile, guide them to register or sign in, then the AI builder.
+6. If they want a live profile, guide them to register or sign in, then the [[Agentic AI|/accent-sidebar/agent]] or the [[AI Profile Builder|/onboard]].
 7. If they ask about lots, land, or buying property in Pampanga, mention DMB Real Estate and [[Real estate listings|https://onepropertee.com/deo-bernal]].
-8. If they are already signed in, greet them by first name when you know it, and point them to Portfolio, Resume, and AI Profile Builder.
+8. If they are already signed in, greet them by first name when you know it, and point them to Portfolio, Resume, [[Agentic AI|/accent-sidebar/agent]], and AI Profile Builder.
 9. You run on free-tier Groq and Google Gemini APIs. If they ask about models, speed, or errors, say so honestly and point them to [[AI automation services|/ai-automation]].
 10. Be professional. Do not quote films or impersonate a copyrighted character by name.
 
@@ -64,6 +67,95 @@ Rules for the block:
 
 Retrieved context:
 {context}`;
+
+function bearerToken(req) {
+  const header = req.headers.authorization || "";
+  const match = /^Bearer\s+(.+)$/i.exec(header);
+  return match ? match[1].trim() : "";
+}
+
+function parseJwtAccount(token) {
+  const parts = String(token || "").split(".");
+  if (parts.length < 2) return null;
+
+  try {
+    const json = Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
+    const payload = JSON.parse(json);
+    const userId = Number(
+      payload.userId ||
+        payload.nameid ||
+        payload.sub ||
+        payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+    );
+    if (!Number.isFinite(userId) || userId <= 0) return null;
+
+    const email = String(
+      payload.email ||
+        payload.unique_name ||
+        payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"] ||
+        payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+        ""
+    )
+      .trim()
+      .toLowerCase();
+
+    return { userId, email };
+  } catch {
+    return null;
+  }
+}
+
+function accountFromProfile(account) {
+  if (!account) return null;
+  const userId = Number(account.userId ?? account.UserId);
+  if (!Number.isFinite(userId) || userId <= 0) return null;
+  return {
+    userId,
+    email: String(account.email || account.username || "").trim().toLowerCase(),
+  };
+}
+
+async function resolveChatAccount(req) {
+  const token = bearerToken(req);
+  if (!token) return null;
+
+  const fromJwt = parseJwtAccount(token);
+  try {
+    const profile = await getUpstreamJson("/profiledetails", { token, timeoutMs: 4000 });
+    return accountFromProfile(profile) || fromJwt;
+  } catch {
+    return fromJwt;
+  }
+}
+
+async function persistChatTurn(account, conversation, assistantText) {
+  if (!account) {
+    console.warn("chat: skip history save — no signed-in account");
+    return;
+  }
+  if (!assistantText) {
+    console.warn("chat: skip history save — empty assistant reply");
+    return;
+  }
+  try {
+    const result = await appendChatTurn(account, latestUserText(conversation), assistantText);
+    if (!result?.stored) {
+      console.warn("chat: history save returned stored=false");
+    }
+  } catch (error) {
+    console.error(`chat: history save failed — ${error?.message || error}`);
+  }
+}
+
+async function loadStoredHistory(account) {
+  if (!account) return [];
+  try {
+    return await listChatMessages(account);
+  } catch (error) {
+    console.error(`chat: history load failed — ${error?.message || error}`);
+    return [];
+  }
+}
 
 function buildConversation(messages) {
   if (!Array.isArray(messages)) return [];
@@ -100,6 +192,16 @@ ${history}
 Respond as the Assistant. Keep it SHORT (2-3 sentences) unless they ask for detailed information.`;
 }
 
+function conversationTurns(conversation) {
+  const history = conversation
+    .map((msg) => `${msg.role === "user" ? "Visitor" : "Assistant"}: ${msg.content}`)
+    .join("\n");
+  return `Conversation so far:
+${history}
+
+Respond as the Assistant. Keep it SHORT (2-3 sentences) unless they ask for detailed information.`;
+}
+
 /**
  * A lead captured mid-conversation must never break the reply, so a failed
  * capture is logged and the visitor still gets their answer.
@@ -129,42 +231,74 @@ async function captureFromChat(filter) {
   }
 }
 
-async function streamReply(res, conversation, context) {
-  const prompt = toPrompt(conversation, context);
-  const filter = createLeadFilter();
-
-  try {
-    const streamed = await streamGeminiText(res, prompt, filter);
-    if (streamed) {
-      await captureFromChat(filter);
-      res.write("data: [DONE]\n\n");
-      res.end();
-      return;
-    }
-  } catch (error) {
-    if (res.headersSent) {
-      throw error;
-    }
+async function finishStream(res, filter, onComplete) {
+  await captureFromChat(filter);
+  if (onComplete) {
+    await onComplete(filter.visible());
   }
-
-  const fallbackFilter = createLeadFilter();
-  const raw = await generateAiText({
-    system: systemPrompt(context),
-    user: toPrompt(conversation, context),
-    json: false,
-  });
-  const text = `${fallbackFilter.feed(raw)}${fallbackFilter.end()}`;
-  await captureFromChat(fallbackFilter);
-
-  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("Connection", "keep-alive");
-  res.write(`data: ${JSON.stringify({ text })}\n\n`);
   res.write("data: [DONE]\n\n");
   res.end();
 }
 
+async function streamReply(res, conversation, context, onComplete) {
+  const prompt = toPrompt(conversation, context);
+  const system = systemPrompt(context);
+  const turns = conversationTurns(conversation);
+
+  const groqFilter = createLeadFilter();
+  try {
+    if (await streamGroqText(res, system, turns, groqFilter)) {
+      await finishStream(res, groqFilter, onComplete);
+      return groqFilter.visible();
+    }
+  } catch (error) {
+    if (res.headersSent) throw error;
+  }
+
+  const geminiFilter = createLeadFilter();
+  try {
+    if (await streamGeminiText(res, prompt, geminiFilter)) {
+      await finishStream(res, geminiFilter, onComplete);
+      return geminiFilter.visible();
+    }
+  } catch (error) {
+    if (res.headersSent) throw error;
+  }
+
+  const fallbackFilter = createLeadFilter();
+  const raw = await generateAiText({
+    system,
+    user: prompt,
+    json: false,
+  });
+  const text = `${fallbackFilter.feed(raw)}${fallbackFilter.end()}`;
+  await captureFromChat(fallbackFilter);
+  if (onComplete) {
+    await onComplete(fallbackFilter.visible() || text);
+  }
+
+  beginSse(res);
+  writeSseText(res, text);
+  res.write("data: [DONE]\n\n");
+  res.end();
+  return fallbackFilter.visible() || text;
+}
+
 module.exports = async (req, res) => {
+  if (req.method === "GET") {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader("Cache-Control", "no-store");
+    try {
+      const account = await resolveChatAccount(req);
+      const messages = await loadStoredHistory(account);
+      res.status(200).json({ messages });
+    } catch (error) {
+      console.error(`chat: history GET failed — ${error?.message || error}`);
+      res.status(200).json({ messages: [] });
+    }
+    return;
+  }
+
   if (req.method !== "POST") {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
     res.status(405).json({ message: "Method not allowed." });
@@ -179,8 +313,11 @@ module.exports = async (req, res) => {
       return;
     }
 
+    const accountPromise = resolveChatAccount(req);
     const context = retrieveContext(latestUserText(conversation));
-    await streamReply(res, conversation, context);
+    await streamReply(res, conversation, context, async (reply) => {
+      await persistChatTurn(await accountPromise, conversation, reply);
+    });
   } catch (error) {
     if (res.headersSent) {
       res.end();

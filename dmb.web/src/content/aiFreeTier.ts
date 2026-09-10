@@ -6,7 +6,7 @@
 export const AI_FREE_TIER_HEADLINE = "All AI on this site is free tier";
 
 export const AI_FREE_TIER_PERFORMANCE =
-  "Every live AI feature here — the chatbot, the resume / profile builder, and the voice trial — uses free-tier APIs. That is why replies can be slower, shorter, or unavailable when usage limits are hit.";
+  "Every live AI feature here — the chatbot, the resume / profile builder, the profile agent, and the voice trial — uses free-tier APIs. That is why replies can be slower, shorter, or unavailable when usage limits are hit.";
 
 export const AI_FREE_TIER_TRADEOFFS =
   "Free tiers for AI tools and APIs offer zero-cost experimentation, but come with strict rate limits, data privacy trade-offs, and no uptime guarantees.";
@@ -35,7 +35,7 @@ export const AI_MODELS_IN_USE: SiteAiModel[] = [
   {
     name: "gemini-2.5-flash",
     provider: "Google Gemini",
-    usedFor: "Chat streaming (primary)",
+    usedFor: "Chat streaming (primary) and profile agent",
     tier: "Free tier",
   },
   {
@@ -53,7 +53,7 @@ export const AI_MODELS_IN_USE: SiteAiModel[] = [
   {
     name: "openai/gpt-oss-20b",
     provider: "Groq (OpenAI-compatible)",
-    usedFor: "Profile builder and chat fallback",
+    usedFor: "Profile builder, profile agent, and chat fallback",
     tier: "Free tier",
   },
   {

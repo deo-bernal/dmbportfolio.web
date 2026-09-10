@@ -5,7 +5,7 @@ import { agenticPageSx } from "styles/main_style";
 import { isoDateToAu } from "utils/date";
 
 type ResumeProfileViewProps = {
-  profile: ResumeProfile;
+  profile: ResumeProfile & { skills?: string };
 };
 
 export default function ResumeProfileView({ profile }: ResumeProfileViewProps) {
@@ -28,6 +28,17 @@ export default function ResumeProfileView({ profile }: ResumeProfileViewProps) {
           {profile.personalInfo.summary || "No summary yet."}
         </Typography>
       </Box>
+
+      {profile.skills ? (
+        <Box sx={agenticPageSx.panelBody}>
+          <Typography component="h2" sx={agenticPageSx.sectionTitle}>
+            Skills
+          </Typography>
+          <Typography component="p" sx={agenticPageSx.summary}>
+            {profile.skills}
+          </Typography>
+        </Box>
+      ) : null}
 
       <Box sx={agenticPageSx.panelBody}>
         <Typography component="h2" sx={agenticPageSx.sectionTitle}>

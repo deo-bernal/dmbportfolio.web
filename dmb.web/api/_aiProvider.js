@@ -11,6 +11,7 @@ const GROQ_BASE_URL = (
   process.env.OPENAI_BASE_URL || "https://api.groq.com/openai/v1"
 ).replace(/\/$/, "");
 const GROQ_MODELS = unique([
+  "llama-3.1-8b-instant",
   process.env.OPENAI_MODEL,
   "openai/gpt-oss-20b",
   "openai/gpt-oss-120b",
@@ -95,6 +96,57 @@ async function callGroq({ system, user, json }) {
     } catch (error) {
       lastError = error;
       logProviderError(`Groq ${model}`, error);
+      if (!isQuotaError(error) && !isMissingModelError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  if (lastError) throw lastError;
+  return null;
+}
+
+async function callGroqChat({ messages, tools = null, json = false }) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+
+  let lastError;
+  for (const model of GROQ_MODELS) {
+    try {
+      const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0.2,
+          messages,
+          ...(tools ? { tools, tool_choice: "auto" } : {}),
+          ...(json ? { response_format: { type: "json_object" } } : {}),
+        }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = new Error(payload?.error?.message || `Groq request failed (${response.status}).`);
+        error.statusCode = response.status;
+        throw error;
+      }
+
+      const message = payload?.choices?.[0]?.message;
+      if (!message) {
+        throw new Error("AI returned an empty response.");
+      }
+      return {
+        content: String(message.content || "").trim(),
+        toolCalls: Array.isArray(message.tool_calls) ? message.tool_calls : [],
+        model,
+      };
+    } catch (error) {
+      lastError = error;
+      logProviderError(`Groq chat ${model}`, error);
       if (!isQuotaError(error) && !isMissingModelError(error)) {
         throw error;
       }
@@ -229,9 +281,123 @@ async function generateAiText({ system, user, json = false }) {
   throw friendlyAiError(lastError);
 }
 
+function beginSse(res) {
+  if (res.headersSent) return;
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+}
+
+function writeSseText(res, text) {
+  if (!text) return;
+  res.write(`data: ${JSON.stringify({ text })}\n\n`);
+}
+
+function withTimeout(promise, ms, label) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        const error = new Error(`${label} timed out`);
+        error.statusCode = 504;
+        reject(error);
+      }, ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
+
+async function streamGroqText(res, system, user, filter = null) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return false;
+
+  let lastError;
+  for (const model of GROQ_MODELS) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          temperature: 0.3,
+          stream: true,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok || !response.body) {
+        const payload = await response.json().catch(() => ({}));
+        const error = new Error(payload?.error?.message || `Groq stream failed (${response.status}).`);
+        error.statusCode = response.status;
+        throw error;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let started = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const data = trimmed.slice(5).trim();
+          if (!data || data === "[DONE]") continue;
+          let piece = "";
+          try {
+            piece = JSON.parse(data)?.choices?.[0]?.delta?.content || "";
+          } catch {
+            continue;
+          }
+          if (!piece) continue;
+          const text = filter ? filter.feed(piece) : piece;
+          if (!text) continue;
+          beginSse(res);
+          started = true;
+          writeSseText(res, text);
+        }
+      }
+
+      if (!started) {
+        throw new Error("Groq stream returned no text.");
+      }
+      const tail = filter ? filter.end() : "";
+      writeSseText(res, tail);
+      return true;
+    } catch (error) {
+      lastError = error;
+      logProviderError(`Groq stream ${model}`, error);
+      if (res.headersSent) throw error;
+      if (!isQuotaError(error) && !isMissingModelError(error) && error?.name !== "AbortError") {
+        continue;
+      }
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  if (lastError && !res.headersSent) return false;
+  return false;
+}
+
 /**
  * `filter`, when supplied, sees every chunk before it is written to the client
  * and may hold text back (see _leadMarker.js).
+ * Headers are not sent until the first token, so a hung stream can still fail over.
  */
 async function streamGeminiText(res, prompt, filter = null) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -247,33 +413,40 @@ async function streamGeminiText(res, prompt, filter = null) {
         model: modelName,
         generationConfig: { temperature: 0.3 },
       });
-      const result = await model.generateContentStream(prompt);
-      res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
-      res.setHeader("Cache-Control", "no-cache, no-transform");
-      res.setHeader("Connection", "keep-alive");
+      const result = await withTimeout(
+        model.generateContentStream(prompt),
+        8000,
+        `Gemini stream ${modelName}`
+      );
+      let started = false;
 
-      for await (const chunk of result.stream) {
-        const raw = chunk.text();
-        if (!raw) continue;
-        const text = filter ? filter.feed(raw) : raw;
-        if (text) {
-          res.write(`data: ${JSON.stringify({ text })}\n\n`);
-        }
+      await withTimeout(
+        (async () => {
+          for await (const chunk of result.stream) {
+            const raw = chunk.text();
+            if (!raw) continue;
+            const text = filter ? filter.feed(raw) : raw;
+            if (!text) continue;
+            beginSse(res);
+            started = true;
+            writeSseText(res, text);
+          }
+        })(),
+        8000,
+        `Gemini tokens ${modelName}`
+      );
+
+      if (!started) {
+        throw new Error("Gemini stream returned no text.");
       }
-
       const tail = filter ? filter.end() : "";
-      if (tail) {
-        res.write(`data: ${JSON.stringify({ text: tail })}\n\n`);
-      }
+      writeSseText(res, tail);
       return true;
     } catch (error) {
       lastError = error;
       logProviderError(`Gemini stream ${modelName}`, error);
       if (res.headersSent) {
         throw error;
-      }
-      if (!isQuotaError(error) && !isMissingModelError(error)) {
-        continue;
       }
     }
   }
@@ -286,7 +459,11 @@ async function streamGeminiText(res, prompt, filter = null) {
 
 module.exports = {
   generateAiText,
+  callGroqChat,
   streamGeminiText,
+  streamGroqText,
+  beginSse,
+  writeSseText,
   friendlyAiError,
   QUOTA_MESSAGE,
 };

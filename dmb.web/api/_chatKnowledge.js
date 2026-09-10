@@ -9,7 +9,7 @@ Current listings include a 192 sqm residential lot in Pandacaqui-Telapayong, Mex
 See listings at https://onepropertee.com/deo-bernal. He also owns properties in Sinura, Porac.`,
 
   `Getting started is free. Register at /register, confirm your email, then sign in at /login.
-After login you can use the AI Profile Builder at /onboard: paste a resume or answer a few questions and the site generates a portfolio plus resume for you.
+After login you can use Agentic AI at /accent-sidebar/agent: it calls tools to draft a portfolio, pause for Allow, then save. The older wizard is still at /onboard.
 You can also build or edit everything manually from Portfolio and Resume in the sidebar.`,
 
   `Your live public URL is https://www.dmbwebsolutions.com/{username} for the portfolio and https://www.dmbwebsolutions.com/{username}/resume for the resume.

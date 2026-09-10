@@ -5,16 +5,32 @@ import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { PortfolioProfileView } from "components/portfolioProfile";
+import { DEO_PORTFOLIO, isDeoPublicUsername } from "content/deoPortfolio";
 import { getPublicProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
 import { agenticPageSx } from "styles/main_style";
 import MarketingLayout from "components/layout/MarketingLayout";
+import type { Profile } from "models";
+
+function profileMatchesUsername(profile: Profile | null, username: string): profile is Profile {
+  if (!profile) {
+    return false;
+  }
+  try {
+    return decodeURIComponent(profile.username).trim().toLowerCase() ===
+      decodeURIComponent(username).trim().toLowerCase();
+  } catch {
+    return profile.username.trim().toLowerCase() === username.trim().toLowerCase();
+  }
+}
 
 export default function PublicPortfolioPage() {
   const dispatch = useDispatch();
   const { username = "" } = useParams<{ username: string }>();
   const { profile, error: loadError, isLoading } = useSelector((state) => state.user);
   const hasFetchedProfile = useRef(false);
+  const snapshot = isDeoPublicUsername(username) ? DEO_PORTFOLIO : null;
+  const displayProfile = profileMatchesUsername(profile, username) ? profile : snapshot;
 
   useEffect(() => {
     hasFetchedProfile.current = false;
@@ -28,7 +44,7 @@ export default function PublicPortfolioPage() {
     dispatch(getPublicProfile(username) as any);
   }, [dispatch, username]);
 
-  if (isLoading && !profile) {
+  if (!displayProfile && isLoading) {
     return (
       <Container sx={agenticPageSx.container}>
         <Box sx={agenticPageSx.loadingState}>Loading portfolio...</Box>
@@ -36,7 +52,7 @@ export default function PublicPortfolioPage() {
     );
   }
 
-  if (!profile) {
+  if (!displayProfile) {
     return (
       <Container sx={agenticPageSx.container}>
         <Box sx={agenticPageSx.loadingState}>{loadError ?? "Unable to load public profile."}</Box>
@@ -54,14 +70,13 @@ export default function PublicPortfolioPage() {
                 Public Portfolio
               </Typography>
               <Typography component="h1" data-testid="profile-name" sx={agenticPageSx.profileName}>
-                {profile.name}
+                {displayProfile.name}
               </Typography>
             </Box>
           </Box>
         </Box>
-        <PortfolioProfileView profile={profile} />
+        <PortfolioProfileView profile={displayProfile} />
       </Stack>
     </MarketingLayout>
   );
 }
-

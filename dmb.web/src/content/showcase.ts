@@ -27,6 +27,11 @@ export type ServiceItem = {
 
 export const SERVICES: ServiceItem[] = [
   {
+    title: "Agentic AI",
+    description:
+      "Signed-in agents that call tools in a loop — draft a profile, check missing fields, and pause for Allow before writing anything to your account.",
+  },
+  {
     title: "AI chat assistants",
     description:
       "Site assistants grounded in your own content, with streaming replies, in-site navigation, and provider failover so a model outage never takes the widget down.",

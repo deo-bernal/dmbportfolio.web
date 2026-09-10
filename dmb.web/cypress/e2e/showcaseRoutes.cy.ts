@@ -5,7 +5,8 @@ describe("AI automation showcase routes", () => {
     cy.visit("/ai-automation");
     cy.contains("h1", "AI systems that capture, qualify, and book your leads.");
     cy.contains("Submit this form and watch the automation run");
-    cy.contains("button", "Send it through the pipeline");
+    cy.contains("A tool-using Agentic AI profile builder");
+    cy.contains("Replay canned run");
   });
 
   it("renders the case study index and both write-ups", () => {
@@ -33,7 +34,7 @@ describe("AI automation showcase routes", () => {
   it("is not swallowed by the /:username public profile catch-all", () => {
     cy.visit("/ai-automation");
     cy.location("pathname").should("eq", "/ai-automation");
-    cy.contains("Six pieces, one working system");
+    cy.contains("Seven pieces, one working system");
   });
 
   it("posts the funnel form to the lead endpoint", () => {

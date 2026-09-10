@@ -39,6 +39,12 @@ function createLeadFilter() {
   let holding = "";
   let captured = "";
   let inMarker = false;
+  let visible = "";
+
+  function emit(safe) {
+    if (safe) visible += safe;
+    return safe;
+  }
 
   return {
     feed(chunk) {
@@ -58,20 +64,24 @@ function createLeadFilter() {
         captured = holding.slice(start + MARKER_START.length);
         holding = "";
         inMarker = true;
-        return safe;
+        return emit(safe);
       }
 
       const keep = partialSuffixLength(holding, MARKER_START);
       const safe = holding.slice(0, holding.length - keep);
       holding = keep ? holding.slice(holding.length - keep) : "";
-      return safe;
+      return emit(safe);
     },
 
     end() {
       if (inMarker) return "";
       const safe = holding;
       holding = "";
-      return safe;
+      return emit(safe);
+    },
+
+    visible() {
+      return visible;
     },
 
     lead() {

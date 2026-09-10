@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useRoutes } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -9,11 +9,16 @@ import useAuth from "./hooks/useAuth";
 import createRouter from "./router";
 import ThemeProvider from "./theme/ThemeProvider";
 import SiteChatWidget from "./components/chat/SiteChatWidget";
+import { prefetchPublicProfile } from "./services/publicContentCache";
 
 function App() {
   const auth = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  useEffect(() => {
+    prefetchPublicProfile();
+  }, []);
 
   const router = useMemo(
     () =>

@@ -11,17 +11,30 @@ import { clearProfile, getProfile } from "slices/user";
 import { useDispatch } from "store";
 import { layoutShellSidebarCtaButtonSx, layoutShellSx, shellNavItemSx } from "styles/main_style";
 
-function ShellNavItem({ to, label, end }: { to: string; label: string; end?: boolean }) {
+function ShellNavItem({
+  to,
+  label,
+  end,
+  forceActive,
+}: {
+  to: string;
+  label: string;
+  end?: boolean;
+  forceActive?: boolean;
+}) {
   return (
     <NavLink to={to} end={end} style={{ textDecoration: "none" }}>
       {({ isActive }) => (
-        <Box component="span" sx={shellNavItemSx(isActive)}>
+        <Box component="span" sx={shellNavItemSx(isActive || Boolean(forceActive))}>
           {label}
         </Box>
       )}
     </NavLink>
   );
 }
+
+const PUBLIC_PROFILE_USERNAME = "deobernal@gmail.com";
+const PDF_RESUME_PATH = "/Deo_Bernal_Resume.pdf";
 
 export default function AccentSidebarLayout() {
   const auth = useAuth();
@@ -32,9 +45,12 @@ export default function AccentSidebarLayout() {
   const { isAdmin, isSuperAdmin, canAccessUserAccess } = useAccountRoles();
   const [logoutBusy, setLogoutBusy] = useState(false);
   const { username } = useParams<{ username?: string }>();
-  const isPublicRoute = Boolean(username) && !location.pathname.startsWith("/accent-sidebar");
-  const portfolioPath = isPublicRoute ? `/${username}` : "/accent-sidebar/portfolio";
-  const resumePath = isPublicRoute ? `/${username}/resume` : "/accent-sidebar/resume";
+  const isPdfResumePage = location.pathname === PDF_RESUME_PATH;
+  const isPublicRoute =
+    (Boolean(username) || isPdfResumePage) && !location.pathname.startsWith("/accent-sidebar");
+  const publicUsername = username || (isPdfResumePage ? PUBLIC_PROFILE_USERNAME : "");
+  const portfolioPath = isPublicRoute ? `/${publicUsername}` : "/accent-sidebar/portfolio";
+  const resumePath = isPublicRoute ? `/${publicUsername}/resume` : "/accent-sidebar/resume";
   const aiProfileBuilderPath = "/accent-sidebar/onboarding";
   const hasFetchedGreeting = useRef(false);
 
@@ -68,10 +84,14 @@ export default function AccentSidebarLayout() {
         ) : null}
         <Box sx={layoutShellSx.navStack}>
           {auth.isAuthenticated ? (
-            <ShellNavItem to={aiProfileBuilderPath} label="AI Profile Builder" end />
+            <>
+              <ShellNavItem to="/accent-sidebar/agent" label="Agentic AI" end />
+              <ShellNavItem to={aiProfileBuilderPath} label="AI Profile Builder" end />
+            </>
           ) : null}
           <ShellNavItem to={portfolioPath} label="Portfolio" end />
-          <ShellNavItem to={resumePath} label="Resume" end />
+          <ShellNavItem to={resumePath} label="Resume" end forceActive={isPdfResumePage} />
+          <ShellNavItem to="/ai-automation" label="AI Automations" end />
           {auth.isAuthenticated && !isPublicRoute && (isAdmin || isSuperAdmin) ? (
             <ShellNavItem to="/accent-sidebar/leads" label="Leads" end />
           ) : null}

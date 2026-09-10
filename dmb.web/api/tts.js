@@ -1,11 +1,7 @@
-const GROQ_BASE_URL = (
-  process.env.GROQ_BASE_URL ||
-  process.env.OPENAI_BASE_URL ||
-  "https://api.groq.com/openai/v1"
-).replace(/\/$/, "");
-
-const DIRECTION = "[deadpan] [slowly] ";
-const MAX_INPUT = 200;
+const GROQ_SPEECH_URL = "https://api.groq.com/openai/v1/audio/speech";
+const MODEL = "canopylabs/orpheus-v1-english";
+const VOICES = ["austin", "daniel", "troy"];
+const MAX_INPUT = 180;
 
 function groqKey() {
   return process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY || "";
@@ -28,7 +24,7 @@ module.exports = async (req, res) => {
   const raw = String(req.body?.text || "")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, Math.max(0, MAX_INPUT - DIRECTION.length));
+    .slice(0, MAX_INPUT);
 
   if (!raw) {
     res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -36,38 +32,42 @@ module.exports = async (req, res) => {
     return;
   }
 
-  try {
-    const response = await fetch(`${GROQ_BASE_URL}/audio/speech`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "canopylabs/orpheus-v1-english",
-        voice: "troy",
-        input: `${DIRECTION}${raw}`.slice(0, MAX_INPUT),
-        response_format: "wav",
-      }),
-    });
+  let lastDetail = "";
+  for (const voice of VOICES) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(GROQ_SPEECH_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          voice,
+          input: raw,
+          response_format: "wav",
+        }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timer));
 
-    if (!response.ok) {
-      const detail = await response.text();
-      console.error(`tts: groq speech failed ${response.status} ${detail.slice(0, 300)}`);
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      res.status(response.status === 429 ? 429 : 502).json({
-        message: "Unable to generate speech right now.",
-      });
+      if (!response.ok) {
+        lastDetail = `${response.status} ${voice} ${(await response.text()).slice(0, 180)}`;
+        continue;
+      }
+
+      const audio = Buffer.from(await response.arrayBuffer());
+      res.setHeader("Content-Type", "audio/wav");
+      res.setHeader("Cache-Control", "no-store");
+      res.status(200).send(audio);
       return;
+    } catch (error) {
+      lastDetail = error instanceof Error ? error.message : "unknown error";
     }
-
-    const audio = Buffer.from(await response.arrayBuffer());
-    res.setHeader("Content-Type", "audio/wav");
-    res.setHeader("Cache-Control", "no-store");
-    res.status(200).send(audio);
-  } catch (error) {
-    console.error(`tts: ${error instanceof Error ? error.message : "unknown error"}`);
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.status(502).json({ message: "Unable to generate speech right now." });
   }
+
+  console.error(`tts: groq speech failed ${lastDetail}`);
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.status(502).json({ message: "Unable to generate speech right now." });
 };

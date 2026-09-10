@@ -7,6 +7,7 @@ import {
   readPublicProfileCache,
   writePublicProfileCache,
 } from "../services/publicContentCache";
+import { DEO_PORTFOLIO, isDeoPublicUsername } from "../content/deoPortfolio";
 import {
   firstNameFromFullName,
   persistAccountFirstName,
@@ -165,7 +166,9 @@ export const getProfile =
 
 export const getPublicProfile = (username: string): AppThunk => async (dispatch): Promise<void> => {
   const cachedApiUser = readPublicProfileCache<ApiUser>(username);
-  const cachedProfile = cachedApiUser ? mapProfileDetailsToProfile(cachedApiUser) : null;
+  const cachedProfile =
+    (cachedApiUser ? mapProfileDetailsToProfile(cachedApiUser) : null) ??
+    (isDeoPublicUsername(username) ? DEO_PORTFOLIO : null);
 
   if (cachedProfile) {
     dispatch(slice.actions.getProfileSuccess({ profile: cachedProfile }));
@@ -177,6 +180,7 @@ export const getPublicProfile = (username: string): AppThunk => async (dispatch)
     const res = await api.get<ApiUser>("/publicprofile", {
       baseURL: resolvePublicApiBaseUrl(),
       params: { username },
+      timeout: 12000,
     });
     writePublicProfileCache(username, res.data);
     dispatch(slice.actions.getProfileSuccess({ profile: mapProfileDetailsToProfile(res.data) }));

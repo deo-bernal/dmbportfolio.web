@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import CloseIcon from "@mui/icons-material/Close";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import MicIcon from "@mui/icons-material/Mic";
 import MicOffIcon from "@mui/icons-material/MicOff";
 import SendIcon from "@mui/icons-material/Send";
@@ -11,13 +12,17 @@ import IconButton from "@mui/material/IconButton";
 import InputBase from "@mui/material/InputBase";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
-import { streamSiteChat, type SiteChatMessage } from "services/siteChat.service";
+import { loadSiteChatHistory, streamSiteChat, type SiteChatMessage } from "services/siteChat.service";
 import { pageFonts } from "styles/main_style";
 import useAccountGreeting from "hooks/useAccountGreeting";
+import useAuth from "hooks/useAuth";
 import { friendlyAiErrorMessage } from "utils/friendlyAiError";
-import { cancelRoboCopSpeech, speakRoboCop } from "utils/roboCopVoice";
+import { cancelRoboCopSpeech, speakRoboCop, unlockRoboCopAudio } from "utils/roboCopVoice";
+import TrackingAssistantIcon from "components/chat/TrackingAssistantIcon";
+import { useDraggableChatWidget } from "hooks/useDraggableChatWidget";
+import { AGENT_PATH } from "utils/navigation";
 
-const ASSISTANT_ICON = "/images/icons/dmb-assistant.png?v=1987";
+const ASSISTANT_ICON = "/images/icons/dmb-assistant.jpg?v=white";
 
 const ATTENTION_MESSAGES = [
   "Need a free online profile? ✨",
@@ -159,6 +164,7 @@ function stripForSpeech(content: string): string {
 
 export default function SiteChatWidget() {
   const navigate = useNavigate();
+  const auth = useAuth();
   const firstName = useAccountGreeting();
   const [isOpen, setIsOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -178,6 +184,7 @@ export default function SiteChatWidget() {
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sendRef = useRef<(text: string) => Promise<void>>(async () => {});
+  const { pos, dragging, onPointerDown, wasDragged } = useDraggableChatWidget(isOpen);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -197,14 +204,44 @@ export default function SiteChatWidget() {
   }, [firstName]);
 
   useEffect(() => {
+    if (!auth.isAuthenticated) {
+      setMessages([welcomeMessage(firstName)]);
+      return;
+    }
+
+    let cancelled = false;
+    void loadSiteChatHistory().then((history) => {
+      if (cancelled) return;
+      setMessages((prev) => {
+        if (history.length > 0) return history;
+        if (prev.length > 1) return prev;
+        return [welcomeMessage(firstName)];
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.isAuthenticated, firstName]);
+
+  useEffect(() => {
     const openFromPage = () => {
       setIsOpen(true);
       setShowBubble(false);
       setBubbleDismissed(true);
     };
+    const openAgent = () => {
+      if (!auth.isAuthenticated) return;
+      setIsOpen(false);
+      setShowBubble(false);
+      navigate(AGENT_PATH);
+    };
     window.addEventListener("dmb:open-chat", openFromPage);
-    return () => window.removeEventListener("dmb:open-chat", openFromPage);
-  }, []);
+    window.addEventListener("dmb:open-agent", openAgent);
+    return () => {
+      window.removeEventListener("dmb:open-chat", openFromPage);
+      window.removeEventListener("dmb:open-agent", openAgent);
+    };
+  }, [auth.isAuthenticated, navigate]);
 
   useEffect(() => {
     if (isOpen || bubbleDismissed) return;
@@ -240,6 +277,7 @@ export default function SiteChatWidget() {
   const speak = useCallback(
     (text: string) => {
       if (!ttsEnabled) return;
+      unlockRoboCopAudio();
       speakNow(text);
     },
     [speakNow, ttsEnabled]
@@ -330,6 +368,14 @@ export default function SiteChatWidget() {
     setShowBubble(false);
   };
 
+  const handleLauncherActivate = (event?: { preventDefault?: () => void }) => {
+    if (dragging || wasDragged()) {
+      event?.preventDefault?.();
+      return;
+    }
+    openChat();
+  };
+
   const closeChat = () => {
     setIsOpen(false);
     if (synthRef.current) synthRef.current.cancel();
@@ -343,28 +389,35 @@ export default function SiteChatWidget() {
         <Box
           sx={{
             position: "fixed",
-            bottom: { xs: 16, sm: 24 },
-            right: { xs: 16, sm: 24 },
+            left: pos.left,
+            top: pos.top,
             zIndex: 1600,
-            display: "flex",
-            alignItems: "flex-end",
-            gap: 1.5,
+            width: { xs: 72, sm: 88 },
+            height: { xs: 72, sm: 88 },
+            overflow: "visible",
             fontFamily: pageFonts.sans,
+            userSelect: "none",
           }}
         >
           {showBubble && !bubbleDismissed && (
             <Box
               className={bubbleFading ? "dmb-chat-fade-out" : "dmb-chat-fade-in"}
-              onClick={openChat}
+              onClick={handleLauncherActivate}
               sx={{
-                position: "relative",
+                position: "absolute",
+                right: "calc(100% + 12px)",
+                bottom: 10,
+                zIndex: 1,
                 bgcolor: "#fff",
-                borderRadius: "999px",
+                borderRadius: "12px",
                 boxShadow: "0 10px 24px rgba(15,23,42,0.16)",
                 border: "1px solid #e2e8f0",
                 px: 2,
                 py: 1.25,
-                maxWidth: 220,
+                width: "max-content",
+                maxWidth: { xs: "min(240px, calc(100vw - 108px))", sm: 260 },
+                whiteSpace: "normal",
+                lineHeight: 1.35,
                 cursor: "pointer",
                 "&:hover .dmb-chat-dismiss": { opacity: 1 },
               }}
@@ -398,38 +451,41 @@ export default function SiteChatWidget() {
           )}
 
           <Box
-            component="button"
-            type="button"
-            onClick={openChat}
-            aria-label="Open chat"
-            className="dmb-chat-bounce"
+            className={dragging ? undefined : "dmb-chat-bounce"}
+            onPointerDown={onPointerDown}
+            onClick={handleLauncherActivate}
             sx={{
-              p: 0,
-              border: 0,
-              background: "none",
-              cursor: "pointer",
               borderRadius: "50%",
-              boxShadow: "0 4px 20px rgba(15,23,42,0.4)",
-              outline: "2px solid rgba(185,28,28,0.5)",
-              outlineOffset: 0,
-              transition: "transform 0.2s ease, box-shadow 0.2s ease",
-              "&:hover": {
-                transform: "scale(1.1)",
-                boxShadow: "0 6px 30px rgba(185,28,28,0.5)",
-              },
+              overflow: "visible",
+              touchAction: "none",
+              cursor: dragging ? "grabbing" : "grab",
             }}
           >
             <Box
-              component="img"
-              src={ASSISTANT_ICON}
-              alt="Chat with DMB Assistant"
+              component="button"
+              type="button"
+              onClick={handleLauncherActivate}
+              aria-label="Open chat"
               sx={{
-                display: "block",
-                width: { xs: 64, sm: 80 },
-                height: { xs: 64, sm: 80 },
+                p: 0,
+                border: 0,
+                background: "none",
+                cursor: dragging ? "grabbing" : "grab",
                 borderRadius: "50%",
+                display: "block",
+                overflow: "visible",
+                transition: dragging ? "none" : "box-shadow 0.2s ease",
+                "&:hover": {
+                  boxShadow: "0 6px 30px rgba(185,28,28,0.5)",
+                },
               }}
-            />
+            >
+              <TrackingAssistantIcon
+                src={ASSISTANT_ICON}
+                alt="Chat with DMB Assistant"
+                size={{ xs: 72, sm: 88 }}
+              />
+            </Box>
           </Box>
         </Box>
       )}
@@ -439,8 +495,8 @@ export default function SiteChatWidget() {
           elevation={0}
           sx={{
             position: "fixed",
-            bottom: { xs: 16, sm: 24 },
-            right: { xs: 16, sm: 24 },
+            left: pos.left,
+            top: pos.top,
             zIndex: 1600,
             width: { xs: "calc(100% - 32px)", sm: 380 },
             height: { xs: 500, sm: 550 },
@@ -453,6 +509,7 @@ export default function SiteChatWidget() {
           }}
         >
           <Box
+            onPointerDown={onPointerDown}
             sx={{
               background: "linear-gradient(90deg, #0f172a 0%, #1e3a5f 100%)",
               color: "#fff",
@@ -460,20 +517,18 @@ export default function SiteChatWidget() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              cursor: dragging ? "grabbing" : "grab",
+              touchAction: "none",
+              userSelect: "none",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Box sx={{ position: "relative" }}>
-                <Box
-                  component="img"
+                <TrackingAssistantIcon
                   src={ASSISTANT_ICON}
                   alt="DMB Assistant"
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: "50%",
-                    outline: "2px solid #b91c1c",
-                  }}
+                  size={44}
+                  outline="2px solid #b91c1c"
                 />
                 {(isSpeaking || isLoading) && (
                   <Box
@@ -495,11 +550,23 @@ export default function SiteChatWidget() {
                   DMB Assistant
                 </Typography>
                 <Typography sx={{ fontSize: 12, color: "#38bdf8" }}>
-                  {isLoading ? "Typing..." : isSpeaking ? "Broadcasting..." : "Free-tier Groq + Gemini"}
+                  {isLoading ? "Typing..." : isSpeaking ? "Speaking..." : "Free-tier Groq + Gemini"}
                 </Typography>
               </Box>
             </Box>
             <Box>
+              {auth.isAuthenticated ? (
+                <IconButton
+                  aria-label="Open Agentic AI"
+                  onClick={() => {
+                    setIsOpen(false);
+                    navigate(AGENT_PATH);
+                  }}
+                  sx={{ color: "rgba(255,255,255,0.85)" }}
+                >
+                  <AutoAwesomeIcon fontSize="small" />
+                </IconButton>
+              ) : null}
               <IconButton
                 aria-label={ttsEnabled ? "Mute voice" : "Enable voice"}
                 onClick={() => {
@@ -510,7 +577,8 @@ export default function SiteChatWidget() {
                       synthRef.current?.cancel();
                       setIsSpeaking(false);
                     } else {
-                      speakNow("Systems online.");
+                      unlockRoboCopAudio();
+                      speakNow("Hello.");
                     }
                     return next;
                   });

@@ -1,28 +1,44 @@
 import { dmbApiConfig, isProductionSiteHost, usesPublicApiProxy } from "config";
+import { DEO_PUBLIC_USERNAME } from "content/deoResume";
 
 const PROFILE_CACHE_PREFIX = "dmb:public-profile:";
 const EARLY_PROFILE_CACHE_PREFIX = "dmb:early-public-profile:";
-const CACHE_TTL_MS = 30 * 60 * 1000;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 type CachedProfile<T> = {
   data: T;
   cachedAt: number;
 };
 
-function normalizeUsername(username: string): string {
-  return username.trim().toLowerCase();
+function getStorage(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
-function readCacheEntry<T>(key: string): T | null {
+function normalizeUsername(username: string): string {
   try {
-    const raw = sessionStorage.getItem(key);
+    return decodeURIComponent(username).trim().toLowerCase();
+  } catch {
+    return username.trim().toLowerCase();
+  }
+}
+
+function readFromStorage<T>(storage: Storage | null, key: string): T | null {
+  if (!storage) {
+    return null;
+  }
+  try {
+    const raw = storage.getItem(key);
     if (!raw) {
       return null;
     }
 
     const parsed = JSON.parse(raw) as CachedProfile<T>;
     if (Date.now() - parsed.cachedAt > CACHE_TTL_MS) {
-      sessionStorage.removeItem(key);
+      storage.removeItem(key);
       return null;
     }
 
@@ -32,9 +48,21 @@ function readCacheEntry<T>(key: string): T | null {
   }
 }
 
+function getSessionStorage(): Storage | null {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readCacheEntry<T>(key: string): T | null {
+  return readFromStorage<T>(getStorage(), key) ?? readFromStorage<T>(getSessionStorage(), key);
+}
+
 function writeCacheEntry<T>(key: string, data: T): void {
   try {
-    sessionStorage.setItem(
+    getStorage()?.setItem(
       key,
       JSON.stringify({
         data,
@@ -62,7 +90,16 @@ export function consumeEarlyPublicProfileCache<T>(username: string): T | null {
   const key = `${EARLY_PROFILE_CACHE_PREFIX}${normalizeUsername(username)}`;
   const cached = readCacheEntry<T>(key);
   if (cached) {
-    sessionStorage.removeItem(key);
+    try {
+      getStorage()?.removeItem(key);
+    } catch {
+      // Ignore storage errors.
+    }
+    try {
+      getSessionStorage()?.removeItem(key);
+    } catch {
+      // Ignore storage errors.
+    }
   }
   return cached;
 }
@@ -79,7 +116,7 @@ export function writePublicResumeCache<T>(username: string, data: T): void {
   writeCacheEntry(`${PROFILE_CACHE_PREFIX}resume:${normalizeUsername(username)}`, data);
 }
 
-export function prefetchPublicProfile(username: string): void {
+export function prefetchPublicProfile(username: string = DEO_PUBLIC_USERNAME): void {
   const normalized = normalizeUsername(username);
   if (!normalized || !normalized.includes("@")) {
     return;
@@ -94,12 +131,17 @@ export function prefetchPublicProfile(username: string): void {
   }
 
   const base = usesPublicApiProxy() ? "/api" : dmbApiConfig.dmb_api_url;
+  const controller = new AbortController();
+  window.setTimeout(() => controller.abort(), 8000);
 
-  fetch(`${base}/publicprofile?username=${encodeURIComponent(normalized)}`)
+  fetch(`${base}/publicprofile?username=${encodeURIComponent(normalized)}`, {
+    signal: controller.signal,
+  })
     .then((response) => (response.ok ? response.json() : null))
     .then((data) => {
       if (data) {
         storeEarlyPublicProfileCache(normalized, data);
+        writePublicProfileCache(normalized, data);
       }
     })
     .catch(() => {
