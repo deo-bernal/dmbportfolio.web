@@ -33,7 +33,10 @@ export async function submitLead(lead: LeadSubmission): Promise<LeadResponse> {
   }
 
   if (!response.ok) {
-    throw new Error(payload?.message || "Unable to send that right now.");
+    throw new Error(
+      (payload as { message?: string } | null)?.message ||
+        `Unable to send that right now. (${response.status})`
+    );
   }
 
   return payload ?? { message: "Thanks — your request is in." };
@@ -102,4 +105,34 @@ export async function updateLeadStatus(
   }
 
   return (payload as { lead?: LeadRecord } | null)?.lead ?? null;
+}
+
+async function deleteRequest(
+  token: string | null,
+  body: { id: string | number } | { status: LeadStatus }
+) {
+  const response = await fetch("/api/leads", {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      (payload as { message?: string } | null)?.message || "Unable to delete those leads."
+    );
+  }
+}
+
+export async function deleteLead(token: string | null, id: string | number) {
+  await deleteRequest(token, { id });
+}
+
+export async function deleteLeadsByStatus(token: string | null, status: LeadStatus) {
+  await deleteRequest(token, { status });
 }

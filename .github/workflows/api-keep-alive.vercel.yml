@@ -2,21 +2,27 @@ name: Keep API warm (Vercel)
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Warm Render API
+      - name: Wake Render API
         run: |
-          curl -fsS -o /dev/null -w "render=%{time_total}s code=%{http_code}\n" \
-            "https://dmbportfolio-api.onrender.com/api/publicprofile?username=deobernal@gmail.com" \
-            --max-time 120
+          curl -fsS -o /dev/null -w "warmup=%{time_total}s code=%{http_code}\n" \
+            "https://www.dmbwebsolutions.com/api/warmup" \
+            --max-time 60
 
-      - name: Warm Vercel cached proxy
+      - name: Warm public profile cache
         run: |
-          curl -fsS -o /dev/null -w "vercel=%{time_total}s code=%{http_code}\n" \
-            "https://www.dmbwebsolutions.com/api/publicprofile?username=deobernal@gmail.com" \
-            --max-time 120
+          curl -fsS -o /dev/null -w "profile=%{time_total}s code=%{http_code}\n" \
+            "https://www.dmbwebsolutions.com/api/publicprofile?username=deobernal%40gmail.com" \
+            --max-time 30
+
+      - name: Warm public resume cache
+        run: |
+          curl -fsS -o /dev/null -w "resume=%{time_total}s code=%{http_code}\n" \
+            "https://www.dmbwebsolutions.com/api/publicresume?username=deobernal%40gmail.com" \
+            --max-time 30

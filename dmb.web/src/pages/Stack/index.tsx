@@ -5,6 +5,7 @@ import FreeTierNotice from "components/showcase/FreeTierNotice";
 import { PLATFORMS_SHIPPED, PLATFORMS_WORKING, type PlatformGroup } from "content/showcase";
 import {
   accentRedContainedButtonSx,
+  agenticPageSx,
   landingPageSx,
   showcaseSx,
 } from "styles/main_style";
@@ -35,8 +36,8 @@ function GroupGrid({ groups }: { groups: PlatformGroup[] }) {
 
 export default function StackPage() {
   return (
-    <MarketingLayout mainSx={landingPageSx.main}>
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
+    <MarketingLayout mainSx={agenticPageSx.embeddedMain} embedded>
+      <Container maxWidth="lg" sx={{ py: { xs: 1, md: 2 } }}>
         <Box sx={landingPageSx.heroPanel}>
           <Stack spacing={2.5}>
             <Typography sx={showcaseSx.kicker}>Platforms and tools</Typography>

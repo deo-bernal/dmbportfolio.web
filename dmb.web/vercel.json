@@ -6,6 +6,42 @@
   },
   "rewrites": [
     {
+      "source": "/api/auth/external/:provider/:action",
+      "destination": "/api/auth-external?provider=:provider&action=:action"
+    },
+    {
+      "source": "/crm/api/:path*",
+      "destination": "https://dmb-crm-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/crm",
+      "destination": "https://dmb-crm-web.vercel.app/crm"
+    },
+    {
+      "source": "/crm/",
+      "destination": "https://dmb-crm-web.vercel.app/crm/"
+    },
+    {
+      "source": "/crm/:path*",
+      "destination": "https://dmb-crm-web.vercel.app/crm/:path*"
+    },
+    {
+      "source": "/lms/api/:path*",
+      "destination": "https://dmb-lms-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/lms",
+      "destination": "https://dmb-lms-web.vercel.app/lms"
+    },
+    {
+      "source": "/lms/",
+      "destination": "https://dmb-lms-web.vercel.app/lms/"
+    },
+    {
+      "source": "/lms/:path*",
+      "destination": "https://dmb-lms-web.vercel.app/lms/:path*"
+    },
+    {
       "source": "/((?!api/|files/).*)",
       "destination": "/index.html"
     }

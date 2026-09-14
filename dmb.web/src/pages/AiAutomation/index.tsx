@@ -2,15 +2,13 @@ import { Link as RouterLink } from "react-router-dom";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutlineOutlined";
 import { Box, Button, Container, Grid, Link, Stack, Typography } from "@mui/material";
-import MarketingLayout from "components/layout/MarketingLayout";
-import LeadForm from "components/leads/LeadForm";
 import BookingEmbed from "components/booking/BookingEmbed";
 import VoiceAgentButton from "components/voice/VoiceAgentButton";
 import AgentDemoReplay from "components/agent/AgentDemoReplay";
+import { openInquireModal } from "components/leads/InquiryModal";
 import FreeTierNotice from "components/showcase/FreeTierNotice";
 import {
   CASE_STUDIES,
-  PIPELINE_STEPS,
   PLATFORMS_SHIPPED,
   SERVICES,
   WALKTHROUGH_URL,
@@ -23,8 +21,8 @@ import {
 
 export default function AiAutomationPage() {
   return (
-    <MarketingLayout mainSx={landingPageSx.main}>
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
+    <Box>
+      <Container maxWidth="lg" sx={{ py: { xs: 1, md: 2 } }}>
         <Box sx={landingPageSx.heroPanel}>
           <Stack spacing={3} sx={{ alignItems: { xs: "stretch", md: "flex-start" } }}>
             <Box sx={landingPageSx.heroBadge}>
@@ -43,18 +41,18 @@ export default function AiAutomationPage() {
               in your own content, funnels that push every lead into your CRM,
               follow-up that runs itself, and booking that closes the loop. Everything
               on this page is live on this domain — including the assistant in the
-              corner and the pipeline below. All of it runs on free-tier Groq and
-              Gemini APIs, so performance is limited.
+              corner. All of it runs on free-tier Groq and Gemini APIs, so performance
+              is limited.
             </Typography>
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
               <Button
-                href="#work-with-me"
                 variant="contained"
                 size="large"
+                onClick={() => openInquireModal()}
                 sx={[landingPageSx.ctaPrimary, accentRedContainedButtonSx]}
               >
-                Start the pipeline demo
+                Inquire
               </Button>
               <Button
                 component={RouterLink}
@@ -175,36 +173,6 @@ export default function AiAutomationPage() {
           </Grid>
         </Box>
 
-        <Box sx={showcaseSx.section} id="work-with-me">
-          <Typography sx={showcaseSx.kicker}>Live demo</Typography>
-          <Typography component="h2" sx={showcaseSx.sectionTitle}>
-            Submit this form and watch the automation run
-          </Typography>
-          <Typography sx={showcaseSx.sectionBody}>
-            This is not a contact form that lands in an inbox. It is the same lead
-            pipeline I build for clients, running on this site right now.
-          </Typography>
-
-          <Grid container spacing={4} sx={{ mt: 1.5 }}>
-            <Grid size={{ xs: 12, md: 7 }}>
-              <LeadForm source="funnel-form" />
-            </Grid>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <Stack spacing={2}>
-                {PIPELINE_STEPS.map((step, index) => (
-                  <Stack key={step.label} direction="row" spacing={1.5}>
-                    <Box sx={showcaseSx.stepIndex}>{index + 1}</Box>
-                    <Box>
-                      <Typography sx={showcaseSx.stepLabel}>{step.label}</Typography>
-                      <Typography sx={showcaseSx.cardBody}>{step.detail}</Typography>
-                    </Box>
-                  </Stack>
-                ))}
-              </Stack>
-            </Grid>
-          </Grid>
-        </Box>
-
         <Box sx={showcaseSx.section} id="profile-agent">
           <Typography sx={showcaseSx.kicker}>Watch the agent work</Typography>
           <Typography component="h2" sx={showcaseSx.sectionTitle}>
@@ -289,7 +257,7 @@ export default function AiAutomationPage() {
             Have a workflow that should run itself?
           </Typography>
           <Typography sx={landingPageSx.bottomCtaBody}>
-            Send it through the form above, or book a call and we will map it together.
+            Send an inquiry, or book a call and we will map it together.
           </Typography>
           <Stack
             direction={{ xs: "column", sm: "row" }}
@@ -297,12 +265,12 @@ export default function AiAutomationPage() {
             sx={{ justifyContent: "center" }}
           >
             <Button
-              href="#work-with-me"
               variant="contained"
               size="large"
+              onClick={() => openInquireModal()}
               sx={[landingPageSx.ctaPrimary, accentRedContainedButtonSx]}
             >
-              Send me the details
+              Inquire
             </Button>
             <Button
               component={RouterLink}
@@ -316,6 +284,6 @@ export default function AiAutomationPage() {
           </Stack>
         </Box>
       </Container>
-    </MarketingLayout>
+    </Box>
   );
 }

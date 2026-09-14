@@ -26,6 +26,35 @@ export function resumeAcceptAttribute(): string {
   return ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 }
 
+function pdfItemsToText(items: Array<{ str?: string; transform?: number[] }>): string {
+  const lines: Array<{ y: number; parts: Array<{ x: number; str: string }> }> = [];
+
+  for (const item of items) {
+    const str = String(item.str || "");
+    if (!str) continue;
+    const x = item.transform?.[4] ?? 0;
+    const y = item.transform?.[5] ?? 0;
+    const last = lines[lines.length - 1];
+    if (last && Math.abs(last.y - y) < 2.5) {
+      last.parts.push({ x, str });
+    } else {
+      lines.push({ y, parts: [{ x, str }] });
+    }
+  }
+
+  return lines
+    .map((line) =>
+      line.parts
+        .sort((a, b) => a.x - b.x)
+        .map((part) => part.str)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim()
+    )
+    .filter(Boolean)
+    .join("\n");
+}
+
 async function extractPdfText(data: ArrayBuffer): Promise<string> {
   const pdf = await getDocument({ data: new Uint8Array(data) }).promise;
   const pages: string[] = [];
@@ -33,11 +62,8 @@ async function extractPdfText(data: ArrayBuffer): Promise<string> {
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
     const content = await page.getTextContent();
-    const line = content.items
-      .map((item) => ("str" in item ? String(item.str) : ""))
-      .filter(Boolean)
-      .join(" ");
-    if (line.trim()) pages.push(line.trim());
+    const text = pdfItemsToText(content.items as Array<{ str?: string; transform?: number[] }>);
+    if (text.trim()) pages.push(text.trim());
   }
 
   return pages.join("\n\n").trim();

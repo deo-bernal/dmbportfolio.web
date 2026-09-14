@@ -5,6 +5,10 @@ import {
   Box,
   Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   MenuItem,
   Stack,
   TextField,
@@ -12,12 +16,14 @@ import {
 } from "@mui/material";
 import {
   LEAD_STATUSES,
+  deleteLead,
+  deleteLeadsByStatus,
   fetchLeads,
   updateLeadStatus,
   type LeadRecord,
   type LeadStatus,
 } from "services/leads.service";
-import { showcaseSx } from "styles/main_style";
+import { accentRedContainedButtonSx, showcaseSx } from "styles/main_style";
 
 const PIPELINE: Array<{ status: LeadStatus; title: string; hint: string }> = [
   { status: "new", title: "New", hint: "Captured, not yet worked" },
@@ -32,13 +38,19 @@ function formatDate(value?: string) {
   return Number.isNaN(parsed.getTime()) ? "" : parsed.toLocaleString();
 }
 
+function leadLabel(lead: LeadRecord) {
+  return lead.name || lead.email || "this lead";
+}
+
 function LeadCard({
   lead,
   onStatusChange,
+  onDelete,
   disabled,
 }: {
   lead: LeadRecord;
   onStatusChange: (lead: LeadRecord, status: LeadStatus) => void;
+  onDelete: (lead: LeadRecord) => void;
   disabled: boolean;
 }) {
   return (
@@ -66,24 +78,40 @@ function LeadCard({
 
       <Typography sx={showcaseSx.codeCaption}>{formatDate(lead.created_at)}</Typography>
 
-      <TextField
-        select
-        size="small"
-        label="Stage"
-        value={(lead.status as LeadStatus) || "new"}
-        disabled={disabled || lead.id === undefined}
-        onChange={(event) => onStatusChange(lead, event.target.value as LeadStatus)}
-        sx={{ mt: 1.5, minWidth: 140 }}
-      >
-        {LEAD_STATUSES.map((status) => (
-          <MenuItem key={status} value={status}>
-            {status}
-          </MenuItem>
-        ))}
-      </TextField>
+      <Stack direction="row" spacing={1} sx={{ mt: 1.5, alignItems: "center", flexWrap: "wrap" }}>
+        <TextField
+          select
+          size="small"
+          label="Stage"
+          value={(lead.status as LeadStatus) || "new"}
+          disabled={disabled || lead.id === undefined}
+          onChange={(event) => onStatusChange(lead, event.target.value as LeadStatus)}
+          sx={{ minWidth: 140, flex: 1 }}
+        >
+          {LEAD_STATUSES.map((status) => (
+            <MenuItem key={status} value={status}>
+              {status}
+            </MenuItem>
+          ))}
+        </TextField>
+        <Button
+          variant="outlined"
+          color="error"
+          size="small"
+          disabled={disabled || lead.id === undefined}
+          onClick={() => onDelete(lead)}
+          sx={{ textTransform: "none", fontWeight: 600 }}
+        >
+          Delete
+        </Button>
+      </Stack>
     </Box>
   );
 }
+
+type PendingDelete =
+  | { kind: "one"; lead: LeadRecord }
+  | { kind: "status"; status: LeadStatus; count: number; title: string };
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<LeadRecord[]>([]);
@@ -91,6 +119,7 @@ export default function LeadsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -124,6 +153,33 @@ export default function LeadsPage() {
     } catch (err: unknown) {
       setLeads(previous);
       setError(err instanceof Error ? err.message : "Unable to update that lead.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      if (pendingDelete.kind === "one") {
+        if (pendingDelete.lead.id === undefined) return;
+        await deleteLead(localStorage.getItem("token"), pendingDelete.lead.id);
+        setLeads((current) => current.filter((item) => item.id !== pendingDelete.lead.id));
+      } else {
+        await deleteLeadsByStatus(localStorage.getItem("token"), pendingDelete.status);
+        setLeads((current) =>
+          current.filter((item) => {
+            const status = (item.status || "new") as LeadStatus;
+            return status !== pendingDelete.status;
+          })
+        );
+      }
+      setPendingDelete(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unable to delete those leads.");
     } finally {
       setIsSaving(false);
     }
@@ -165,15 +221,30 @@ export default function LeadsPage() {
             {storage === "log" ? " · Supabase is not configured yet" : ""}
           </Typography>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={() => void load()}
-          disabled={isLoading}
-          sx={{ textTransform: "none", fontWeight: 600 }}
-        >
-          Refresh
-        </Button>
+        <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+          {lostCount > 0 ? (
+            <Button
+              variant="outlined"
+              color="error"
+              disabled={isLoading || isSaving}
+              onClick={() =>
+                setPendingDelete({ kind: "status", status: "lost", count: lostCount, title: "Lost" })
+              }
+              sx={{ textTransform: "none", fontWeight: 600 }}
+            >
+              Delete lost
+            </Button>
+          ) : null}
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={() => void load()}
+            disabled={isLoading}
+            sx={{ textTransform: "none", fontWeight: 600 }}
+          >
+            Refresh
+          </Button>
+        </Stack>
       </Stack>
 
       {error ? (
@@ -219,6 +290,25 @@ export default function LeadsPage() {
               <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", mb: 1, flexShrink: 0 }}>
                 <Typography sx={showcaseSx.stepLabel}>{column.title}</Typography>
                 <Typography sx={showcaseSx.metricLabel}>{column.items.length}</Typography>
+                {column.items.length > 0 ? (
+                  <Button
+                    variant="text"
+                    color="error"
+                    size="small"
+                    disabled={isSaving}
+                    onClick={() =>
+                      setPendingDelete({
+                        kind: "status",
+                        status: column.status,
+                        count: column.items.length,
+                        title: column.title,
+                      })
+                    }
+                    sx={{ ml: "auto", textTransform: "none", fontWeight: 700, minWidth: 0 }}
+                  >
+                    Delete all
+                  </Button>
+                ) : null}
               </Stack>
               <Typography sx={[showcaseSx.codeCaption, { mb: 1.5, flexShrink: 0 }]}>{column.hint}</Typography>
 
@@ -232,6 +322,7 @@ export default function LeadsPage() {
                       lead={lead}
                       disabled={isSaving}
                       onStatusChange={(target, status) => void handleStatusChange(target, status)}
+                      onDelete={(target) => setPendingDelete({ kind: "one", lead: target })}
                     />
                   ))
                 )}
@@ -240,6 +331,34 @@ export default function LeadsPage() {
           ))}
         </Box>
       )}
+
+      <Dialog open={Boolean(pendingDelete)} onClose={isSaving ? undefined : () => setPendingDelete(null)}>
+        <DialogTitle>
+          {pendingDelete?.kind === "one"
+            ? "Delete this lead?"
+            : `Delete all ${pendingDelete?.title.toLowerCase()} leads?`}
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            {pendingDelete?.kind === "one"
+              ? `${leadLabel(pendingDelete.lead)} will be removed from the pipeline.`
+              : `${pendingDelete?.count} lead${pendingDelete?.count === 1 ? "" : "s"} in ${pendingDelete?.title} will be removed. Other stages are left alone.`}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingDelete(null)} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => void confirmDelete()}
+            disabled={isSaving}
+            variant="contained"
+            sx={accentRedContainedButtonSx}
+          >
+            {isSaving ? "Deleting…" : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

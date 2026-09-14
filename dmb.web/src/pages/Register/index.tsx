@@ -26,6 +26,7 @@ import MarketingLayout from "components/layout/MarketingLayout";
 import { authFlowSx, loginPageSx, loginJwtSx, onboardingPageSx } from "styles/main_style";
 import api from "services/http.service";
 import type { ApiMessageResponse, RegisterFormValues, RegisterRequest } from "models";
+import SocialAuthButtons from "components/auth/SocialAuthButtons";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: ReactElement },
@@ -65,6 +66,11 @@ export default function Register() {
         contactNumber: values.contactNumber,
       };
       await api.post("/registration/register", payload);
+      try {
+        sessionStorage.setItem("dmb:account-username", values.email.trim());
+      } catch {
+        // Ignore quota / private-mode errors.
+      }
       setDialogOpen(true);
     } catch (error: unknown) {
       let errorMessage = "Registration failed. Please try again.";
@@ -94,6 +100,7 @@ export default function Register() {
             </Box>
 
             <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={loginJwtSx.form}>
+              <SocialAuthButtons />
               <TextField
                 sx={loginJwtSx.textField}
                 label="Email address"

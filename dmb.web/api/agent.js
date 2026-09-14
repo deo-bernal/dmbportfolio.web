@@ -23,91 +23,17 @@ const {
   loadLatestAgentSession,
   updateAgentRun,
 } = require("./_agentStore");
+const {
+  executeAutomationTool,
+  getRecipe,
+  guardAutomationWrite,
+  normalizeAgentType,
+  shouldPauseForInquiry,
+} = require("./_agentRecipes");
 
 const MAX_STEPS = 8;
 const MAX_RESUME = 20000;
-const WRITE_TOOLS = new Set(["save_portfolio", "save_resume"]);
-
-const TOOLS = [
-  {
-    type: "function",
-    function: {
-      name: "generate_profile",
-      description: "Draft portfolio and resume JSON from the resume text and goal already supplied.",
-      parameters: { type: "object", properties: {}, additionalProperties: false },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_profile",
-      description: "Read the user's currently saved public portfolio from the database.",
-      parameters: { type: "object", properties: {}, additionalProperties: false },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_resume",
-      description: "Read the user's currently saved resume from the database.",
-      parameters: { type: "object", properties: {}, additionalProperties: false },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "list_missing_fields",
-      description: "List required fields still missing from the current draft before saving.",
-      parameters: { type: "object", properties: {}, additionalProperties: false },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "save_portfolio",
-      description: "Save the current draft to the public portfolio. Requires the user to Allow first.",
-      parameters: { type: "object", properties: {}, additionalProperties: false },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "save_resume",
-      description: "Save the current draft to the resume page. Requires the user to Allow first.",
-      parameters: { type: "object", properties: {}, additionalProperties: false },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_public_url",
-      description: "Return the public portfolio path after a successful save.",
-      parameters: { type: "object", properties: {}, additionalProperties: false },
-    },
-  },
-];
-
-const SYSTEM_PROMPT = `You are the DMB Profile Builder Agent. You use tools to turn resume text into a live public portfolio.
-
-Rules:
-- Use tools. Do not invent employers, degrees, or dates.
-- Typical order: generate_profile, list_missing_fields, save_portfolio, save_resume, get_public_url.
-- If required fields are missing, tell the user what to add instead of saving.
-- save_portfolio and save_resume wait for the user to click Allow. Never claim they are saved until the tool result says so.
-- Keep user-facing messages short (2-3 sentences).
-- You run on free-tier Groq and Gemini APIs.`;
-
-const JSON_FALLBACK_PROMPT = `${SYSTEM_PROMPT}
-
-Reply with JSON only, one of:
-{"tool":"generate_profile","arguments":{}}
-{"tool":"get_profile","arguments":{}}
-{"tool":"get_resume","arguments":{}}
-{"tool":"list_missing_fields","arguments":{}}
-{"tool":"save_portfolio","arguments":{}}
-{"tool":"save_resume","arguments":{}}
-{"tool":"get_public_url","arguments":{}}
-{"done":true,"message":"short status for the user"}`;
+const MAX_WORKFLOW = 8000;
 
 function bearerToken(req) {
   const header = req.headers.authorization || "";
@@ -204,9 +130,17 @@ function parseJsonObject(content) {
   return JSON.parse(raw);
 }
 
-async function decideNextAction(messages) {
+function inferAgentType(body) {
+  const fromBody = normalizeAgentType(body?.agentType);
+  if (body?.agentType) return fromBody;
+  const tool = String(body?.confirm?.tool || body?.tool || "");
+  if (tool === "submit_inquiry") return "automation";
+  return fromBody;
+}
+
+async function decideNextAction(messages, recipe) {
   try {
-    const result = await callGroqChat({ messages, tools: TOOLS });
+    const result = await callGroqChat({ messages, tools: recipe.tools });
     if (result?.toolCalls?.length) {
       const call = result.toolCalls[0];
       return {
@@ -238,7 +172,7 @@ async function decideNextAction(messages) {
     .slice(0, 12000);
 
   const content = await generateAiText({
-    system: JSON_FALLBACK_PROMPT,
+    system: recipe.jsonFallbackPrompt,
     user: transcript,
     json: true,
   });
@@ -247,7 +181,73 @@ async function decideNextAction(messages) {
   if (parsed?.tool) {
     return { kind: "tool", name: parsed.tool, arguments: parsed.arguments || {}, assistantMessage: "" };
   }
-  return { kind: "done", message: "I could not choose a next tool. Try again with more resume detail." };
+  return {
+    kind: "done",
+    message:
+      recipe.type === "automation"
+        ? "I could not choose a next tool. Add more detail about the workflow and run again."
+        : "I could not choose a next tool. Try again with more resume detail.",
+  };
+}
+
+async function loadAccountInfo(token, email) {
+  const [resume, profile] = await Promise.all([
+    getUpstreamJson("/resume", { token, timeoutMs: 20000 }),
+    getUpstreamJson("/profiledetails", { token, timeoutMs: 20000 }),
+  ]);
+  const fromResume = accountFromResume(resume, email);
+  return {
+    firstName: firstFilled(fromResume.firstName, profile?.firstName),
+    lastName: firstFilled(fromResume.lastName, profile?.lastName),
+    contactNo: firstFilled(fromResume.contactNo, profile?.contactNo),
+    email: firstFilled(fromResume.email, profile?.email, profile?.username, email),
+    address: firstFilled(fromResume.address),
+  };
+}
+
+async function saveResumeRecord(payload, token) {
+  return sendUpstreamJson("/resume", {
+    token,
+    method: "PUT",
+    body: payload,
+    timeoutMs: 45000,
+  });
+}
+
+async function saveDraftToAccount(context) {
+  const { token, account, draft } = context;
+  const email = account?.email || "";
+  if (!draft) return { ok: false, error: "No draft to save.", clientFallback: true };
+
+  const accountInfo = await loadAccountInfo(token, email);
+  const profilePayload = buildProfilePayload(draft, email, accountInfo);
+  const resumePayload = buildResumePayload(draft, email, accountInfo);
+
+  const portfolioResult = await savePortfolioRecord(profilePayload, token);
+  if (!portfolioResult.ok) {
+    return {
+      ok: false,
+      status: portfolioResult.status,
+      clientFallback: true,
+      error: upstreamErrorMessage(portfolioResult, "Unable to save portfolio."),
+    };
+  }
+
+  const resumeResult = await saveResumeRecord(resumePayload, token);
+  if (!resumeResult.ok) {
+    return {
+      ok: false,
+      status: resumeResult.status,
+      clientFallback: true,
+      error: upstreamErrorMessage(resumeResult, "Unable to save resume."),
+    };
+  }
+
+  context.savedPortfolio = true;
+  context.savedResumeRecord = true;
+  const path = publicProfilePath(firstFilled(email, accountInfo.email));
+  context.publicUrl = path;
+  return { ok: true, saved: "portfolio and resume", path };
 }
 
 async function savePortfolioRecord(payload, token) {
@@ -271,6 +271,10 @@ async function savePortfolioRecord(payload, token) {
 }
 
 async function executeTool(name, context) {
+  if (context.recipe?.type === "automation") {
+    return executeAutomationTool(name, context);
+  }
+
   const { token, account, resumeText, goal, draft } = context;
   const email = account?.email || "";
 
@@ -301,7 +305,9 @@ async function executeTool(name, context) {
     }
     const savedResume = context.savedResume || (await getUpstreamJson("/resume", { token, timeoutMs: 8000 }));
     context.savedResume = savedResume;
-    return { ok: true, ...listMissingFields(context.draft, savedResume, email) };
+    const listed = listMissingFields(context.draft, savedResume, email);
+    context.missingFields = listed.missing || [];
+    return { ok: true, ...listed };
   }
 
   if (name === "get_public_url") {
@@ -310,47 +316,8 @@ async function executeTool(name, context) {
     return { ok: Boolean(path), path, hint: path ? "Prefix with the site origin in the browser." : "Email missing." };
   }
 
-  if (name === "save_portfolio") {
-    if (!draft) return { ok: false, error: "No draft to save.", clientFallback: true };
-    const savedResume = context.savedResume || (await getUpstreamJson("/resume", { token, timeoutMs: 20000 }));
-    const accountInfo = accountFromResume(savedResume, email);
-    const payload = buildProfilePayload(draft, email, accountInfo);
-    const result = await savePortfolioRecord(payload, token);
-    if (!result.ok) {
-      return {
-        ok: false,
-        status: result.status,
-        clientFallback: true,
-        error: upstreamErrorMessage(result, "Unable to save portfolio."),
-      };
-    }
-    context.savedPortfolio = true;
-    return { ok: true, saved: "portfolio" };
-  }
-
-  if (name === "save_resume") {
-    if (!draft) return { ok: false, error: "No draft to save.", clientFallback: true };
-    const savedResume = context.savedResume || (await getUpstreamJson("/resume", { token, timeoutMs: 20000 }));
-    const accountInfo = accountFromResume(savedResume, email);
-    const payload = buildResumePayload(draft, email, accountInfo);
-    const result = await sendUpstreamJson("/resume", {
-      token,
-      method: "PUT",
-      body: payload,
-      timeoutMs: 45000,
-    });
-    if (!result.ok) {
-      return {
-        ok: false,
-        status: result.status,
-        clientFallback: true,
-        error: upstreamErrorMessage(result, "Unable to save resume."),
-      };
-    }
-    context.savedResumeRecord = true;
-    const path = publicProfilePath(email);
-    context.publicUrl = path;
-    return { ok: true, saved: "resume", path };
+  if (name === "save_portfolio" || name === "save_resume") {
+    return saveDraftToAccount(context);
   }
 
   return { ok: false, error: `Unknown tool: ${name}` };
@@ -386,13 +353,72 @@ async function safeUpdateRun(runId, patch) {
   }
 }
 
+async function pauseForWrite(res, context, tool, args) {
+  const recipe = context.recipe || getRecipe("profile");
+  const name = recipe.writeTools.has(tool) ? tool : recipe.defaultWriteTool;
+  await safeUpdateRun(context.runId, { status: "awaiting_confirmation" });
+  await safeStep(context.runId, {
+    tool: name,
+    status: "pending",
+    arguments: args || {},
+    result: { needsConfirmation: true },
+  });
+  writeEvent(res, {
+    type: "confirm",
+    tool: name,
+    arguments: {
+      ...(args || {}),
+      ...(context.brief ? { brief: context.brief } : {}),
+    },
+    draft: context.draft || null,
+    brief: context.brief || null,
+    runId: context.runId,
+    message: recipe.confirmMessage,
+  });
+}
+
+function shouldPauseForSave(context) {
+  if (context?.recipe?.type === "automation") return shouldPauseForInquiry(context);
+  if (!context?.draft) return false;
+  if (context.savedPortfolio || context.savedResumeRecord) return false;
+  const missing = context.missingFields;
+  if (Array.isArray(missing) && missing.length > 0) return false;
+  return true;
+}
+
+function finishPayload(context, message) {
+  if (context.recipe?.type === "automation") {
+    return {
+      type: "done",
+      message,
+      publicUrl: "",
+      bookingUrl: context.bookingUrl || "",
+      submitted: Boolean(context.submittedInquiry),
+      runId: context.runId,
+    };
+  }
+  const saved = Boolean(context.savedPortfolio || context.savedResumeRecord);
+  const path = saved ? context.publicUrl || publicProfilePath(context.account?.email) : "";
+  return {
+    type: "done",
+    message,
+    publicUrl: path || "",
+    runId: context.runId,
+  };
+}
+
 async function runLoop(res, context, messages, remaining) {
+  const recipe = context.recipe || getRecipe("profile");
   for (let i = 0; i < remaining; i += 1) {
-    const action = await decideNextAction(messages);
+    const action = await decideNextAction(messages, recipe);
     if (action.kind === "done") {
-      const path = context.publicUrl || publicProfilePath(context.account?.email);
-      await safeUpdateRun(context.runId, { status: "completed", public_url: path || null });
-      writeEvent(res, { type: "done", message: action.message, publicUrl: path || "", runId: context.runId });
+      if (shouldPauseForSave(context)) {
+        await pauseForWrite(res, context, recipe.defaultWriteTool, {});
+        return;
+      }
+      const event = finishPayload(context, action.message);
+      await safeUpdateRun(context.runId, { status: "completed", public_url: event.publicUrl || null });
+      writeEvent(res, event);
       return;
     }
 
@@ -403,22 +429,32 @@ async function runLoop(res, context, messages, remaining) {
       return;
     }
 
-    if (WRITE_TOOLS.has(name)) {
-      await safeUpdateRun(context.runId, { status: "awaiting_confirmation" });
-      await safeStep(context.runId, {
-        tool: name,
-        status: "pending",
-        arguments: action.arguments || {},
-        result: { needsConfirmation: true },
-      });
-      writeEvent(res, {
-        type: "confirm",
-        tool: name,
-        arguments: action.arguments || {},
-        draft: context.draft || null,
-        runId: context.runId,
-        message: name === "save_resume" ? "Allow saving the resume draft?" : "Allow saving the public portfolio?",
-      });
+    if (recipe.writeTools.has(name)) {
+      if (recipe.type === "automation") {
+        const gate = guardAutomationWrite(context);
+        if (gate.scope !== "in_scope") {
+          const event = finishPayload(context, gate.message || context.blockMessage);
+          await safeUpdateRun(context.runId, { status: "completed", public_url: null });
+          writeEvent(res, event);
+          return;
+        }
+        if (!context.brief) {
+          writeEvent(res, {
+            type: "step",
+            step: {
+              tool: name,
+              status: "error",
+              result: { error: "Draft an in-scope brief before submit_inquiry." },
+            },
+          });
+          messages.push({
+            role: "user",
+            content: "submit_inquiry was blocked. Call extract_requirements, propose_pipeline, and draft_brief first. Do not submit yet.",
+          });
+          continue;
+        }
+      }
+      await pauseForWrite(res, context, name, action.arguments || {});
       return;
     }
 
@@ -426,7 +462,7 @@ async function runLoop(res, context, messages, remaining) {
     const result = await executeTool(name, context);
     await safeStep(context.runId, {
       tool: name,
-      status: result.ok ? "ok" : "error",
+      status: result.stopRun ? "ok" : result.ok ? "ok" : "error",
       arguments: action.arguments || {},
       result: name === "generate_profile" ? { ok: result.ok, summary: result.summary } : result,
     });
@@ -434,11 +470,19 @@ async function runLoop(res, context, messages, remaining) {
       type: "step",
       step: {
         tool: name,
-        status: result.ok ? "ok" : "error",
+        status: result.stopRun ? "ok" : result.ok ? "ok" : "error",
         result: name === "generate_profile" ? { summary: result.summary } : result,
       },
       draft: context.draft || undefined,
+      brief: context.brief || undefined,
     });
+
+    if (result.stopRun) {
+      const event = finishPayload(context, result.message || context.blockMessage);
+      await safeUpdateRun(context.runId, { status: "completed", public_url: event.publicUrl || null });
+      writeEvent(res, event);
+      return;
+    }
 
     messages.push({
       role: "assistant",
@@ -450,27 +494,40 @@ async function runLoop(res, context, messages, remaining) {
     });
   }
 
+  if (shouldPauseForSave(context)) {
+    await pauseForWrite(res, context, recipe.defaultWriteTool, {});
+    return;
+  }
+
+  const event = finishPayload(
+    context,
+    "Reached the tool-call limit. Review the steps and run again if needed."
+  );
   await safeUpdateRun(context.runId, {
     status: "completed",
-    public_url: context.publicUrl || publicProfilePath(context.account?.email) || null,
+    public_url: event.publicUrl || null,
   });
-  writeEvent(res, {
-    type: "done",
-    message: "Reached the tool-call limit. Review the steps and run again if needed.",
-    publicUrl: context.publicUrl || publicProfilePath(context.account?.email) || "",
-    runId: context.runId,
-  });
+  writeEvent(res, event);
 }
 
-function buildMessages({ goal, resumeText, extra }) {
-  const resume = String(resumeText || "").trim().slice(0, MAX_RESUME);
-  const parts = [
-    `Goal: ${String(goal || "Build my public portfolio and resume from this resume.").trim()}`,
-    resume ? `Resume text:\n${resume}` : "No resume text was provided. Use get_resume or ask the user to paste a resume.",
-  ];
+function buildMessages({ recipe, goal, resumeText, workflowText, extra }) {
+  const parts =
+    recipe.type === "automation"
+      ? [
+          `Goal: ${String(goal || recipe.defaultGoal).trim()}`,
+          String(workflowText || "").trim()
+            ? `Workflow to automate:\n${String(workflowText).trim().slice(0, MAX_WORKFLOW)}`
+            : "No workflow description was provided. Ask the user to describe what should run itself.",
+        ]
+      : [
+          `Goal: ${String(goal || recipe.defaultGoal).trim()}`,
+          String(resumeText || "").trim()
+            ? `Resume text:\n${String(resumeText).trim().slice(0, MAX_RESUME)}`
+            : "No resume text was provided. Use get_resume or ask the user to paste a resume.",
+        ];
   if (extra) parts.push(extra);
   return [
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system", content: recipe.systemPrompt },
     { role: "user", content: parts.join("\n\n") },
   ];
 }
@@ -508,8 +565,10 @@ module.exports = async (req, res) => {
   }
 
   const body = req.body || {};
-  const goal = String(body.goal || "Build my public portfolio and resume from this resume.").trim();
+  const recipe = getRecipe(inferAgentType(body));
+  const goal = String(body.goal || recipe.defaultGoal).trim();
   const resumeText = String(body.resumeText || "").trim().slice(0, MAX_RESUME);
+  const workflowText = String(body.workflowText || body.resumeText || "").trim().slice(0, MAX_WORKFLOW);
 
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache, no-transform");
@@ -518,27 +577,40 @@ module.exports = async (req, res) => {
   const context = {
     token,
     account,
+    recipe,
     resumeText,
+    workflowText,
     goal,
     draft: body.draft || null,
+    brief: body.brief || null,
     savedResume: null,
     runId: null,
     publicUrl: "",
+    submittedInquiry: false,
+    bookingUrl: "",
   };
 
   try {
+    if (recipe.type === "automation" && !context.accountInfo) {
+      try {
+        context.accountInfo = await loadAccountInfo(token, account.email);
+      } catch {
+        context.accountInfo = { email: account.email };
+      }
+    }
+
     if (body.deny && body.runId) {
       const run = await getAgentRun(account, body.runId).catch(() => null);
       context.runId = run?.id || body.runId;
       await safeUpdateRun(context.runId, { status: "denied" });
       await safeStep(context.runId, {
-        tool: String(body.tool || "save_portfolio"),
+        tool: String(body.tool || recipe.defaultWriteTool),
         status: "denied",
         result: { denied: true },
       });
       writeEvent(res, {
         type: "done",
-        message: "Save cancelled. Nothing was published.",
+        message: recipe.denyMessage,
         publicUrl: "",
         runId: context.runId,
       });
@@ -546,7 +618,7 @@ module.exports = async (req, res) => {
       return;
     }
 
-    if (body.confirm?.tool && WRITE_TOOLS.has(body.confirm.tool)) {
+    if (body.confirm?.tool && recipe.writeTools.has(body.confirm.tool)) {
       let run = null;
       if (body.runId) {
         run = await getAgentRun(account, body.runId).catch(() => null);
@@ -557,28 +629,68 @@ module.exports = async (req, res) => {
       context.runId = run?.id || null;
       writeEvent(res, { type: "run", runId: context.runId });
 
-      if (body.alreadySaved) {
-        if (body.confirm.tool === "save_portfolio") context.savedPortfolio = true;
-        if (body.confirm.tool === "save_resume") context.savedResumeRecord = true;
+      if (recipe.type === "automation") {
+        context.brief = body.brief || body.confirm?.arguments?.brief || context.brief;
+        if (!context.brief && context.runId) {
+          const steps = await listAgentSteps(context.runId).catch(() => []);
+          const last = [...steps].reverse().find((step) => step.tool === "draft_brief" && step.result?.brief);
+          if (last?.result?.brief) context.brief = last.result.brief;
+        }
+      }
+
+      if (body.alreadySaved && recipe.type === "profile") {
+        context.savedPortfolio = true;
+        context.savedResumeRecord = true;
         context.publicUrl = context.publicUrl || publicProfilePath(account.email);
         await safeStep(context.runId, {
           tool: body.confirm.tool,
           status: "ok",
-          result: { ok: true, saved: body.confirm.tool === "save_resume" ? "resume" : "portfolio", via: "browser" },
+          result: { ok: true, saved: "portfolio and resume", via: "browser" },
         });
         writeEvent(res, {
           type: "step",
           step: {
             tool: body.confirm.tool,
             status: "ok",
-            result: { saved: body.confirm.tool === "save_resume" ? "resume" : "portfolio" },
+            result: { saved: "portfolio and resume" },
           },
           draft: context.draft || undefined,
         });
         const messages = buildMessages({
+          recipe,
           goal,
           resumeText,
-          extra: `The user allowed ${body.confirm.tool} and the save already succeeded from the browser. Continue with remaining tools, then get_public_url.`,
+          workflowText,
+          extra: `The user allowed the write. Both the portfolio and resume are already saved on this account. Call get_public_url and finish. Do not call save_portfolio or save_resume again.`,
+        });
+        await runLoop(res, context, messages, MAX_STEPS);
+        res.end();
+        return;
+      }
+
+      if (body.alreadySaved && recipe.type === "automation") {
+        context.submittedInquiry = true;
+        context.bookingUrl = String(body.bookingUrl || "");
+        await safeStep(context.runId, {
+          tool: body.confirm.tool,
+          status: "ok",
+          result: { ok: true, submitted: true, via: "browser" },
+        });
+        writeEvent(res, {
+          type: "step",
+          step: {
+            tool: body.confirm.tool,
+            status: "ok",
+            result: { submitted: true },
+          },
+          brief: context.brief || undefined,
+        });
+        const messages = buildMessages({
+          recipe,
+          goal,
+          resumeText,
+          workflowText,
+          extra: `The user allowed the write. The inquiry is already submitted through the live lead pipeline. Return done with a short confirmation. Do not call submit_inquiry again.`,
         });
         await runLoop(res, context, messages, MAX_STEPS);
         res.end();
@@ -596,13 +708,14 @@ module.exports = async (req, res) => {
         type: "step",
         step: { tool: body.confirm.tool, status: result.ok ? "ok" : "error", result },
         draft: context.draft || undefined,
+        brief: context.brief || undefined,
       });
 
       if (!result.ok) {
         await safeUpdateRun(context.runId, { status: "failed" });
         writeEvent(res, {
           type: "error",
-          message: result.error || "Save failed.",
+          message: result.error || (recipe.type === "automation" ? "Unable to send that inquiry." : "Save failed."),
           clientFallback: Boolean(result.clientFallback),
           tool: body.confirm.tool,
         });
@@ -610,23 +723,60 @@ module.exports = async (req, res) => {
         return;
       }
 
+      const followUp =
+        recipe.type === "automation"
+          ? `The user allowed the write. Result: ${toolResultForModel(body.confirm.tool, result)}. The inquiry is submitted. Return done with a short confirmation. Do not call submit_inquiry again.`
+          : `The user allowed the write. Result: ${toolResultForModel(body.confirm.tool, result)}. Both portfolio and resume are saved. Call get_public_url and finish. Do not save again.`;
       const messages = buildMessages({
+        recipe,
         goal,
         resumeText,
-        extra: `The user allowed ${body.confirm.tool}. Result: ${toolResultForModel(body.confirm.tool, result)}. Continue with remaining tools, then get_public_url when both saves are done.`,
+        workflowText,
+        extra: followUp,
       });
       await runLoop(res, context, messages, MAX_STEPS);
       res.end();
       return;
     }
 
-    if (!resumeText && !context.draft) {
+    if (recipe.type === "profile" && !resumeText && !context.draft) {
       writeEvent(res, {
         type: "error",
-        message: "Upload or paste a resume so the agent has something to work with.",
+        message: recipe.emptyInputMessage,
       });
       res.end();
       return;
+    }
+
+    if (recipe.type === "automation" && !workflowText) {
+      writeEvent(res, {
+        type: "error",
+        message: recipe.emptyInputMessage,
+      });
+      res.end();
+      return;
+    }
+
+    if (recipe.type === "automation") {
+      const gate = guardAutomationWrite(context);
+      if (gate.scope !== "in_scope") {
+        const run = await createAgentRun(account, goal).catch(() => null);
+        context.runId = run?.id || null;
+        writeEvent(res, { type: "run", runId: context.runId });
+        writeEvent(res, {
+          type: "step",
+          step: {
+            tool: "extract_requirements",
+            status: "ok",
+            result: { scope: gate.scope, message: gate.message || context.blockMessage },
+          },
+        });
+        const event = finishPayload(context, gate.message || context.blockMessage);
+        await safeUpdateRun(context.runId, { status: "completed", public_url: null });
+        writeEvent(res, event);
+        res.end();
+        return;
+      }
     }
 
     const run = await createAgentRun(account, goal).catch((error) => {
@@ -636,7 +786,7 @@ module.exports = async (req, res) => {
     context.runId = run?.id || null;
     writeEvent(res, { type: "run", runId: context.runId });
 
-    const messages = buildMessages({ goal, resumeText });
+    const messages = buildMessages({ recipe, goal, resumeText, workflowText });
     await runLoop(res, context, messages, MAX_STEPS);
     res.end();
   } catch (error) {

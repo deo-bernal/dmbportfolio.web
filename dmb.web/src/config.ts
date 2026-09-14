@@ -53,3 +53,16 @@ export function resolvePublicApiBaseUrl(): string {
 
   return dmbApiConfig.dmb_api_url;
 }
+
+/** Production OAuth start/callback go through the site /api proxy so the browser never hits Render's spin-up page. */
+export function resolveOAuthApiBaseUrl(): string {
+  if (
+    usesPublicApiProxy() &&
+    typeof window !== "undefined" &&
+    isProductionSiteHost(window.location.hostname)
+  ) {
+    return `${window.location.origin}/api`;
+  }
+
+  return dmbApiConfig.dmb_api_url;
+}

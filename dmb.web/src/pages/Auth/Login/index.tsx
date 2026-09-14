@@ -10,10 +10,10 @@ export default function Login() {
         <Card elevation={0} sx={loginPageSx.card}>
           <Box>
             <Typography variant="h2" sx={loginPageSx.titleSignIn}>
-              Online Profile
+              DMB Web Solutions
             </Typography>
             <Typography variant="h4" sx={loginPageSx.titleSubtitle}>
-              Sign in to view your portfolio
+              Sign in to your workspace
             </Typography>
           </Box>
           <LoginJWT />

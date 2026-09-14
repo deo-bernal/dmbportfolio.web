@@ -1,6 +1,12 @@
 export const ONBOARD_PATH = "/accent-sidebar/onboarding";
 export const AGENT_PATH = "/accent-sidebar/agent";
 export const DASHBOARD_PATH = "/accent-sidebar/portfolio";
+export const AI_AUTOMATION_PATH = "/ai-automation";
+export const PROFILES_PATH = "/profiles";
+export const CASE_STUDIES_PATH = "/case-studies";
+export const STACK_PATH = "/stack";
+export const CRM_PATH = "/crm";
+export const LMS_PATH = "/lms";
 
 const APP_PATH_PREFIXES = [
   "/login",
@@ -8,13 +14,17 @@ const APP_PATH_PREFIXES = [
   "/forgot-password",
   "/reset-password",
   "/activate-account",
+  "/auth",
   "/accent-sidebar",
   "/portfolio",
   "/onboard",
   "/onboarding",
   "/ai-automation",
+  "/profiles",
   "/case-studies",
   "/stack",
+  "/crm",
+  "/lms",
 ];
 
 export function getSafeRedirectPath(value: string | null | undefined): string | null {

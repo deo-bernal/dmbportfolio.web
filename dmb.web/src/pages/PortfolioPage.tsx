@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -11,7 +11,8 @@ import { getProfile } from "slices/user";
 import { useDispatch, useSelector } from "store";
 import { accentRedContainedButtonSx, agenticPageSx } from "styles/main_style";
 import type { PortfolioPageProps, Profile, UpdateProfileRequest } from "models";
-import { ONBOARD_PATH } from "utils/navigation";
+import { AGENT_PATH, ONBOARD_PATH } from "utils/navigation";
+import { PROFILE_SAVED_EVENT } from "utils/publishGeneratedProfile";
 import MarketingLayout from "components/layout/MarketingLayout";
 
 const EMPTY_PROFILE: Profile = {
@@ -29,14 +30,14 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
   const dispatch = useDispatch();
   const { profile, error: loadError, isLoading } = useSelector((state) => state.user);
   const [isEditing, setIsEditing] = useState(false);
-  const hasFetchedProfile = useRef(false);
 
   useEffect(() => {
-    if (hasFetchedProfile.current) {
-      return;
-    }
-    hasFetchedProfile.current = true;
-    dispatch(getProfile(onLogout) as any);
+    void dispatch(getProfile(onLogout) as any);
+    const refresh = () => {
+      void dispatch(getProfile(onLogout) as any);
+    };
+    window.addEventListener(PROFILE_SAVED_EVENT, refresh);
+    return () => window.removeEventListener(PROFILE_SAVED_EVENT, refresh);
   }, [dispatch, onLogout]);
 
   const handleSaveProfile = async (nextProfile: Profile, mode: "create" | "update") => {
@@ -88,10 +89,17 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
   }
 
   const activeProfile = profile ?? EMPTY_PROFILE;
+  const hasGeneratedContent = Boolean(
+    activeProfile.summary.trim() ||
+      activeProfile.skills.length ||
+      activeProfile.projectCategories.some((category) =>
+        category.items.some((item) => item.name.trim())
+      )
+  );
   const isCreateMode = !profile;
 
   return (
-    <MarketingLayout mainSx={agenticPageSx.embeddedMain}>
+    <MarketingLayout mainSx={agenticPageSx.embeddedMain} embedded>
       <Stack sx={agenticPageSx.stackSections}>
         <Box sx={agenticPageSx.panelBody}>
           <Box component="header" sx={agenticPageSx.headerRow}>
@@ -110,15 +118,25 @@ export default function PortfolioPage({ onLogout }: PortfolioPageProps) {
             <Box sx={agenticPageSx.headerActionsRow}>
               {!isEditing ? (
                 <>
-                  {isCreateMode ? (
-                    <Button
-                      component={RouterLink}
-                      to={ONBOARD_PATH}
-                      variant="contained"
-                      sx={[agenticPageSx.headerOutlinedButton, accentRedContainedButtonSx]}
-                    >
-                      Build with AI
-                    </Button>
+                  {!hasGeneratedContent ? (
+                    <>
+                      <Button
+                        component={RouterLink}
+                        to={AGENT_PATH}
+                        variant="contained"
+                        sx={[agenticPageSx.headerOutlinedButton, accentRedContainedButtonSx]}
+                      >
+                        Agentic AI
+                      </Button>
+                      <Button
+                        component={RouterLink}
+                        to={ONBOARD_PATH}
+                        variant="contained"
+                        sx={[agenticPageSx.headerOutlinedButton, accentRedContainedButtonSx]}
+                      >
+                        AI Profile Builder
+                      </Button>
+                    </>
                   ) : null}
                   <Button variant="outlined" onClick={() => setIsEditing(true)} sx={agenticPageSx.headerOutlinedButton}>
                     {isCreateMode ? "Create portfolio" : "Edit portfolio"}

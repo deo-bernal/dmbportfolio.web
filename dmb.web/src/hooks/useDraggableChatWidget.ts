@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 const STORAGE_KEY = "dmb:chat-widget-pos";
+const DRAGGED_KEY = "dmb:chat-widget-dragged";
 const MARGIN = 8;
 const DRAG_THRESHOLD = 10;
 
@@ -17,9 +18,17 @@ function panelSize(): { width: number; height: number } {
   };
 }
 
+function viewportSize(): { width: number; height: number } {
+  return {
+    width: window.visualViewport?.width ?? window.innerWidth,
+    height: window.visualViewport?.height ?? window.innerHeight,
+  };
+}
+
 function clamp(left: number, top: number, width: number, height: number): WidgetPos {
-  const maxLeft = Math.max(MARGIN, window.innerWidth - width - MARGIN);
-  const maxTop = Math.max(MARGIN, window.innerHeight - height - MARGIN);
+  const view = viewportSize();
+  const maxLeft = Math.max(MARGIN, view.width - width - MARGIN);
+  const maxTop = Math.max(MARGIN, view.height - height - MARGIN);
   return {
     left: Math.min(Math.max(MARGIN, left), maxLeft),
     top: Math.min(Math.max(MARGIN, top), maxTop),
@@ -28,11 +37,29 @@ function clamp(left: number, top: number, width: number, height: number): Widget
 
 function defaultLauncherPos(): WidgetPos {
   const size = launcherSize();
-  const margin = window.innerWidth < 600 ? 16 : 24;
-  return clamp(window.innerWidth - margin - size, window.innerHeight - margin - size, size, size);
+  const view = viewportSize();
+  const margin = view.width < 600 ? 16 : 24;
+  return clamp(view.width - margin - size, view.height - margin - size, size, size);
+}
+
+function hasUserDragged(): boolean {
+  try {
+    return localStorage.getItem(DRAGGED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markUserDragged(): void {
+  try {
+    localStorage.setItem(DRAGGED_KEY, "1");
+  } catch {
+    // Ignore quota errors.
+  }
 }
 
 function readStoredLauncherPos(): WidgetPos | null {
+  if (!hasUserDragged()) return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -94,16 +121,25 @@ export function useDraggableChatWidget(isOpen: boolean) {
   }, []);
 
   useEffect(() => {
+    if (!hasUserDragged()) {
+      setPos(defaultLauncherPos());
+    }
+
     const onResize = () => {
       setPos((prev) => {
-        const launcher = toLauncherPos(prev, false);
-        const next = clamp(launcher.left, launcher.top, launcherSize(), launcherSize());
-        writeStoredLauncherPos(next);
+        const next = hasUserDragged()
+          ? clamp(toLauncherPos(prev, false).left, toLauncherPos(prev, false).top, launcherSize(), launcherSize())
+          : defaultLauncherPos();
+        if (hasUserDragged()) writeStoredLauncherPos(next);
         return next;
       });
     };
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
+    };
   }, []);
 
   const onPointerDown = useCallback((event: ReactPointerEvent) => {
@@ -141,7 +177,10 @@ export function useDraggableChatWidget(isOpen: boolean) {
       const drag = dragRef.current;
       if (!drag || upEvent.pointerId !== drag.pointerId) return;
       dragRef.current = null;
-      if (drag.moved) draggedRef.current = true;
+      if (drag.moved) {
+        draggedRef.current = true;
+        markUserDragged();
+      }
       setDragging(false);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);

@@ -314,15 +314,21 @@ export const layoutShellSx = {
   } satisfies SxProps<Theme>,
 
   sidebarBrand: {
-    fontFamily: pageFonts.mono,
-    fontWeight: 600,
-    fontSize: "0.7rem",
-    letterSpacing: "0.14em",
-    textTransform: "uppercase",
-    color: alpha("#e2e8f0", 0.92),
-    mb: { xs: 1, sm: 2.5 },
-    pb: { xs: 1, sm: 1.75 },
+    fontFamily: pageFonts.sans,
+    fontWeight: 700,
+    fontSize: "0.92rem",
+    letterSpacing: "-0.02em",
+    textTransform: "none",
+    lineHeight: 1.3,
+    color: alpha("#e2e8f0", 0.96),
+    mb: { xs: 1, sm: 2 },
+    pb: { xs: 1, sm: 1.5 },
     borderBottom: `1px solid ${alpha("#94a3b8", 0.22)}`,
+    textDecoration: "none",
+    display: "block",
+    "&:hover": {
+      color: "#f8fafc",
+    },
   } satisfies SxProps<Theme>,
 
   sidebarGreeting: {
@@ -337,8 +343,28 @@ export const layoutShellSx = {
     display: "flex",
     flexDirection: { xs: "row", sm: "column" },
     flexWrap: "wrap",
-    gap: 0.75,
+    gap: { xs: 0.75, sm: 1.75 },
     flex: { sm: 1 },
+  } satisfies SxProps<Theme>,
+
+  navSection: {
+    display: "flex",
+    flexDirection: { xs: "row", sm: "column" },
+    flexWrap: "wrap",
+    gap: 0.75,
+    width: { sm: "100%" },
+  } satisfies SxProps<Theme>,
+
+  navSectionLabel: {
+    display: { xs: "none", sm: "block" },
+    fontFamily: pageFonts.mono,
+    fontWeight: 600,
+    fontSize: "0.65rem",
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    color: alpha("#cbd5e1", 0.62),
+    px: 1.5,
+    mb: 0.25,
   } satisfies SxProps<Theme>,
 
   sidebarAccountNav: {
@@ -395,7 +421,38 @@ export const layoutShellSx = {
     mt: { xs: 1.5, sm: "auto" },
     pt: { sm: 1.5 },
   } satisfies SxProps<Theme>,
+
+  sidebarAlsoLink: {
+    display: "block",
+    mt: 1.25,
+    pt: 1,
+    borderTop: `1px solid ${alpha("#94a3b8", 0.18)}`,
+    fontFamily: pageFonts.sans,
+    fontWeight: 500,
+    fontSize: "0.75rem",
+    letterSpacing: "0.01em",
+    color: alpha("#cbd5e1", 0.55),
+    textDecoration: "none",
+    textAlign: { xs: "center", sm: "left" },
+    "&:hover": {
+      color: alpha("#e2e8f0", 0.88),
+    },
+  } satisfies SxProps<Theme>,
 } as const;
+
+export const layoutShellSidebarInquireButtonSx = {
+  ...layoutShellSx.navItem,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  fontWeight: 700,
+  color: "#f8fafc",
+  borderColor: alpha("#94a3b8", 0.45),
+  "&:hover": {
+    color: "#ffffff",
+    bgcolor: alpha("#64748b", 0.28),
+    borderColor: alpha("#e2e8f0", 0.5),
+  },
+} satisfies SxProps<Theme>;
 
 export const layoutShellSidebarCtaButtonSx = {
   ...layoutShellSx.navItemActive,
@@ -437,6 +494,29 @@ export const agenticPageSx = {
   panelBody: {
     ...agenticSurfaceSx.panel,
     p: { xs: 2.5, sm: 3 },
+  } satisfies SxProps<Theme>,
+
+  recipeRow: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 1,
+  } satisfies SxProps<Theme>,
+
+  recipeButton: {
+    textTransform: "none",
+    fontWeight: 600,
+    borderColor: alpha("#94a3b8", 0.45),
+    color: "#334155",
+    bgcolor: "#fff",
+    "&:hover": {
+      borderColor: alpha("#64748b", 0.7),
+      bgcolor: alpha("#64748b", 0.06),
+    },
+  } satisfies SxProps<Theme>,
+
+  recipeButtonActive: {
+    color: "#f8fafc",
+    ...accentRedContainedButtonSx,
   } satisfies SxProps<Theme>,
 
   loadingState: {
@@ -1278,6 +1358,9 @@ export const showcaseSx = {
     fontWeight: 700,
     fontSize: "1.125rem",
     color: "#0f172a",
+    minWidth: 0,
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
   } satisfies SxProps<Theme>,
   metricLabel: {
     fontFamily: pageFonts.mono,

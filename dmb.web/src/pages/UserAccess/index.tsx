@@ -4,15 +4,15 @@ import { showcaseSx } from "styles/main_style";
 
 export default function UserAccessPage() {
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 3, md: 4 } }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
       <Box sx={{ mb: 3 }}>
         <Typography sx={showcaseSx.kicker}>Super admin</Typography>
         <Typography component="h1" sx={showcaseSx.sectionTitle}>
-          Who can open Leads
+          Manage users
         </Typography>
         <Typography sx={showcaseSx.cardBody}>
-          Grant Admin to people who should work the pipeline. Super admin cannot be given or
-          removed from this list.
+          Update account details or delete a user and every related record. Super admin cannot be
+          deleted, and you cannot delete your own account from here.
         </Typography>
       </Box>
       <AdminUsersPanel />

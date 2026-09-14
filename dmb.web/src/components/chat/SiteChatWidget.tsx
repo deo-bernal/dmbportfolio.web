@@ -28,14 +28,13 @@ const ATTENTION_MESSAGES = [
   "Need a free online profile? ✨",
   "Want AI automation for your business?",
   "Build your resume with AI",
-  "Lots for sale in Pampanga",
 ];
 
 function welcomeMessage(firstName: string): SiteChatMessage {
   const greeting = firstName ? `Hi ${firstName}` : "Hi";
   return {
     role: "assistant",
-    content: `${greeting}. I am DMB Assistant. Ask about free portfolio pages, [[AI automation services|/ai-automation]], or DMB Real Estate lots in Pampanga. I run on free-tier Groq and Gemini APIs. Replies can be limited when usage caps are hit.`,
+    content: `${greeting}. I am DMB Assistant. Ask about [[AI automation services|/ai-automation]] or free portfolio pages. I run on free-tier Groq and Gemini APIs. Replies can be limited when usage caps are hit.`,
   };
 }
 

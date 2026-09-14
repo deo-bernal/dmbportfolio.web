@@ -9,6 +9,7 @@ import useAuth from "./hooks/useAuth";
 import createRouter from "./router";
 import ThemeProvider from "./theme/ThemeProvider";
 import SiteChatWidget from "./components/chat/SiteChatWidget";
+import InquiryModal from "./components/leads/InquiryModal";
 import { prefetchPublicProfile } from "./services/publicContentCache";
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
         >
           <CssBaseline />
           {auth.isInitialized ? content : null}
+          {auth.isInitialized ? <InquiryModal /> : null}
           {auth.isInitialized ? <SiteChatWidget /> : null}
         </SnackbarProvider>
       </LocalizationProvider>

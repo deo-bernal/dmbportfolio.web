@@ -11,17 +11,17 @@ const GROQ_BASE_URL = (
   process.env.OPENAI_BASE_URL || "https://api.groq.com/openai/v1"
 ).replace(/\/$/, "");
 const GROQ_MODELS = unique([
-  "llama-3.1-8b-instant",
-  process.env.OPENAI_MODEL,
   "openai/gpt-oss-20b",
   "openai/gpt-oss-120b",
   "qwen/qwen3.6-27b",
+  process.env.OPENAI_MODEL,
 ]);
 const GEMINI_MODELS = unique([
+  "gemini-3.6-flash",
   process.env.GEMINI_MODEL,
+  "gemini-flash-latest",
   "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-flash-latest",
 ]);
 
 const QUOTA_MESSAGE = [
@@ -57,47 +57,68 @@ function logProviderError(provider, error) {
   console.error(`${provider}: ${errorText(error)}`);
 }
 
-async function callGroq({ system, user, json }) {
+function isJsonModeError(error) {
+  return /Failed to validate JSON|json_object|response_format|json schema/i.test(errorText(error));
+}
+
+async function groqChatRequest(apiKey, { model, messages, json, tools, maxTokens }) {
+  const body = {
+    model,
+    temperature: json ? 0.4 : 0.2,
+    messages,
+  };
+  if (/gpt-oss/i.test(model)) {
+    body.include_reasoning = false;
+  }
+  if (maxTokens) body.max_tokens = maxTokens;
+  if (json) body.response_format = { type: "json_object" };
+  if (tools) {
+    body.tools = tools;
+    body.tool_choice = "auto";
+  }
+
+  const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(payload?.error?.message || `Groq request failed (${response.status}).`);
+    error.statusCode = response.status;
+    throw error;
+  }
+  return payload;
+}
+
+async function callGroq({ system, user, json, maxTokens }) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
+  const messages = [
+    { role: "system", content: system },
+    { role: "user", content: user },
+  ];
   let lastError;
   for (const model of GROQ_MODELS) {
-    try {
-      const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          temperature: json ? 0.4 : 0.3,
-          ...(json ? { response_format: { type: "json_object" } } : {}),
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: user },
-          ],
-        }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const error = new Error(payload?.error?.message || `Groq request failed (${response.status}).`);
-        error.statusCode = response.status;
-        throw error;
-      }
-
-      const content = payload?.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error("AI returned an empty response.");
-      }
-      return content;
-    } catch (error) {
-      lastError = error;
-      logProviderError(`Groq ${model}`, error);
-      if (!isQuotaError(error) && !isMissingModelError(error)) {
-        throw error;
+    for (const useJson of json ? [true, false] : [false]) {
+      try {
+        const payload = await groqChatRequest(apiKey, { model, messages, json: useJson, maxTokens });
+        const content = payload?.choices?.[0]?.message?.content;
+        if (!content) {
+          throw new Error("AI returned an empty response.");
+        }
+        return content;
+      } catch (error) {
+        lastError = error;
+        logProviderError(`Groq ${model}${useJson ? " json" : ""}`, error);
+        if (useJson && isJsonModeError(error)) {
+          continue;
+        }
+        break;
       }
     }
   }
@@ -113,28 +134,7 @@ async function callGroqChat({ messages, tools = null, json = false }) {
   let lastError;
   for (const model of GROQ_MODELS) {
     try {
-      const response = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0.2,
-          messages,
-          ...(tools ? { tools, tool_choice: "auto" } : {}),
-          ...(json ? { response_format: { type: "json_object" } } : {}),
-        }),
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const error = new Error(payload?.error?.message || `Groq request failed (${response.status}).`);
-        error.statusCode = response.status;
-        throw error;
-      }
-
+      const payload = await groqChatRequest(apiKey, { model, messages, json, tools });
       const message = payload?.choices?.[0]?.message;
       if (!message) {
         throw new Error("AI returned an empty response.");
@@ -147,9 +147,6 @@ async function callGroqChat({ messages, tools = null, json = false }) {
     } catch (error) {
       lastError = error;
       logProviderError(`Groq chat ${model}`, error);
-      if (!isQuotaError(error) && !isMissingModelError(error)) {
-        throw error;
-      }
     }
   }
 
@@ -157,7 +154,7 @@ async function callGroqChat({ messages, tools = null, json = false }) {
   return null;
 }
 
-async function callGeminiSdk({ system, user, json }) {
+async function callGeminiSdk({ system, user, json, maxTokens }) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
@@ -171,6 +168,7 @@ async function callGeminiSdk({ system, user, json }) {
         model: modelName,
         generationConfig: {
           temperature: json ? 0.4 : 0.3,
+          ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
           ...(json ? { responseMimeType: "application/json" } : {}),
         },
       });
@@ -182,9 +180,6 @@ async function callGeminiSdk({ system, user, json }) {
     } catch (error) {
       lastError = error;
       logProviderError(`Gemini SDK ${modelName}`, error);
-      if (!isQuotaError(error) && !isMissingModelError(error)) {
-        throw error;
-      }
     }
   }
 
@@ -192,7 +187,7 @@ async function callGeminiSdk({ system, user, json }) {
   return null;
 }
 
-async function callGeminiRest({ system, user, json }) {
+async function callGeminiRest({ system, user, json, maxTokens }) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
@@ -210,6 +205,7 @@ async function callGeminiRest({ system, user, json }) {
           contents: [{ role: "user", parts: [{ text: user }] }],
           generationConfig: {
             temperature: json ? 0.4 : 0.3,
+            ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
             ...(json ? { responseMimeType: "application/json" } : {}),
           },
         }),
@@ -230,9 +226,6 @@ async function callGeminiRest({ system, user, json }) {
     } catch (error) {
       lastError = error;
       logProviderError(`Gemini REST ${modelName}`, error);
-      if (!isQuotaError(error) && !isMissingModelError(error)) {
-        throw error;
-      }
     }
   }
 
@@ -250,13 +243,13 @@ async function callGemini(options) {
   return callGeminiRest(options);
 }
 
-async function generateAiText({ system, user, json = false }) {
+async function generateAiText({ system, user, json = false, maxTokens }) {
   const providers = [];
   if (process.env.OPENAI_API_KEY) {
-    providers.push(() => callGroq({ system, user, json }));
+    providers.push(() => callGroq({ system, user, json, maxTokens }));
   }
   if (process.env.GEMINI_API_KEY) {
-    providers.push(() => callGemini({ system, user, json }));
+    providers.push(() => callGemini({ system, user, json, maxTokens }));
   }
 
   if (providers.length === 0) {

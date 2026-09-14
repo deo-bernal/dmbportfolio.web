@@ -1,6 +1,8 @@
 import type { RouteObject } from "react-router";
 import { Navigate } from "react-router-dom";
 import Login from "../pages/Auth/Login";
+import AuthCallback from "../pages/Auth/Callback";
+import AuthComplete from "../pages/Auth/Complete";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
 import ResetPassword from "../pages/Auth/ResetPassword";
 import Register from "../pages/Register";
@@ -24,7 +26,21 @@ import RequireAuth from "../components/auth/RequireAuth";
 import RequireLeadAccess from "../components/auth/RequireLeadAccess";
 import RequireSuperAdmin from "../components/auth/RequireSuperAdmin";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
-import { ONBOARD_PATH } from "../utils/navigation";
+import CrmGateway from "../pages/CrmGateway";
+import LmsGateway from "../pages/LmsGateway";
+import { AI_AUTOMATION_PATH, ONBOARD_PATH } from "../utils/navigation";
+
+function aiAutomationRoute() {
+  return {
+    element: <AccentSidebarLayout />,
+    children: [
+      {
+        path: "",
+        element: <AiAutomationPage />,
+      },
+    ],
+  };
+}
 
 type RouterConfig = {
   token: string | null;
@@ -39,6 +55,14 @@ export default function createRouter({
     {
       path: "/login",
       element: token ? <AuthRedirect /> : <Login />,
+    },
+    {
+      path: "/auth/callback",
+      element: <AuthCallback />,
+    },
+    {
+      path: "/auth/complete",
+      element: <AuthComplete />,
     },
     {
       path: "/forgot-password",
@@ -66,7 +90,7 @@ export default function createRouter({
     },
     {
       path: "/",
-      element: token ? <Navigate to="/accent-sidebar" replace /> : <LandingPage />,
+      element: <Navigate to={AI_AUTOMATION_PATH} replace />,
     },
     {
       path: "/portfolio",
@@ -75,19 +99,25 @@ export default function createRouter({
     // Registered ahead of the "/:username" public profile catch-all below.
     {
       path: "/ai-automation",
-      element: <AiAutomationPage />,
+      ...aiAutomationRoute(),
+    },
+    {
+      path: "/profiles",
+      element: <AccentSidebarLayout />,
+      children: [{ path: "", element: <LandingPage /> }],
     },
     {
       path: "/case-studies",
-      element: <CaseStudiesPage />,
-    },
-    {
-      path: "/case-studies/:slug",
-      element: <CaseStudyView />,
+      element: <AccentSidebarLayout />,
+      children: [
+        { path: "", element: <CaseStudiesPage /> },
+        { path: ":slug", element: <CaseStudyView /> },
+      ],
     },
     {
       path: "/stack",
-      element: <StackPage />,
+      element: <AccentSidebarLayout />,
+      children: [{ path: "", element: <StackPage /> }],
     },
     {
       path: "/Deo_Bernal_Resume.pdf",
@@ -146,6 +176,14 @@ export default function createRouter({
       ],
     },
     {
+      path: "/crm/*",
+      element: <CrmGateway />,
+    },
+    {
+      path: "/lms/*",
+      element: <LmsGateway />,
+    },
+    {
       path: "/:username",
       element: <AccentSidebarLayout />,
       children: [
@@ -161,7 +199,7 @@ export default function createRouter({
     },
     {
       path: "*",
-      element: <Navigate to={token ? "/accent-sidebar" : "/"} replace />,
+      element: <Navigate to={token ? "/accent-sidebar" : AI_AUTOMATION_PATH} replace />,
     },
   ];
 }

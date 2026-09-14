@@ -8,15 +8,22 @@ import {
 } from "styles/main_style";
 import useAuth from "hooks/useAuth";
 import useAccountGreeting from "hooks/useAccountGreeting";
+import { AI_AUTOMATION_PATH, PROFILES_PATH } from "utils/navigation";
 
 type MarketingLayoutProps = {
   children: ReactNode;
   mainSx?: object;
+  embedded?: boolean;
 };
 
-export default function MarketingLayout({ children, mainSx }: MarketingLayoutProps) {
+export default function MarketingLayout({ children, mainSx, embedded = false }: MarketingLayoutProps) {
   const auth = useAuth();
   const firstName = useAccountGreeting();
+
+  if (embedded) {
+    return <Box sx={mainSx}>{children}</Box>;
+  }
+
   return (
     <LoginMainContent sx={landingPageSx.root}>
       <Box component="header" sx={landingPageSx.header}>
@@ -28,13 +35,28 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
               { alignItems: "center", justifyContent: "space-between" },
             ]}
           >
-            <Typography
+            <Box
               component={RouterLink}
-              to="/"
-              sx={[landingPageSx.logo, { textDecoration: "none", color: "inherit" }]}
+              to={AI_AUTOMATION_PATH}
+              sx={[
+                landingPageSx.logo,
+                {
+                  textDecoration: "none",
+                  color: "inherit",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1.25,
+                },
+              ]}
             >
+              <Box
+                component="img"
+                src="/dmb-web-solutions-logo.png"
+                alt=""
+                sx={{ width: 40, height: 40, borderRadius: 1.25, display: "block", flexShrink: 0 }}
+              />
               DMB Web Solutions
-            </Typography>
+            </Box>
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Button
               component={RouterLink}
@@ -46,6 +68,28 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
               ]}
             >
               AI automation
+            </Button>
+            <Button
+              component="a"
+              href="/crm"
+              size="small"
+              sx={[
+                landingPageSx.headerButtonOutline,
+                { border: "none", display: { xs: "none", sm: "inline-flex" } },
+              ]}
+            >
+              CRM
+            </Button>
+            <Button
+              component="a"
+              href="/lms"
+              size="small"
+              sx={[
+                landingPageSx.headerButtonOutline,
+                { border: "none", display: { xs: "none", sm: "inline-flex" } },
+              ]}
+            >
+              LMS
             </Button>
             {auth.isAuthenticated ? (
               <>
@@ -80,7 +124,7 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
                   size="small"
                   sx={[landingPageSx.headerButtonPrimary, accentRedContainedButtonSx]}
                 >
-                  Create free profile
+                  Create account
                 </Button>
               </>
             )}
@@ -104,6 +148,18 @@ export default function MarketingLayout({ children, mainSx }: MarketingLayoutPro
               sx={landingPageSx.inlineLink}
             >
               dmbwebsolutions.com
+            </Link>
+            {" · "}
+            <Link href="/crm" underline="hover" sx={landingPageSx.inlineLink}>
+              CRM
+            </Link>
+            {" · "}
+            <Link href="/lms" underline="hover" sx={landingPageSx.inlineLink}>
+              LMS
+            </Link>
+            {" · "}
+            <Link component={RouterLink} to={`${PROFILES_PATH}#lots`} underline="hover" sx={landingPageSx.inlineLink}>
+              Lots in Pampanga
             </Link>
           </Typography>
         </Container>

@@ -13,6 +13,7 @@ import {
   persistAccountFirstName,
   readAccountFirstName,
 } from "../utils/accountGreeting";
+import { persistAccountUsername } from "../utils/publishGeneratedProfile";
 import type { ApiUser, Profile, ProjectCategory, ProjectItem } from "models";
 
 type AccountRoles = {
@@ -138,6 +139,7 @@ export const getProfile =
       const profile = mapProfileDetailsToProfile(res.data);
       const firstName = res.data.firstName || firstNameFromFullName(profile.name);
       persistAccountFirstName(firstName);
+      persistAccountUsername(res.data.username || res.data.email || "");
       dispatch(
         slice.actions.getProfileSuccess({
           profile,

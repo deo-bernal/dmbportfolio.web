@@ -33,7 +33,7 @@ describe("Login and portfolio flow", () => {
       },
     }).as("profileRequest");
 
-    cy.visit("/");
+    cy.visit("/login");
 
     cy.get("#login-username").type("admin11");
     cy.get("#login-password").type("password79");
@@ -53,7 +53,7 @@ describe("Login and portfolio flow", () => {
       body: { message: "Unauthorized" },
     }).as("loginRequest");
 
-    cy.visit("/");
+    cy.visit("/login");
 
     cy.get("#login-username").type("wrong-user");
     cy.get("#login-password").type("wrong-pass");

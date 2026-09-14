@@ -28,9 +28,13 @@ const TIMELINES = ["Right away", "This month", "This quarter", "Just exploring"]
 
 type LeadFormProps = {
   source?: LeadSource;
+  variant?: "demo" | "inquiry";
 };
 
-export default function LeadForm({ source = "funnel-form" }: LeadFormProps) {
+export default function LeadForm({
+  source = "funnel-form",
+  variant = "inquiry",
+}: LeadFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
@@ -79,10 +83,12 @@ export default function LeadForm({ source = "funnel-form" }: LeadFormProps) {
           <CheckCircleOutlineIcon sx={{ color: "#15803d" }} />
           <Typography sx={showcaseSx.stepLabel}>{sentMessage}</Typography>
         </Stack>
-        <Typography sx={showcaseSx.cardBody}>
-          A confirmation email is on its way. If you would rather skip the email
-          thread, {HAS_BOOKING_PAGE ? "pick a time directly." : "email me and we will pick a time."}
-        </Typography>
+        {variant === "inquiry" ? null : (
+          <Typography sx={showcaseSx.cardBody}>
+            A confirmation email is on its way. If you would rather skip the email
+            thread, {HAS_BOOKING_PAGE ? "pick a time directly." : "email me and we will pick a time."}
+          </Typography>
+        )}
         <Button
           href={getBookingHref()}
           target={HAS_BOOKING_PAGE ? "_blank" : undefined}
@@ -98,7 +104,7 @@ export default function LeadForm({ source = "funnel-form" }: LeadFormProps) {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} sx={{ position: "relative" }}>
       {error ? <Alert severity="error">{error}</Alert> : null}
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -156,7 +162,7 @@ export default function LeadForm({ source = "funnel-form" }: LeadFormProps) {
       <TextField
         label="What are you trying to automate? (optional)"
         multiline
-        minRows={3}
+        minRows={variant === "inquiry" ? 2 : 3}
         value={message}
         onChange={(event) => setMessage(event.target.value)}
         fullWidth
@@ -183,17 +189,23 @@ export default function LeadForm({ source = "funnel-form" }: LeadFormProps) {
         onClick={() => void handleSubmit()}
         startIcon={isSending ? <ButtonLoadingIcon /> : null}
         sx={[
-          { textTransform: "none", fontWeight: 700, alignSelf: { xs: "stretch", sm: "flex-start" } },
+          {
+            textTransform: "none",
+            fontWeight: 700,
+            alignSelf: variant === "inquiry" ? "stretch" : { xs: "stretch", sm: "flex-start" },
+          },
           accentRedContainedButtonSx,
         ]}
       >
-        {isSending ? "Sending..." : "Send it through the pipeline"}
+        {isSending ? "Sending..." : variant === "inquiry" ? "Send inquiry" : "Send it through the pipeline"}
       </Button>
 
-      <Typography sx={showcaseSx.codeCaption}>
-        Submitting runs the real pipeline: stored in Supabase, pushed to n8n, and
-        answered by an automated email.
-      </Typography>
+      {variant === "inquiry" ? null : (
+        <Typography sx={showcaseSx.codeCaption}>
+          Submitting runs the real pipeline: stored in Supabase, pushed to n8n, and
+          answered by an automated email.
+        </Typography>
+      )}
     </Stack>
   );
 }

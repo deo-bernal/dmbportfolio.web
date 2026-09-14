@@ -24,12 +24,14 @@ import { resolvePostLoginPath } from "services/postLoginNavigation";
 import { getSafeRedirectPath } from "utils/navigation";
 import { loginJwtSubmitButtonSignInSx, loginJwtSx } from "styles/main_style";
 import type { ApiMessageResponse, AuthFormValues } from "models";
+import SocialAuthButtons from "components/auth/SocialAuthButtons";
 
 const LoginJWT: FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
+  const ssoError = searchParams.get("ssoError")?.trim() ?? "";
 
   const formOptions = {
     resolver: yupResolver(authSchema),
@@ -45,7 +47,11 @@ const LoginJWT: FC = () => {
   const onSubmit = async ({ username, password }: AuthFormValues) => {
     try {
       await login(username, password);
-      sessionStorage.setItem("dmb:account-username", username.trim());
+      try {
+        sessionStorage.setItem("dmb:account-username", username.trim());
+      } catch {
+        // Ignore quota / private-mode errors.
+      }
       const nextPath = redirectPath ?? (await resolvePostLoginPath());
       navigate(nextPath, { replace: true });
     } catch (error: unknown) {
@@ -80,6 +86,13 @@ const LoginJWT: FC = () => {
           Credential gateway
         </Typography>
       </Box>
+
+      <SocialAuthButtons />
+      {ssoError ? (
+        <FormHelperText error sx={loginJwtSx.rootErrorHelper}>
+          {ssoError}
+        </FormHelperText>
+      ) : null}
 
       <TextField
         sx={loginJwtSx.textField}

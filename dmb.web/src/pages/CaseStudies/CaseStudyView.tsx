@@ -1,10 +1,12 @@
 import { Link as RouterLink, Navigate, useParams } from "react-router-dom";
 import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
 import MarketingLayout from "components/layout/MarketingLayout";
+import { openInquireModal } from "components/leads/InquiryModal";
 import FreeTierNotice from "components/showcase/FreeTierNotice";
 import { findCaseStudy, type CaseStudySection } from "content/showcase";
 import {
   accentRedContainedButtonSx,
+  agenticPageSx,
   landingPageSx,
   showcaseSx,
 } from "styles/main_style";
@@ -55,8 +57,8 @@ export default function CaseStudyView() {
   }
 
   return (
-    <MarketingLayout mainSx={landingPageSx.main}>
-      <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 } }}>
+    <MarketingLayout mainSx={agenticPageSx.embeddedMain} embedded>
+      <Container maxWidth="md" sx={{ py: { xs: 1, md: 2 } }}>
         <Box sx={landingPageSx.heroPanel}>
           <Stack spacing={2.5}>
             <Typography sx={showcaseSx.kicker}>
@@ -77,7 +79,7 @@ export default function CaseStudyView() {
 
             <Grid container spacing={2}>
               {study.metrics.map((metric) => (
-                <Grid key={metric.label} size={{ xs: 12, sm: 4 }}>
+                <Grid key={metric.label} size={{ xs: 12, md: 4 }} sx={{ minWidth: 0 }}>
                   <Typography sx={showcaseSx.metricLabel}>{metric.label}</Typography>
                   <Typography sx={showcaseSx.metricValue}>{metric.value}</Typography>
                 </Grid>
@@ -101,7 +103,7 @@ export default function CaseStudyView() {
             Want one of these for your business?
           </Typography>
           <Typography sx={landingPageSx.bottomCtaBody}>
-            The same pipeline — capture, qualify, follow up, book — takes days, not
+            The same capture, qualify, follow-up, and booking loop takes days, not
             months.
           </Typography>
           <Stack
@@ -110,13 +112,12 @@ export default function CaseStudyView() {
             sx={{ justifyContent: "center" }}
           >
             <Button
-              component={RouterLink}
-              to="/ai-automation#work-with-me"
               variant="contained"
               size="large"
+              onClick={() => openInquireModal()}
               sx={[landingPageSx.ctaPrimary, accentRedContainedButtonSx]}
             >
-              Start the pipeline demo
+              Inquire
             </Button>
             <Button
               component={RouterLink}

@@ -1,18 +1,20 @@
 import { Link as RouterLink } from "react-router-dom";
 import { Box, Button, Container, Grid, Stack, Typography } from "@mui/material";
 import MarketingLayout from "components/layout/MarketingLayout";
+import { openInquireModal } from "components/leads/InquiryModal";
 import FreeTierNotice from "components/showcase/FreeTierNotice";
 import { CASE_STUDIES } from "content/showcase";
 import {
   accentRedContainedButtonSx,
+  agenticPageSx,
   landingPageSx,
   showcaseSx,
 } from "styles/main_style";
 
 export default function CaseStudiesPage() {
   return (
-    <MarketingLayout mainSx={landingPageSx.main}>
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
+    <MarketingLayout mainSx={agenticPageSx.embeddedMain} embedded>
+      <Container maxWidth="lg" sx={{ py: { xs: 1, md: 2 } }}>
         <Box sx={landingPageSx.heroPanel}>
           <Stack spacing={2.5}>
             <Typography sx={showcaseSx.kicker}>Case studies</Typography>
@@ -64,17 +66,15 @@ export default function CaseStudiesPage() {
             See the automation running
           </Typography>
           <Typography sx={landingPageSx.bottomCtaBody}>
-            The lead pipeline on the services page is live — submit it and watch the
-            follow-up arrive.
+            Send an inquiry if you want the same kind of system for your business.
           </Typography>
           <Button
-            component={RouterLink}
-            to="/ai-automation"
             variant="contained"
             size="large"
+            onClick={() => openInquireModal()}
             sx={[landingPageSx.ctaPrimary, accentRedContainedButtonSx]}
           >
-            Open the services page
+            Inquire
           </Button>
         </Box>
       </Container>

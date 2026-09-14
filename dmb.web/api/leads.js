@@ -1,5 +1,7 @@
 const {
   captureLead,
+  deleteLead,
+  deleteLeadsByStatus,
   isRateLimited,
   listLeads,
   normalizeLead,
@@ -49,8 +51,22 @@ async function isOwner(req) {
   return identifiers.some((value) => OWNER_EMAILS.includes(value));
 }
 
+function readJsonBody(req) {
+  if (req.body && typeof req.body === "object") {
+    return req.body;
+  }
+  if (typeof req.body === "string" && req.body.trim()) {
+    try {
+      return JSON.parse(req.body);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
 async function handlePost(req, res) {
-  const result = normalizeLead(req.body || {});
+  const result = normalizeLead(readJsonBody(req));
 
   if (!result.ok) {
     if (result.dropped) {
@@ -119,6 +135,42 @@ async function handlePatch(req, res) {
   }
 }
 
+async function handleDelete(req, res) {
+  if (!(await isOwner(req))) {
+    res.status(401).json({ message: "Sign in with the owner account to delete leads." });
+    return;
+  }
+
+  const body = req.body || {};
+  const id = body.id;
+  const status = typeof body.status === "string" ? body.status.trim().toLowerCase() : "";
+
+  if (id !== undefined && id !== null && String(id).trim() !== "") {
+    try {
+      await deleteLead(id);
+      res.status(200).json({ deleted: "one", id });
+      return;
+    } catch (error) {
+      console.error(`leads: delete failed — ${error?.message || error}`);
+      res.status(400).json({ message: error?.message || "Could not delete that lead." });
+      return;
+    }
+  }
+
+  if (!status) {
+    res.status(400).json({ message: "Provide a lead id or a status." });
+    return;
+  }
+
+  try {
+    await deleteLeadsByStatus(status);
+    res.status(200).json({ deleted: "status", status });
+  } catch (error) {
+    console.error(`leads: delete-by-status failed — ${error?.message || error}`);
+    res.status(400).json({ message: error?.message || "Could not delete those leads." });
+  }
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
@@ -138,6 +190,11 @@ module.exports = async (req, res) => {
     return;
   }
 
-  res.setHeader("Allow", "GET, POST, PATCH");
+  if (req.method === "DELETE") {
+    await handleDelete(req, res);
+    return;
+  }
+
+  res.setHeader("Allow", "GET, POST, PATCH, DELETE");
   res.status(405).json({ message: "Method not allowed." });
 };

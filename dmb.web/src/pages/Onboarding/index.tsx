@@ -21,29 +21,30 @@ import {
   AI_FREE_TIER_PERFORMANCE,
   AI_FREE_TIER_TRADEOFFS,
 } from "content/aiFreeTier";
-import api from "services/http.service";
 import MarketingLayout from "components/layout/MarketingLayout";
 import {
   accentRedContainedButtonSx,
   agenticPageSx,
   onboardingPageSx,
 } from "styles/main_style";
-import type { GeneratedProfile, ResumeProfile, UpdateProfileRequest } from "models";
+import type { GeneratedProfile } from "models";
+import { getProfile } from "slices/user";
+import { useDispatch } from "store";
 import {
   parseResumeFile,
   resumeAcceptAttribute,
 } from "utils/parseResumeFile";
+import {
+  firstFilled,
+  getAccountUsername,
+  loadAccountInfo,
+  persistAccountUsername,
+  publishGeneratedProfile,
+  type AccountInfo,
+} from "utils/publishGeneratedProfile";
+import { DASHBOARD_PATH } from "utils/navigation";
 
 type WizardStep = "input" | "generating" | "review" | "success";
-
-/** Name, phone, and address already saved on the account, used when AI leaves them blank. */
-type AccountInfo = {
-  firstName: string;
-  lastName: string;
-  contactNo: string;
-  email: string;
-  address: string;
-};
 
 const EMPTY_ACCOUNT_INFO: AccountInfo = {
   firstName: "",
@@ -52,29 +53,6 @@ const EMPTY_ACCOUNT_INFO: AccountInfo = {
   email: "",
   address: "",
 };
-
-const ACCOUNT_USERNAME_KEY = "dmb:account-username";
-
-function getAccountUsername(): string {
-  try {
-    return sessionStorage.getItem(ACCOUNT_USERNAME_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-function toNullableDate(value: string): string | null {
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
-}
-
-function firstFilled(...values: Array<string | null | undefined>): string {
-  for (const value of values) {
-    const trimmed = String(value ?? "").trim();
-    if (trimmed) return trimmed;
-  }
-  return "";
-}
 
 /**
  * Saving a blank name or phone overwrites what the account already has, so every
@@ -103,73 +81,9 @@ function mergeAccountDefaults(profile: GeneratedProfile, account: AccountInfo): 
   };
 }
 
-function buildProfilePayload(
-  profile: GeneratedProfile,
-  accountEmail: string,
-  account: AccountInfo
-): UpdateProfileRequest {
-  return {
-    summary: profile.summary,
-    video: "",
-    isViewable: true,
-    skills: profile.skills,
-    contact: {
-      email: firstFilled(profile.resume.personalInfo.email, account.email, accountEmail),
-      phone: firstFilled(
-        profile.contact.phone,
-        profile.resume.personalInfo.contactNo,
-        account.contactNo
-      ),
-    },
-    projectCategories:
-      profile.projectCategories.length > 0
-        ? profile.projectCategories
-        : [{ title: "Projects", items: [{ name: "My Work", description: profile.summary }] }],
-  };
-}
-
-function buildResumePayload(
-  profile: GeneratedProfile,
-  accountEmail: string,
-  account: AccountInfo
-) {
-  const personalInfo = profile.resume.personalInfo;
-  return {
-    personalInfo: {
-      firstName: firstFilled(personalInfo.firstName, account.firstName),
-      lastName: firstFilled(personalInfo.lastName, account.lastName),
-      contactNo:
-        firstFilled(personalInfo.contactNo, profile.contact.phone, account.contactNo) || null,
-      email: firstFilled(personalInfo.email, account.email, accountEmail),
-      address:
-        firstFilled(personalInfo.address, profile.contact.address, account.address) || null,
-      summary: personalInfo.summary || profile.summary || null,
-    },
-    workHistory: profile.resume.workHistory.map((item) => ({
-      company: item.company,
-      position: item.position,
-      fromDate: toNullableDate(item.fromDate),
-      toDate: toNullableDate(item.toDate),
-      jobDescription: item.jobDescription || null,
-    })),
-    education: profile.resume.education.map((item) => ({
-      school: item.school,
-      address: item.address || null,
-      courseTaken: item.courseTaken || null,
-      startDate: toNullableDate(item.startDate),
-      endDate: toNullableDate(item.endDate),
-    })),
-    affiliations: profile.resume.affiliations.map((item) => ({
-      organization: item.organization,
-      title: item.title,
-      issueDate: toNullableDate(item.issueDate),
-      details: item.details || null,
-    })),
-  };
-}
-
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const accountEmail = useMemo(() => getAccountUsername(), []);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -191,24 +105,17 @@ export default function OnboardingPage() {
   useEffect(() => {
     let cancelled = false;
 
-    const loadAccountInfo = async () => {
+    const loadSavedAccount = async () => {
       try {
-        const res = await api.get<ResumeProfile>("/resume");
+        const info = await loadAccountInfo(accountEmail);
         if (cancelled) return;
-        const info = res.data?.personalInfo;
-        accountInfoRef.current = {
-          firstName: firstFilled(info?.firstName),
-          lastName: firstFilled(info?.lastName),
-          contactNo: firstFilled(info?.contactNo),
-          email: firstFilled(info?.email, accountEmail),
-          address: firstFilled(info?.address),
-        };
+        accountInfoRef.current = info;
       } catch {
-        // No saved resume yet — the AI draft fields stay as-is.
+        // No saved account details yet — the AI draft fields stay as-is.
       }
     };
 
-    void loadAccountInfo();
+    void loadSavedAccount();
     return () => {
       cancelled = true;
     };
@@ -277,39 +184,21 @@ export default function OnboardingPage() {
     setError(null);
 
     try {
-      const account = accountInfoRef.current;
-      const profilePayload = buildProfilePayload(generatedProfile, accountEmail, account);
-      const resumePayload = buildResumePayload(generatedProfile, accountEmail, account);
-
-      try {
-        await api.post("/profiledetails", profilePayload);
-      } catch (createError: unknown) {
-        if (axiosIsError(createError) && createError.response?.status === 409) {
-          await api.put("/profiledetails", profilePayload);
-        } else {
-          throw createError;
-        }
-      }
-
-      await api.put("/resume", resumePayload);
-
-      const username = accountEmail || profilePayload.contact.email;
+      const username = await publishGeneratedProfile(generatedProfile);
+      persistAccountUsername(username);
+      await dispatch(getProfile() as any);
       const origin = window.location.origin;
       setPublicUrl(`${origin}/${encodeURIComponent(username)}`);
       setStep("success");
     } catch (err: unknown) {
-      if (axiosIsError(err)) {
-        setError(err.response?.data?.message ?? "Unable to publish profile.");
-      } else {
-        setError("Unable to publish profile.");
-      }
+      setError(err instanceof Error ? err.message : "Unable to publish profile.");
     } finally {
       setIsPublishing(false);
     }
   };
 
   return (
-    <MarketingLayout mainSx={onboardingPageSx.container}>
+    <MarketingLayout mainSx={onboardingPageSx.container} embedded>
       <Container maxWidth="md">
         <Box sx={onboardingPageSx.panel}>
           <Stack spacing={3}>
@@ -649,7 +538,7 @@ export default function OnboardingPage() {
                 <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   <CheckCircleOutlinedIcon sx={{ color: "#15803d" }} />
                   <Typography sx={onboardingPageSx.successText}>
-                    Your public profile is ready.
+                    Portfolio and resume are saved to your account.
                   </Typography>
                 </Stack>
                 {publicUrl ? (
@@ -662,11 +551,19 @@ export default function OnboardingPage() {
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
                   <Button
                     component={RouterLink}
-                    to="/accent-sidebar/portfolio"
+                    to={DASHBOARD_PATH}
                     variant="contained"
                     sx={[onboardingPageSx.primaryButton, accentRedContainedButtonSx]}
                   >
-                    Open dashboard
+                    Open portfolio
+                  </Button>
+                  <Button
+                    component={RouterLink}
+                    to="/accent-sidebar/resume"
+                    variant="outlined"
+                    sx={onboardingPageSx.secondaryButton}
+                  >
+                    Open resume
                   </Button>
                   {publicUrl ? (
                     <Button

@@ -38,7 +38,7 @@ describe("Delete account", () => {
       body: { message: "Account deleted successfully." },
     }).as("deleteAccountRequest");
 
-    cy.visit("/");
+    cy.visit("/login");
 
     cy.get("#login-username").type("admin11");
     cy.get("#login-password").type("password79");

@@ -61,7 +61,7 @@ export default function PublicPortfolioPage() {
   }
 
   return (
-    <MarketingLayout mainSx={agenticPageSx.embeddedMain}>
+    <MarketingLayout mainSx={agenticPageSx.embeddedMain} embedded>
       <Stack sx={agenticPageSx.stackSections}>
         <Box sx={agenticPageSx.panelBody}>
           <Box component="header" sx={agenticPageSx.headerRow}>

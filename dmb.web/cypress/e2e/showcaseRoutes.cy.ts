@@ -1,16 +1,23 @@
 /// <reference types="cypress" />
 
 describe("AI automation showcase routes", () => {
+  it("redirects the site root to AI Automations", () => {
+    cy.visit("/");
+    cy.location("pathname").should("eq", "/ai-automation");
+    cy.contains("h1", "AI systems that capture, qualify, and book your leads.");
+  });
+
   it("renders the services funnel", () => {
     cy.visit("/ai-automation");
     cy.contains("h1", "AI systems that capture, qualify, and book your leads.");
-    cy.contains("Submit this form and watch the automation run");
+    cy.contains("button", /^Inquire$/i).should("be.visible");
     cy.contains("A tool-using Agentic AI profile builder");
     cy.contains("Replay canned run");
   });
 
   it("renders the case study index and both write-ups", () => {
     cy.visit("/case-studies");
+    cy.contains("button", /^Inquire$/i).should("be.visible");
     cy.contains("h1", "Work you can open in another tab.");
 
     cy.visit("/case-studies/dmb-assistant");
@@ -27,6 +34,7 @@ describe("AI automation showcase routes", () => {
 
   it("renders the stack page with both honesty groups", () => {
     cy.visit("/stack");
+    cy.contains("button", /^Inquire$/i).should("be.visible");
     cy.contains("Running in production right now");
     cy.contains("Comfortable, and quick to get productive");
   });
@@ -37,6 +45,18 @@ describe("AI automation showcase routes", () => {
     cy.contains("Seven pieces, one working system");
   });
 
+  it("sends logged-out service links to login, then back to the chosen tool", () => {
+    cy.visit("/ai-automation");
+    cy.contains("a", "Agentic AI").click();
+    cy.location("pathname").should("eq", "/login");
+    cy.location("search").should("include", encodeURIComponent("/accent-sidebar/agent"));
+
+    cy.visit("/ai-automation");
+    cy.contains("a", "AI Profile Builder").click();
+    cy.location("pathname").should("eq", "/login");
+    cy.location("search").should("include", encodeURIComponent("/accent-sidebar/onboarding"));
+  });
+
   it("posts the funnel form to the lead endpoint", () => {
     cy.intercept("POST", "/api/leads", {
       statusCode: 201,
@@ -44,12 +64,15 @@ describe("AI automation showcase routes", () => {
     }).as("createLead");
 
     cy.visit("/ai-automation");
-    cy.get("input[type=email]").first().type("cypress@example.com");
-    cy.contains("label", "Name")
-      .parent()
-      .find("input")
-      .type("Cypress Check");
-    cy.contains("button", "Send it through the pipeline").click();
+    cy.contains("button", /^Inquire$/i).first().click();
+    cy.get('[role="dialog"]').within(() => {
+      cy.get("input[type=email]").first().type("cypress@example.com");
+      cy.contains("label", "Name")
+        .parent()
+        .find("input")
+        .type("Cypress Check");
+      cy.contains("button", "Send inquiry").click();
+    });
 
     cy.wait("@createLead").its("request.body").should((body) => {
       expect(body.email).to.eq("cypress@example.com");

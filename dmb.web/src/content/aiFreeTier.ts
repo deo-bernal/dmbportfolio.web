@@ -33,15 +33,9 @@ export type SiteAiModel = {
 
 export const AI_MODELS_IN_USE: SiteAiModel[] = [
   {
-    name: "gemini-2.5-flash",
+    name: "gemini-3.6-flash",
     provider: "Google Gemini",
     usedFor: "Chat streaming (primary) and profile agent",
-    tier: "Free tier",
-  },
-  {
-    name: "gemini-2.0-flash",
-    provider: "Google Gemini",
-    usedFor: "Chat and generation fallback",
     tier: "Free tier",
   },
   {

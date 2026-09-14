@@ -10,19 +10,41 @@ export type AgentStep = {
   arguments?: unknown;
 };
 
+export type AgentType = "profile" | "automation";
+
+export type AutomationBrief = {
+  name?: string;
+  email?: string;
+  company?: string;
+  need?: string;
+  timeline?: string;
+  message?: string;
+  source?: string;
+  services?: string;
+};
+
 export type AgentConfirm = {
   tool: string;
   arguments?: Record<string, unknown>;
   message?: string;
   draft?: GeneratedProfile | null;
+  brief?: AutomationBrief | null;
   runId?: number | null;
 };
 
 export type AgentEvent =
   | { type: "run"; runId: number | null }
-  | { type: "step"; step: AgentStep; draft?: GeneratedProfile }
-  | { type: "confirm"; tool: string; arguments?: Record<string, unknown>; draft?: GeneratedProfile | null; runId?: number | null; message?: string }
-  | { type: "done"; message: string; publicUrl?: string; runId?: number | null }
+  | { type: "step"; step: AgentStep; draft?: GeneratedProfile; brief?: AutomationBrief }
+  | {
+      type: "confirm";
+      tool: string;
+      arguments?: Record<string, unknown>;
+      draft?: GeneratedProfile | null;
+      brief?: AutomationBrief | null;
+      runId?: number | null;
+      message?: string;
+    }
+  | { type: "done"; message: string; publicUrl?: string; bookingUrl?: string; submitted?: boolean; runId?: number | null }
   | { type: "error"; message: string; clientFallback?: boolean; tool?: string };
 
 export type AgentSession = {
@@ -148,7 +170,14 @@ async function postAgent(body: Record<string, unknown>, onEvent: (event: AgentEv
 }
 
 export async function runProfileAgent(
-  input: { goal: string; resumeText: string; draft?: GeneratedProfile | null },
+  input: {
+    goal: string;
+    resumeText?: string;
+    workflowText?: string;
+    draft?: GeneratedProfile | null;
+    brief?: AutomationBrief | null;
+    agentType?: AgentType;
+  },
   onEvent: (event: AgentEvent) => void
 ): Promise<void> {
   await postAgent(input, onEvent);
@@ -160,9 +189,12 @@ export async function confirmAgentTool(
     tool: string;
     arguments?: Record<string, unknown>;
     goal: string;
-    resumeText: string;
+    resumeText?: string;
+    workflowText?: string;
     draft?: GeneratedProfile | null;
+    brief?: AutomationBrief | null;
     alreadySaved?: boolean;
+    agentType?: AgentType;
   },
   onEvent: (event: AgentEvent) => void
 ): Promise<void> {
@@ -171,8 +203,11 @@ export async function confirmAgentTool(
       runId: input.runId,
       goal: input.goal,
       resumeText: input.resumeText,
+      workflowText: input.workflowText,
       draft: input.draft,
+      brief: input.brief,
       alreadySaved: Boolean(input.alreadySaved),
+      agentType: input.agentType || "profile",
       confirm: { tool: input.tool, arguments: input.arguments || {} },
     },
     onEvent
@@ -180,11 +215,17 @@ export async function confirmAgentTool(
 }
 
 export async function denyAgentTool(
-  input: { runId?: number | null; tool: string; goal: string },
+  input: { runId?: number | null; tool: string; goal: string; agentType?: AgentType },
   onEvent: (event: AgentEvent) => void
 ): Promise<void> {
   await postAgent(
-    { runId: input.runId, tool: input.tool, goal: input.goal, deny: true },
+    {
+      runId: input.runId,
+      tool: input.tool,
+      goal: input.goal,
+      deny: true,
+      agentType: input.agentType || "profile",
+    },
     onEvent
   );
 }

@@ -34,6 +34,10 @@ services:
         value: "false"
       - key: N8N_RUNNERS_ENABLED
         value: "true"
+      # n8n 2.x blocks $env in nodes unless this is false. The lead workflow
+      # reads N8N_WEBHOOK_TOKEN, Slack, Supabase, and Resend that way.
+      - key: N8N_BLOCK_ENV_ACCESS_IN_NODE
+        value: "false"
       - key: DB_TYPE
         value: postgresdb
       - key: DB_POSTGRESDB_PORT

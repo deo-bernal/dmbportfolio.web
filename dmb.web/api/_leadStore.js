@@ -43,6 +43,18 @@ const BOOKING_URL =
 const MAX_FIELD = 2000;
 const RATE_LIMIT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const STORE_TIMEOUT_MS = 12000;
+const FANOUT_TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(url, options, ms) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 /** Best-effort per-instance throttle. Serverless instances are short lived, so
  * this stops a burst from one client without pretending to be a global limit. */
@@ -140,13 +152,14 @@ async function insertLead(lead) {
     return { stored: false, storage: "log" };
   }
 
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${SUPABASE_URL}/rest/v1/${encodeURIComponent(SUPABASE_TABLE)}`,
     {
       method: "POST",
       headers: supabaseHeaders({ Prefer: "return=representation" }),
       body: JSON.stringify([lead]),
-    }
+    },
+    STORE_TIMEOUT_MS
   );
 
   if (!response.ok) {
@@ -203,6 +216,55 @@ async function updateLeadStatus(id, status) {
 
   const rows = await response.json().catch(() => []);
   return rows?.[0] || null;
+}
+
+async function deleteLead(id) {
+  if (!supabaseConfigured()) {
+    throw new Error("Supabase is not configured.");
+  }
+  if (id === undefined || id === null || String(id).trim() === "") {
+    throw new Error("Provide a lead id.");
+  }
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/${encodeURIComponent(SUPABASE_TABLE)}?id=eq.${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+      headers: supabaseHeaders({ Prefer: "return=minimal" }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Supabase delete failed (${response.status}): ${detail.slice(0, 300)}`);
+  }
+}
+
+async function deleteLeadsByStatus(status) {
+  if (!LEAD_STATUSES.includes(status)) {
+    throw new Error(`Unknown status "${status}".`);
+  }
+  if (!supabaseConfigured()) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const filter =
+    status === "new"
+      ? "or=(status.eq.new,status.is.null)"
+      : `status=eq.${encodeURIComponent(status)}`;
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/${encodeURIComponent(SUPABASE_TABLE)}?${filter}`,
+    {
+      method: "DELETE",
+      headers: supabaseHeaders({ Prefer: "return=minimal" }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Supabase delete failed (${response.status}): ${detail.slice(0, 300)}`);
+  }
 }
 
 async function getLeadStatusByEmail(email) {
@@ -283,14 +345,18 @@ async function notifyWorkflow(lead) {
   if (!N8N_WEBHOOK_URL) return false;
 
   try {
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(N8N_WEBHOOK_TOKEN ? { "X-DMB-Token": N8N_WEBHOOK_TOKEN } : {}),
+    const response = await fetchWithTimeout(
+      N8N_WEBHOOK_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(N8N_WEBHOOK_TOKEN ? { "X-DMB-Token": N8N_WEBHOOK_TOKEN } : {}),
+        },
+        body: JSON.stringify({ ...lead, bookingUrl: BOOKING_URL, receivedAt: new Date().toISOString() }),
       },
-      body: JSON.stringify({ ...lead, bookingUrl: BOOKING_URL, receivedAt: new Date().toISOString() }),
-    });
+      FANOUT_TIMEOUT_MS
+    );
     if (!response.ok) {
       console.error(`leads: n8n webhook returned ${response.status}`);
       return false;
@@ -318,20 +384,24 @@ async function sendEmail({ to, subject, html, replyTo }) {
   }
 
   try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
+    const response = await fetchWithTimeout(
+      "https://api.resend.com/emails",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: FROM_EMAIL,
+          to: [to],
+          subject,
+          html,
+          ...(replyTo ? { reply_to: replyTo } : {}),
+        }),
       },
-      body: JSON.stringify({
-        from: FROM_EMAIL,
-        to: [to],
-        subject,
-        html,
-        ...(replyTo ? { reply_to: replyTo } : {}),
-      }),
-    });
+      FANOUT_TIMEOUT_MS
+    );
 
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
@@ -353,7 +423,7 @@ async function sendEmail({ to, subject, html, replyTo }) {
 async function captureLead(lead) {
   const inserted = await insertLead(lead);
 
-  const [notified, confirmed] = await Promise.all([
+  const results = await Promise.allSettled([
     notifyWorkflow(lead),
     sendEmail({
       to: lead.email,
@@ -372,8 +442,8 @@ async function captureLead(lead) {
 
   return {
     ...inserted,
-    notified,
-    confirmed,
+    notified: results[0].status === "fulfilled" && results[0].value === true,
+    confirmed: results[1].status === "fulfilled" && results[1].value === true,
     bookingUrl: BOOKING_URL,
   };
 }
@@ -382,6 +452,8 @@ module.exports = {
   BOOKING_URL,
   LEAD_STATUSES,
   captureLead,
+  deleteLead,
+  deleteLeadsByStatus,
   getLeadStatusByEmail,
   isRateLimited,
   listLeads,

@@ -16,18 +16,18 @@ You can also build or edit everything manually from Portfolio and Resume in the 
 Share one link. Portfolio and resume stay online. Profiles are only public when you mark them viewable.`,
 
   `A DMB profile includes a professional summary, skills, projects (grouped by category), optional intro video, and contact details.
-The resume side includes personal info, work history, education, and affiliations. Both are edited in the Online Profile dashboard after you sign in.`,
+The resume side includes personal info, work history, education, and affiliations. Both are edited from Your profile in the DMB Web Solutions sidebar after you sign in.`,
 
   `The AI builder uses your resume text and optional answers (target role, years of experience, top skills, a key achievement).
 It should not invent employers, degrees, or credentials. If something is missing, add it in the Portfolio or Resume editors after generation.
 There is a review step before content is saved to your account.`,
 
-  `The AI on this site is entirely free tier. Chat streams Google Gemini Flash (gemini-2.5-flash, then gemini-2.0-flash and gemini-flash-latest). Profile generation and chat fallback use Groq OpenAI-compatible models: openai/gpt-oss-20b, openai/gpt-oss-120b, and qwen/qwen3.6-27b. The optional voice agent is a Vapi trial. Performance is limited because these are free-tier APIs: strict rate limits, data privacy trade-offs, and no uptime guarantees. If a visitor hits a usage limit, tell them to wait about a minute and try again, and point them to /ai-automation#ai-models for the model list.`,
+  `The AI on this site is entirely free tier. Chat streams Google Gemini Flash (gemini-3.6-flash, then gemini-flash-latest). Profile generation and chat fallback use Groq OpenAI-compatible models: openai/gpt-oss-20b, openai/gpt-oss-120b, and qwen/qwen3.6-27b. The optional voice agent is a Vapi trial. Performance is limited because these are free-tier APIs: strict rate limits, data privacy trade-offs, and no uptime guarantees. If a visitor hits a usage limit, tell them to wait about a minute and try again, and point them to /ai-automation#ai-models for the model list.`,
 
   `Pricing: creating and publishing an online profile is free to start. Upgrade later when you need more (premium themes, custom domain, extra AI generations, and similar extras are planned).
 There is no charge required to register, generate a first profile, or share your public URL.`,
 
-  `Need an account? Use Create free profile / register. Already have an account? Sign in.
+  `Need an account? Use Create account / register. Already have an account? Sign in.
 Forgot password is available from the login page. New accounts require email activation before you can sign in.`,
 
   `DMB AI Automation is Deo Bernal's services side, at /ai-automation. Deo builds AI systems that capture, qualify, and book leads for businesses:
