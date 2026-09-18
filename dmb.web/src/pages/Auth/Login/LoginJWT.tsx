@@ -46,7 +46,13 @@ const LoginJWT: FC = () => {
 
   const onSubmit = async ({ username, password }: AuthFormValues) => {
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7513/ingest/47ea1aa0-3bc6-4901-89a9-6a98fae40541',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'aa2ea5'},body:JSON.stringify({sessionId:'aa2ea5',runId:'post-fix',hypothesisId:'F',location:'LoginJWT.tsx:onSubmit',message:'portfolio login attempt',data:{usernameLen:username.trim().length,apiBase:typeof window!=='undefined'?window.location.origin+'/api':'n/a'},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       await login(username, password);
+      // #region agent log
+      fetch('http://127.0.0.1:7513/ingest/47ea1aa0-3bc6-4901-89a9-6a98fae40541',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'aa2ea5'},body:JSON.stringify({sessionId:'aa2ea5',runId:'post-fix',hypothesisId:'F',location:'LoginJWT.tsx:onSubmit:success',message:'portfolio login success',data:{ok:true},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       try {
         sessionStorage.setItem("dmb:account-username", username.trim());
       } catch {
@@ -67,6 +73,9 @@ const LoginJWT: FC = () => {
             errorMessage = data?.message ?? "Invalid username or password.";
           }
         }
+        // #region agent log
+        fetch('http://127.0.0.1:7513/ingest/47ea1aa0-3bc6-4901-89a9-6a98fae40541',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'aa2ea5'},body:JSON.stringify({sessionId:'aa2ea5',runId:'post-fix',hypothesisId:'F',location:'LoginJWT.tsx:onSubmit:error',message:'portfolio login failed',data:{status:error.response?.status??0,hasMessage:Boolean((error.response?.data as {message?:string}|undefined)?.message),errorMessage},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
       }
       setError("root", { type: "manual", message: errorMessage });
     }
