@@ -8,7 +8,14 @@ import {
 } from "styles/main_style";
 import useAuth from "hooks/useAuth";
 import useAccountGreeting from "hooks/useAccountGreeting";
-import { AI_AUTOMATION_PATH, PROFILES_PATH } from "utils/navigation";
+import {
+  AI_AUTOMATION_PATH,
+  AGENT_OPS_PATH,
+  COMMERCE_PATH,
+  CRM_PATH,
+  LMS_PATH,
+  PROFILES_PATH,
+} from "utils/navigation";
 
 type MarketingLayoutProps = {
   children: ReactNode;
@@ -71,7 +78,7 @@ export default function MarketingLayout({ children, mainSx, embedded = false }: 
             </Button>
             <Button
               component="a"
-              href="/crm"
+              href={CRM_PATH}
               size="small"
               sx={[
                 landingPageSx.headerButtonOutline,
@@ -82,7 +89,7 @@ export default function MarketingLayout({ children, mainSx, embedded = false }: 
             </Button>
             <Button
               component="a"
-              href="/lms"
+              href={LMS_PATH}
               size="small"
               sx={[
                 landingPageSx.headerButtonOutline,
@@ -90,6 +97,28 @@ export default function MarketingLayout({ children, mainSx, embedded = false }: 
               ]}
             >
               LMS
+            </Button>
+            <Button
+              component="a"
+              href={COMMERCE_PATH}
+              size="small"
+              sx={[
+                landingPageSx.headerButtonOutline,
+                { border: "none", display: { xs: "none", md: "inline-flex" } },
+              ]}
+            >
+              Commerce
+            </Button>
+            <Button
+              component="a"
+              href={AGENT_OPS_PATH}
+              size="small"
+              sx={[
+                landingPageSx.headerButtonOutline,
+                { border: "none", display: { xs: "none", md: "inline-flex" } },
+              ]}
+            >
+              Agent
             </Button>
             {auth.isAuthenticated ? (
               <>
@@ -150,12 +179,20 @@ export default function MarketingLayout({ children, mainSx, embedded = false }: 
               dmbwebsolutions.com
             </Link>
             {" · "}
-            <Link href="/crm" underline="hover" sx={landingPageSx.inlineLink}>
+            <Link href={CRM_PATH} underline="hover" sx={landingPageSx.inlineLink}>
               CRM
             </Link>
             {" · "}
-            <Link href="/lms" underline="hover" sx={landingPageSx.inlineLink}>
+            <Link href={LMS_PATH} underline="hover" sx={landingPageSx.inlineLink}>
               LMS
+            </Link>
+            {" · "}
+            <Link href={COMMERCE_PATH} underline="hover" sx={landingPageSx.inlineLink}>
+              Commerce
+            </Link>
+            {" · "}
+            <Link href={AGENT_OPS_PATH} underline="hover" sx={landingPageSx.inlineLink}>
+              Agent
             </Link>
             {" · "}
             <Link component={RouterLink} to={`${PROFILES_PATH}#lots`} underline="hover" sx={landingPageSx.inlineLink}>
