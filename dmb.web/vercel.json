@@ -10,6 +10,10 @@
       "destination": "/api/auth-external?provider=:provider&action=:action"
     },
     {
+      "source": "/api/:path*",
+      "destination": "https://dmbportfolio-api.onrender.com/api/:path*"
+    },
+    {
       "source": "/crm/api/:path*",
       "destination": "https://dmb-crm-api.onrender.com/api/:path*"
     },
