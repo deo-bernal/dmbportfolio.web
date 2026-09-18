@@ -104,7 +104,7 @@ export default function MarketingLayout({ children, mainSx, embedded = false }: 
               size="small"
               sx={[
                 landingPageSx.headerButtonOutline,
-                { border: "none", display: { xs: "none", md: "inline-flex" } },
+                { border: "none", display: { xs: "none", sm: "inline-flex" } },
               ]}
             >
               Commerce
@@ -115,7 +115,7 @@ export default function MarketingLayout({ children, mainSx, embedded = false }: 
               size="small"
               sx={[
                 landingPageSx.headerButtonOutline,
-                { border: "none", display: { xs: "none", md: "inline-flex" } },
+                { border: "none", display: { xs: "none", sm: "inline-flex" } },
               ]}
             >
               Agent
