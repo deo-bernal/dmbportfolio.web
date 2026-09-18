@@ -206,6 +206,20 @@ export default function AccentSidebarLayout() {
             >
               Learning Management System (LMS)
             </Box>
+            <Box
+              component="a"
+              href="/commerce"
+              sx={shellNavItemSx(false)}
+            >
+              Distribution through E-Commerce
+            </Box>
+            <Box
+              component="a"
+              href="/agent"
+              sx={shellNavItemSx(false)}
+            >
+              Agentic Operations Console
+            </Box>
           </NavSection>
 
           {isPublicRoute ? (

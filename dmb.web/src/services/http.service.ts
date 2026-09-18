@@ -1,14 +1,15 @@
 import axios from "axios";
-import { dmbApiConfig } from "../config";
+import { resolvePublicApiBaseUrl } from "../config";
 
 const http = axios.create({
-  baseURL: dmbApiConfig.dmb_api_url,
+  baseURL: resolvePublicApiBaseUrl(),
   headers: {
     "Content-type": "application/json",
   },
 });
 
 http.interceptors.request.use((config) => {
+  config.baseURL = resolvePublicApiBaseUrl();
   const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

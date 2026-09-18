@@ -7,6 +7,8 @@ export const CASE_STUDIES_PATH = "/case-studies";
 export const STACK_PATH = "/stack";
 export const CRM_PATH = "/crm";
 export const LMS_PATH = "/lms";
+export const COMMERCE_PATH = "/commerce";
+export const AGENT_OPS_PATH = "/agent";
 
 const APP_PATH_PREFIXES = [
   "/login",
@@ -25,6 +27,8 @@ const APP_PATH_PREFIXES = [
   "/stack",
   "/crm",
   "/lms",
+  "/commerce",
+  "/agent",
 ];
 
 export function getSafeRedirectPath(value: string | null | undefined): string | null {

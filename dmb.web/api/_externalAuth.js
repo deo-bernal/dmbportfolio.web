@@ -1,6 +1,8 @@
 const RENDER_AUTH_BASE = "https://dmbportfolio-api.onrender.com/api/auth/external";
 const CRM_AUTH_BASE = "https://dmb-crm-api.onrender.com/api/auth/external";
 const LMS_AUTH_BASE = "https://dmb-lms-api.onrender.com/api/auth/external";
+const COMMERCE_AUTH_BASE = "https://dmb-commerce-api.onrender.com/api/auth/external";
+const AGENT_AUTH_BASE = "https://dmb-agent-api.onrender.com/api/auth/external";
 
 function publicCallback(provider) {
   return `https://www.dmbwebsolutions.com/api/auth/external/${provider}/callback`;
@@ -8,7 +10,7 @@ function publicCallback(provider) {
 
 function workspaceFromRequest(incoming) {
   const app = (incoming.searchParams.get("app") || "").toLowerCase();
-  if (app === "crm" || app === "lms") {
+  if (app === "crm" || app === "lms" || app === "commerce" || app === "agent") {
     return app;
   }
 
@@ -18,6 +20,12 @@ function workspaceFromRequest(incoming) {
   }
   if (state.startsWith("lms.")) {
     return "lms";
+  }
+  if (state.startsWith("commerce.")) {
+    return "commerce";
+  }
+  if (state.startsWith("agent.")) {
+    return "agent";
   }
   return "portfolio";
 }
@@ -56,7 +64,7 @@ function createExternalAuthHandler(suffix) {
     // Keep CRM/LMS Facebook (and other social) callbacks on the public domain so
     // the browser never lands on Render's wake page, and so the code is exchanged
     // once by the target API instead of being consumed by a server-side proxy fetch.
-    if (/\/callback$/i.test(suffix) && (workspace === "crm" || workspace === "lms")) {
+    if (/\/callback$/i.test(suffix) && (workspace === "crm" || workspace === "lms" || workspace === "commerce" || workspace === "agent")) {
       const dest = new URL(`https://www.dmbwebsolutions.com/${workspace}/api/auth/external/${suffix}`);
       incoming.searchParams.forEach((value, key) => {
         if (key !== "path" && key !== "provider" && key !== "action") {
@@ -71,7 +79,11 @@ function createExternalAuthHandler(suffix) {
       ? CRM_AUTH_BASE
       : workspace === "lms"
         ? LMS_AUTH_BASE
-        : RENDER_AUTH_BASE;
+        : workspace === "commerce"
+          ? COMMERCE_AUTH_BASE
+          : workspace === "agent"
+            ? AGENT_AUTH_BASE
+            : RENDER_AUTH_BASE;
     const target = new URL(`${authBase}/${suffix}`);
     incoming.searchParams.forEach((value, key) => {
       if (key !== "path" && key !== "provider" && key !== "action") {

@@ -8,6 +8,15 @@ import App from "./App";
 import { AuthProvider } from "./hooks/useAuth";
 import reportWebVitals from "./reportWebVitals";
 import store from "./store";
+import { isProductionSiteHost, usesPublicApiProxy } from "./config";
+
+if (
+  typeof window !== "undefined" &&
+  usesPublicApiProxy() &&
+  isProductionSiteHost(window.location.hostname)
+) {
+  void fetch("/api/warmup", { method: "GET", cache: "no-store" }).catch(() => undefined);
+}
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {

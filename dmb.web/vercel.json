@@ -42,6 +42,38 @@
       "destination": "https://dmb-lms-web.vercel.app/lms/:path*"
     },
     {
+      "source": "/commerce/api/:path*",
+      "destination": "https://dmb-commerce-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/commerce",
+      "destination": "https://dmb-commerce-web.vercel.app/commerce"
+    },
+    {
+      "source": "/commerce/",
+      "destination": "https://dmb-commerce-web.vercel.app/commerce/"
+    },
+    {
+      "source": "/commerce/:path*",
+      "destination": "https://dmb-commerce-web.vercel.app/commerce/:path*"
+    },
+    {
+      "source": "/agent/api/:path*",
+      "destination": "https://dmb-agent-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/agent",
+      "destination": "https://dmb-agent-web.vercel.app/agent"
+    },
+    {
+      "source": "/agent/",
+      "destination": "https://dmb-agent-web.vercel.app/agent/"
+    },
+    {
+      "source": "/agent/:path*",
+      "destination": "https://dmb-agent-web.vercel.app/agent/:path*"
+    },
+    {
       "source": "/((?!api/|files/).*)",
       "destination": "/index.html"
     }

@@ -28,6 +28,8 @@ import RequireSuperAdmin from "../components/auth/RequireSuperAdmin";
 import AccentSidebarLayout from "../layouts/AccentSidebarLayout";
 import CrmGateway from "../pages/CrmGateway";
 import LmsGateway from "../pages/LmsGateway";
+import CommerceGateway from "../pages/CommerceGateway";
+import AgentOpsGateway from "../pages/AgentOpsGateway";
 import { AI_AUTOMATION_PATH, ONBOARD_PATH } from "../utils/navigation";
 
 function aiAutomationRoute() {
@@ -182,6 +184,14 @@ export default function createRouter({
     {
       path: "/lms/*",
       element: <LmsGateway />,
+    },
+    {
+      path: "/commerce/*",
+      element: <CommerceGateway />,
+    },
+    {
+      path: "/agent/*",
+      element: <AgentOpsGateway />,
     },
     {
       path: "/:username",
