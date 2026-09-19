@@ -30,6 +30,7 @@ import CrmGateway from "../pages/CrmGateway";
 import LmsGateway from "../pages/LmsGateway";
 import CommerceGateway from "../pages/CommerceGateway";
 import AgentOpsGateway from "../pages/AgentOpsGateway";
+import LangChatGateway from "../pages/LangChatGateway";
 import { AI_AUTOMATION_PATH, ONBOARD_PATH } from "../utils/navigation";
 
 function aiAutomationRoute() {
@@ -192,6 +193,10 @@ export default function createRouter({
     {
       path: "/agent/*",
       element: <AgentOpsGateway />,
+    },
+    {
+      path: "/langchat/*",
+      element: <LangChatGateway />,
     },
     {
       path: "/:username",

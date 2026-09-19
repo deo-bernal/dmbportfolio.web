@@ -220,6 +220,13 @@ export default function AccentSidebarLayout() {
             >
               Agentic Operations Console
             </Box>
+            <Box
+              component="a"
+              href="/langchat"
+              sx={shellNavItemSx(false)}
+            >
+              LangChat (LangChain + Convex)
+            </Box>
           </NavSection>
 
           {isPublicRoute ? (

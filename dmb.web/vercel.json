@@ -78,6 +78,18 @@
       "destination": "https://dmb-agent-web.vercel.app/agent/:path*"
     },
     {
+      "source": "/langchat",
+      "destination": "https://dmb-langchat-web.vercel.app/langchat"
+    },
+    {
+      "source": "/langchat/",
+      "destination": "https://dmb-langchat-web.vercel.app/langchat/"
+    },
+    {
+      "source": "/langchat/:path*",
+      "destination": "https://dmb-langchat-web.vercel.app/langchat/:path*"
+    },
+    {
       "source": "/((?!api/|files/).*)",
       "destination": "/index.html"
     }

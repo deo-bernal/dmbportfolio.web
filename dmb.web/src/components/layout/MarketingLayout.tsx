@@ -13,6 +13,7 @@ import {
   AGENT_OPS_PATH,
   COMMERCE_PATH,
   CRM_PATH,
+  LANGCHAT_PATH,
   LMS_PATH,
   PROFILES_PATH,
 } from "utils/navigation";
@@ -120,6 +121,17 @@ export default function MarketingLayout({ children, mainSx, embedded = false }: 
             >
               Agent
             </Button>
+            <Button
+              component="a"
+              href={LANGCHAT_PATH}
+              size="small"
+              sx={[
+                landingPageSx.headerButtonOutline,
+                { border: "none", display: { xs: "none", md: "inline-flex" } },
+              ]}
+            >
+              LangChat
+            </Button>
             {auth.isAuthenticated ? (
               <>
                 {firstName ? (
@@ -193,6 +205,10 @@ export default function MarketingLayout({ children, mainSx, embedded = false }: 
             {" · "}
             <Link href={AGENT_OPS_PATH} underline="hover" sx={landingPageSx.inlineLink}>
               Agent
+            </Link>
+            {" · "}
+            <Link href={LANGCHAT_PATH} underline="hover" sx={landingPageSx.inlineLink}>
+              LangChat
             </Link>
             {" · "}
             <Link component={RouterLink} to={`${PROFILES_PATH}#lots`} underline="hover" sx={landingPageSx.inlineLink}>
