@@ -43,6 +43,31 @@ Deo has twenty years of software delivery experience and is available for AI imp
 
   `This assistant helps visitors understand DMB Profiles, how to register, how AI builder works, and where to go on the site.
 It cannot log in for the user, reset passwords, or change account data. Direct people to the matching page with a [[link|/path]] when that helps.`,
+
+  `DMB LangChat is live at [[LangChat|/langchat]] (also https://www.dmbwebsolutions.com/langchat/).
+It is a standalone demo product separate from DMB Profiles, CRM, LMS, Commerce, and Agent.
+Purpose: prove durable chat memory — threads survive refresh — using Python LangChain plus Convex Free as the database, not RAM-only lab memory.`,
+
+  `How LangChat works end to end:
+1) The chat UI is a Vite React app on Vercel, proxied under /langchat on dmbwebsolutions.com.
+2) The browser talks to Convex in realtime for thread lists and messages (tables: threads, messages).
+3) When you send a message, the UI POSTs to the Python FastAPI on Render (dmb-langchat-api.onrender.com /chat).
+4) That API loads recent history from Convex via convex-py, runs LangChain (Google Gemini when GOOGLE_API_KEY is set, otherwise OpenAI, otherwise a demo-echo fallback), then appends the human and AI turns back to Convex.
+5) The UI updates live through Convex subscriptions. Refresh keeps the thread.`,
+
+  `What LangChain is in this product: LangChain is the Python orchestration layer around the LLM.
+It builds a message list (system + prior human/AI turns from Convex), invokes the chat model, and returns the reply string.
+Convex is the durable memory store (the database cylinder from the LangChain architecture diagram). Vercel hosts the front end. Render hosts the Python brain.
+Free tiers: Convex Free, Render Free, Vercel Hobby. Cold starts on Render can delay the first reply.`,
+
+  `LangChat Phase 1 auth is anonymous sessionId stored in the browser (localStorage), not the marketing Google/LinkedIn/Facebook SSO hub.
+Threads are scoped to that sessionId. Full SSO into LangChat is planned later and documented in the LangChat Documentations PDFs (SSO, System Architecture, User Guide) in the dmb-langchat repo.
+Workspace sidebar links from LangChat go to CRM, LMS, Commerce, Agent, Portfolio, and the main website.
+The floating DMB Assistant (Robocop) on LangChat is the same site chatbot as the main site and talks through /api/chat.`,
+
+  `If someone asks how LangChat differs from this Robocop assistant: Robocop is the marketing-site helper grounded in DMB docs (profiles, automation, real estate).
+LangChat is the LangChain+Convex durable-memory demo — its main pane stores conversations in Convex permanently for that browser session.
+Both can appear on the LangChat page: main pane = LangChat memory demo; floating widget = Robocop site assistant.`,
 ];
 
 function tokenize(text) {
